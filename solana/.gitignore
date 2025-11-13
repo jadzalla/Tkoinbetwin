@@ -1,0 +1,20 @@
+# CRITICAL SECURITY: Never commit wallet files or private keys
+wallets/
+*.json
+deployment.json
+
+# Exceptions (allow README and config files)
+!README.md
+!package.json
+
+# Environment files
+.env
+.env.local
+.env.production
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
