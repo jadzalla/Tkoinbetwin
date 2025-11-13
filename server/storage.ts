@@ -72,6 +72,7 @@ export interface IStorage {
   
   // Transaction Operations
   getTransaction(id: string): Promise<Transaction | undefined>;
+  getAllTransactions(filters?: Record<string, any>): Promise<Transaction[]>;
   getTransactionsByAgent(agentId: string): Promise<Transaction[]>;
   getTransactionsByUser(userId: string): Promise<Transaction[]>;
   getTransactionBySignature(signature: string): Promise<Transaction | undefined>;
@@ -267,6 +268,10 @@ export class PostgresStorage implements IStorage {
   async getTransaction(id: string): Promise<Transaction | undefined> {
     const result = await db.select().from(transactions).where(eq(transactions.id, id)).limit(1);
     return result[0];
+  }
+
+  async getAllTransactions(_filters?: Record<string, any>): Promise<Transaction[]> {
+    return db.select().from(transactions).orderBy(desc(transactions.createdAt));
   }
 
   async getTransactionsByAgent(agentId: string): Promise<Transaction[]> {

@@ -302,16 +302,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const burnRateBasisPoints = parseInt(burnRateValue);
       const burnRatePercent = (burnRateBasisPoints / 100).toString();
       
-      // TODO: Implement actual stats from blockchain
-      // For now, return mock data structure
+      // Get marketplace metrics
+      const activeAgentsList = await storage.getAllAgents({ status: 'active' });
+      
+      // Calculate total agent liquidity (sum of all agent balances)
+      const totalLiquidity = activeAgentsList.reduce((sum, agent) => {
+        const balance = parseFloat(agent.tkoinBalance || '0');
+        return sum + balance;
+      }, 0);
+      
+      // Get all transactions from the last 24 hours for volume calculation
+      const now = new Date();
+      const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      const allTransactions = await storage.getAllTransactions({});
+      const recentTransactions = allTransactions.filter((tx: typeof allTransactions[0]) => 
+        tx.createdAt && new Date(tx.createdAt) >= yesterday
+      );
+      const volume24h = recentTransactions.reduce((sum: number, tx: typeof recentTransactions[0]) => {
+        const amount = parseFloat(tx.tkoinAmount || '0');
+        return sum + amount;
+      }, 0);
+      
+      // Count agents by tier (based on totalMinted as a proxy for volume)
+      const agentsByTier = {
+        bronze: activeAgentsList.filter(a => parseFloat(a.totalMinted || '0') < 25000).length,
+        silver: activeAgentsList.filter(a => {
+          const total = parseFloat(a.totalMinted || '0');
+          return total >= 25000 && total < 100000;
+        }).length,
+        gold: activeAgentsList.filter(a => parseFloat(a.totalMinted || '0') >= 100000).length,
+      };
+      
+      // TODO: Implement actual stats from blockchain for circulating and burned
+      // Always return complete marketplace metrics with defaults to prevent frontend errors
       const stats = {
         maxSupply: "100000000",
-        circulatingSupply: "0",
+        circulatingSupply: totalLiquidity.toFixed(8),
         totalBurned: "0",
-        burnRate: burnRatePercent, // Now uses configurable rate
+        burnRate: burnRatePercent,
         burnRateBasisPoints: burnRateBasisPoints,
         conversionRate: "100", // 1 TKOIN = 100 Credits
-        activeAgents: await storage.getAllAgents({ status: 'active' }).then(a => a.length),
+        activeAgents: activeAgentsList.length || 0,
+        // New marketplace metrics (always present)
+        totalLiquidity: totalLiquidity.toFixed(8),
+        volume24h: volume24h.toFixed(8),
+        agentsByTier: {
+          bronze: agentsByTier.bronze || 0,
+          silver: agentsByTier.silver || 0,
+          gold: agentsByTier.gold || 0,
+        },
+        supportedCurrencies: 6, // PHP, EUR, USD, JPY, GBP, AUD
       };
       
       res.json(stats);
