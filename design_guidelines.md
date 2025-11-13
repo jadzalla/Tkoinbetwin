@@ -1,159 +1,166 @@
-# Tkoin Ecosystem Design Guidelines
+# Tkoin Exchange Platform Design Guidelines
 
 ## Design Approach
 
-**Reference-Based Strategy**: Draw inspiration from leading crypto platforms - Solana.com for brand clarity, Jupiter for clean functionality, and Phantom Wallet for trust-building design patterns. Create a professional fintech aesthetic that balances technical sophistication with accessibility.
+**Reference-Based Strategy**: Blend Coinbase's trust-building professionalism, Binance's data density, and Phantom Wallet's clean interface. Create a credible financial platform that balances institutional reliability with crypto-native accessibility.
 
-**Core Principle**: Establish credibility through precision, clarity, and real-time transparency - every design element reinforces trust in the tokenomics system.
+**Core Principle**: Every pixel reinforces financial credibility - precision in data display, clarity in transactions, transparency in agent operations.
+
+---
+
+## Color System
+
+**Primary Palette**:
+- Deep Purple/Indigo: #4C1D95 to #5B21B6 (primary brand, CTAs, headers)
+- Accent Purple: #7C3AED (hover states, highlights)
+- Success Green: #10B981 (completed transactions, positive trends)
+- Warning Amber: #F59E0B (pending states, alerts)
+- Error Red: #EF4444 (failed transactions, rejections)
+- Neutral Grays: #F9FAFB to #111827 (backgrounds, text, borders)
+
+**Usage**:
+- Purple gradients for hero sections and primary CTAs
+- Status indicators use semantic colors (green/amber/red)
+- Agent tier badges use bronze/silver/gold metallic tones
+- Dark mode ready with purple accents maintaining prominence
 
 ---
 
 ## Typography
 
-**Font Families** (via Google Fonts):
-- **Primary**: Inter (headings, UI elements) - weights 400, 500, 600, 700
-- **Secondary**: JetBrains Mono (addresses, transaction hashes, numbers) - weight 400
+**Fonts** (Google Fonts CDN):
+- **Inter**: Headlines, UI (400, 500, 600, 700)
+- **JetBrains Mono**: Addresses, hashes, amounts (400, 500)
 
-**Hierarchy**:
-- Hero Headlines: text-5xl to text-6xl, font-bold, tracking-tight
-- Section Headers: text-3xl to text-4xl, font-semibold
-- Card Titles: text-xl, font-semibold
-- Body Text: text-base, font-normal
-- Captions/Labels: text-sm, uppercase tracking-wide for UI labels
-- Monospace Data: text-sm to text-base for addresses, amounts, hashes
+**Scale**:
+- Hero: text-6xl lg:text-7xl, font-bold, tracking-tight
+- Headers: text-4xl, font-semibold
+- Cards: text-xl, font-semibold
+- Body: text-base
+- Data Labels: text-sm, uppercase, tracking-wide
+- Amounts: text-lg to text-3xl, JetBrains Mono, font-medium
 
 ---
 
 ## Layout System
 
-**Spacing Primitives**: Use Tailwind units of **4, 6, 8, 12, 16, 20** for consistent rhythm
-- Component padding: p-6, p-8
-- Section spacing: py-16, py-20, py-24
-- Card gaps: gap-6, gap-8
-- Grid gutters: gap-4 for tight data, gap-8 for feature cards
+**Spacing**: Tailwind units **4, 6, 8, 12, 16, 20, 24**
+- Cards: p-6 to p-8
+- Sections: py-20 to py-24
+- Grid gaps: gap-6 for features, gap-4 for data tables
 
-**Container Strategy**:
-- Full-width sections with inner max-w-7xl
-- Dashboard content: max-w-6xl
-- Form containers: max-w-2xl
+**Containers**:
+- Public pages: max-w-7xl
+- Dashboards: max-w-6xl
+- Forms: max-w-2xl
 
 ---
 
 ## Component Library
 
 ### Navigation
-- **Public Header**: Logo left, nav links center (About, Tokenomics, Docs), "Agent Portal" button right
-- **Dashboard Header**: Logo, breadcrumbs, agent profile dropdown right
-- Sticky positioning on scroll with subtle backdrop blur
+**Public Header**: Logo left, nav (Tokenomics, Agents, Docs, About), "Agent Login" + "Admin" buttons right. Sticky with backdrop-blur-lg.
 
-### Cards & Containers
-- **Stat Cards**: Rounded borders (rounded-xl), subtle background differentiation, large numbers with labels
-- **Transaction Cards**: Compact rows with monospace hashes, status badges, timestamp
-- **Feature Cards**: Icon + title + description layout in 3-column grid
+**Dashboard Header**: Logo, breadcrumb navigation, notifications icon, profile dropdown. Purple gradient bottom border.
 
-### Data Display
-- **Live Stats**: Large numeric displays with trend indicators (↑ green, ↓ red)
-- **Tables**: Clean striped rows, sortable headers, monospace for addresses/amounts
-- **Charts**: Simple line/area charts for supply/burn trends (use Chart.js or similar)
+### Cards & Data Display
+**Stat Cards**: Large numbers (text-3xl, JetBrains Mono), icon top-left, trend indicator, label below. Rounded-xl borders, subtle background.
+
+**Agent Cards**: Profile image, name, tier badge, transaction volume, rating stars, "View Profile" link. Grid layout (3-4 columns desktop).
+
+**Transaction Tables**: Striped rows, sortable headers, monospace for hashes/addresses, status badges, timestamp, Explorer link icon.
+
+**Live Ticker**: Horizontal scrolling feed showing recent mints/burns with animation.
 
 ### Forms & Inputs
-- **Input Fields**: Rounded borders, clear labels above, helper text below
-- **Calculators**: Side-by-side input/output display with real-time updates
-- **Sliders**: For fee percentage adjustments with numeric input sync
+**Exchange Calculator**: Two-column input/output display with large amounts, real-time conversion, fee breakdown below.
+
+**Agent Verification Form**: Multi-step progress indicator, document upload areas, status checkboxes.
+
+### Status Elements
+**Tier Badges**: Rounded-full pills with metallic gradients (bronze/silver/gold), small icons.
+
+**Verification Badges**: Green checkmark for verified agents, yellow pending, gray for unverified.
+
+**Transaction Status**: Pills with icons - Completed (green), Pending (amber), Failed (red).
 
 ### Buttons
-- **Primary CTAs**: Solid fill, rounded-lg, medium padding (px-6 py-3)
-- **Secondary**: Outline style with border
-- **Hero Buttons**: Larger (px-8 py-4) with blur backdrop when on images
-
-### Badges & Status
-- **Status Badges**: Small rounded-full pills (Pending, Completed, Failed)
-- **Tier Indicators**: Bronze/Silver/Gold badges for commission tiers
+**Primary**: Purple gradient background, rounded-lg, px-8 py-4, white text
+**Secondary**: Purple outline, transparent background
+**Hero Buttons**: Larger scale, backdrop-blur-md background when on images
 
 ---
 
-## Page-Specific Layouts
+## Page Layouts
 
 ### Homepage (tkoin.finance)
 
-**Hero Section** (90vh):
-- Large hero image: Abstract Solana-themed gradient/particle background
-- Centered headline: "Tkoin: Solana Token-2022 Powering BetWin Gaming"
-- Subheadline explaining the soft-peg credit system
-- Two CTAs: "View Tokenomics" (primary) + "Agent Portal" (secondary)
-- Live supply counter displayed prominently
+**Hero** (85vh): Full-width purple-to-indigo gradient background image with particle effects. Centered headline "Professional Tkoin Exchange - Trusted Agent Network", subheadline, two CTAs ("Find an Agent", "Become an Agent"), live stats bar below (Total Supply, 24h Volume, Active Agents).
 
-**Tokenomics Section**:
-- 3-column grid: Max Supply (100M), Circulating Supply (live), Total Burned (live)
-- Visual breakdown: Pie chart or progress bars for distribution
-- Key features: Transfer fees, burn mechanics, commission system
+**Tokenomics Dashboard**: 4-column live stats (Max Supply, Circulating, Burned, Total Agents), visual supply chart, burn rate graph.
 
-**How It Works**:
-- 4-step flow diagram: Deposit → Burn → Credits → Withdraw
-- Icons + brief descriptions for each step
-- Agent role explanation with commission tiers visual
+**Featured Agents**: 3-column grid of top-performing agents with profile cards, "View All Agents" link.
 
-**Live Activity Feed**:
-- Recent transactions ticker (mints, burns, large transfers)
-- Links to Solana Explorer for transparency
+**How It Works**: 3-step flow (Find Agent → Exchange Funds → Receive Tkoin) with icons and descriptions. 
 
-**Integration Section**:
-- 2-column: "For Players" (deposit flow) + "For Agents" (minting flow)
-- Screenshot mockups or simplified diagrams
+**Trust Section**: 2-column grid - left side lists security features (blockchain verification, escrow protection), right side shows audit badge and regulatory compliance.
 
-**Footer**:
-- Links: Documentation, GitHub, Solana Explorer
-- Social links, audit reports link
-- Newsletter signup (optional)
+**Live Activity**: Recent transaction feed with real-time updates.
+
+**Agent CTA Section**: Large centered card encouraging agent applications with benefits list and "Apply Now" button.
+
+**Footer**: Navigation links, social, documentation, legal pages, newsletter signup.
 
 ### Agent Portal
 
-**Login Page**:
-- Centered card (max-w-md), Replit Auth integration
-- Clean form with "Approved Agents Only" messaging
+**Dashboard Home**: Top row KPI cards (Total Volume, Commissions Earned, Active Orders, Current Tier). Exchange interface card with calculator. Recent orders table. Commission progress bar with next tier threshold.
 
-**Agent Dashboard**:
-- Top stats row: Total Minted, Commissions Earned, Current Tier
-- Minting Interface Card:
-  - Amount input with TKOIN suffix
-  - Fee calculator showing: Gross amount, Fee %, Net to user, Your commission
-  - "Generate Tkoin" primary button
-- Recent Activity table below
+**Order Management**: Full-width table with filters (status, date range, amount). Columns: Order ID, Customer, Amount, Fee, Commission, Status, Actions. Expandable rows for order details.
 
-**Transaction History**:
-- Full-width table with filters (date range, type, status)
-- Columns: Date, Type, Amount, User, Fee, Commission, Status, Explorer Link
-- Export to CSV button
+**Inventory Panel**: Current TKOIN balance, fiat reserves, pending transactions, liquidity status indicators.
 
-**Commission Tracker**:
-- Progress bar to next tier with thresholds labeled
-- Earnings breakdown by month (simple bar chart)
-- Tier benefits table
+**Analytics Page**: Monthly volume chart, commission breakdown, customer retention metrics, tier progression graph.
 
-**Settings Panel**:
-- Fee configuration form (admin only)
-- Commission tier thresholds editor
-- Burn rate adjustment slider
+**Profile Settings**: Agent information form, bank account details, verification documents display, commission tier benefits table.
+
+### Admin Panel
+
+**Agent Approval Queue**: Table with pending applications, document preview modal, approve/reject actions, verification checklist.
+
+**System Configuration**: Fee structure editor with sliders, burn rate adjustment, tier threshold configuration, emergency pause toggles.
+
+**Platform Analytics**: Total platform volume, agent performance leaderboard, transaction heatmap, burn rate trends.
+
+**Agent Directory Management**: Search/filter interface, bulk actions, tier reassignment, suspension controls.
 
 ---
 
-## Visual Elements
+## Images
 
-### Images
-- **Hero**: Full-width abstract Solana-branded gradient background (purples, blues, teals)
-- **Section backgrounds**: Subtle geometric patterns or particle effects
-- **Icons**: Use Heroicons for UI, custom Solana logo SVG
+**Hero Image**: Abstract cryptocurrency visualization with purple-to-indigo gradient, flowing particle effects suggesting blockchain transactions, professional and modern (1920x1080, full-bleed).
 
-### Animations
-- **Minimal**: Counter animations for live stats
-- **Hover states**: Subtle scale on cards (scale-105), underline on links
-- **Loading states**: Skeleton screens for async data, spinner for transactions
+**Section Backgrounds**: Subtle geometric grid patterns in light purple for alternating sections.
+
+**Agent Profiles**: Placeholder avatars for agents without photos (professional initials style).
+
+**Trust Badges**: Security audit logos, regulatory compliance seals.
 
 ---
 
-## Accessibility & Polish
-- High contrast ratios throughout (WCAG AA minimum)
-- Focus states on all interactive elements (ring-2 ring-offset-2)
-- Responsive breakpoints: Mobile-first, tablet (md:), desktop (lg:, xl:)
-- Loading skeletons for blockchain data fetches
-- Error states with clear messaging and retry options
+## Animations
+
+**Minimal & Purposeful**:
+- Live counter animations for stats using smooth number transitions
+- Hover: scale-105 on cards, subtle glow on purple buttons
+- Loading: Skeleton screens for async data, spinner for form submissions
+- Transaction feed: Smooth fade-in for new entries
+
+---
+
+## Accessibility
+
+- Purple color contrast tested against white/light backgrounds (WCAG AA)
+- Focus rings on all interactive elements (ring-2 ring-purple-500)
+- Keyboard navigation for all dashboard functions
+- Screen reader labels for transaction statuses and amounts
+- High contrast mode for data tables
