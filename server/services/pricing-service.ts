@@ -118,7 +118,12 @@ export class PricingService {
       .where(eq(agents.id, agentId))
       .limit(1);
 
-    const agentGlobalDailyLimit = agent.length > 0 ? parseFloat(agent[0].dailyLimit) : 10000;
+    let agentGlobalDailyLimit = 10000;
+    if (agent.length > 0 && agent[0].dailyLimit != null) {
+      const parsed = parseFloat(agent[0].dailyLimit);
+      agentGlobalDailyLimit = isNaN(parsed) ? 10000 : parsed;
+    }
+    
     const defaults = await this.getDefaultSettings();
 
     if (settings.length === 0) {
@@ -134,12 +139,25 @@ export class PricingService {
     }
 
     const s = settings[0];
-    const bidSpreadBps = Number(s.bidSpreadBps);
-    const askSpreadBps = Number(s.askSpreadBps);
-    const fxBufferBps = Number(s.fxBufferBps);
-    const minOrderUsd = Number(s.minOrderUsd);
-    const maxOrderUsd = Number(s.maxOrderUsd);
-    const dailyLimitUsd = Math.min(Number(s.dailyLimitUsd), agentGlobalDailyLimit);
+    const bidSpreadBps = s.bidSpreadBps != null ? Number(s.bidSpreadBps) : defaults.bidSpreadBps;
+    const askSpreadBps = s.askSpreadBps != null ? Number(s.askSpreadBps) : defaults.askSpreadBps;
+    const fxBufferBps = s.fxBufferBps != null ? Number(s.fxBufferBps) : defaults.fxBufferBps;
+    const minOrderUsd = s.minOrderUsd != null ? Number(s.minOrderUsd) : defaults.minOrderUsd;
+    const maxOrderUsd = s.maxOrderUsd != null ? Number(s.maxOrderUsd) : defaults.maxOrderUsd;
+    const dailyLimitUsd = Math.min(s.dailyLimitUsd != null ? Number(s.dailyLimitUsd) : defaults.dailyLimitUsd, agentGlobalDailyLimit);
+
+    if (isNaN(bidSpreadBps) || isNaN(askSpreadBps) || isNaN(fxBufferBps) || isNaN(minOrderUsd) || isNaN(maxOrderUsd) || isNaN(dailyLimitUsd)) {
+      console.error(`[Pricing] NaN values detected in agent ${agentId} currency ${currency} settings, using defaults`);
+      return {
+        isActive: s.isActive,
+        bidSpreadBps: defaults.bidSpreadBps,
+        askSpreadBps: defaults.askSpreadBps,
+        fxBufferBps: defaults.fxBufferBps,
+        minOrderUsd: defaults.minOrderUsd,
+        maxOrderUsd: defaults.maxOrderUsd,
+        dailyLimitUsd: Math.min(defaults.dailyLimitUsd, agentGlobalDailyLimit),
+      };
+    }
 
     if (minOrderUsd > maxOrderUsd) {
       console.warn(`[Pricing] Invalid limits for agent ${agentId} currency ${currency}: min ${minOrderUsd} > max ${maxOrderUsd}, using defaults`);
@@ -180,14 +198,35 @@ export class PricingService {
       quoteTtlMinutes: this.DEFAULT_QUOTE_TTL_MINUTES,
     });
 
+    const bidSpreadBps = Number(config.bidSpreadBps ?? this.DEFAULT_BID_SPREAD_BPS);
+    const askSpreadBps = Number(config.askSpreadBps ?? this.DEFAULT_ASK_SPREAD_BPS);
+    const fxBufferBps = Number(config.fxBufferBps ?? this.DEFAULT_FX_BUFFER_BPS);
+    const minOrderUsd = Number(config.minOrderUsd ?? this.DEFAULT_MIN_ORDER_USD);
+    const maxOrderUsd = Number(config.maxOrderUsd ?? this.DEFAULT_MAX_ORDER_USD);
+    const dailyLimitUsd = Number(config.dailyLimitUsd ?? this.DEFAULT_DAILY_LIMIT_USD);
+    const quoteTtlMinutes = Number(config.quoteTtlMinutes ?? this.DEFAULT_QUOTE_TTL_MINUTES);
+
+    if (isNaN(bidSpreadBps) || isNaN(askSpreadBps) || isNaN(fxBufferBps) || isNaN(minOrderUsd) || isNaN(maxOrderUsd) || isNaN(dailyLimitUsd) || isNaN(quoteTtlMinutes)) {
+      console.error('[Pricing] NaN values detected in system config, using hardcoded defaults');
+      return {
+        bidSpreadBps: this.DEFAULT_BID_SPREAD_BPS,
+        askSpreadBps: this.DEFAULT_ASK_SPREAD_BPS,
+        fxBufferBps: this.DEFAULT_FX_BUFFER_BPS,
+        minOrderUsd: this.DEFAULT_MIN_ORDER_USD,
+        maxOrderUsd: this.DEFAULT_MAX_ORDER_USD,
+        dailyLimitUsd: this.DEFAULT_DAILY_LIMIT_USD,
+        quoteTtlMinutes: this.DEFAULT_QUOTE_TTL_MINUTES,
+      };
+    }
+
     return {
-      bidSpreadBps: Number(config.bidSpreadBps ?? this.DEFAULT_BID_SPREAD_BPS),
-      askSpreadBps: Number(config.askSpreadBps ?? this.DEFAULT_ASK_SPREAD_BPS),
-      fxBufferBps: Number(config.fxBufferBps ?? this.DEFAULT_FX_BUFFER_BPS),
-      minOrderUsd: Number(config.minOrderUsd ?? this.DEFAULT_MIN_ORDER_USD),
-      maxOrderUsd: Number(config.maxOrderUsd ?? this.DEFAULT_MAX_ORDER_USD),
-      dailyLimitUsd: Number(config.dailyLimitUsd ?? this.DEFAULT_DAILY_LIMIT_USD),
-      quoteTtlMinutes: Number(config.quoteTtlMinutes ?? this.DEFAULT_QUOTE_TTL_MINUTES),
+      bidSpreadBps,
+      askSpreadBps,
+      fxBufferBps,
+      minOrderUsd,
+      maxOrderUsd,
+      dailyLimitUsd,
+      quoteTtlMinutes,
     };
   }
 
@@ -291,6 +330,21 @@ export class PricingService {
 
     const orderValueUsd = finalFiatAmount / baseRate;
 
+    const MAX_DECIMAL_20_8 = 999999999999;
+    const MAX_DECIMAL_20_2 = 999999999999999999;
+
+    if (Math.abs(finalTkoinAmount) > MAX_DECIMAL_20_8) {
+      throw new Error('TKOIN amount exceeds maximum precision (12 digits)');
+    }
+
+    if (Math.abs(finalFiatAmount) > MAX_DECIMAL_20_2) {
+      throw new Error('Fiat amount exceeds maximum precision (18 digits)');
+    }
+
+    if (Math.abs(effectiveRate) > MAX_DECIMAL_20_8) {
+      throw new Error('Exchange rate exceeds maximum precision (12 digits)');
+    }
+
     if (orderValueUsd < settings.minOrderUsd) {
       throw new Error(`Order value ($${orderValueUsd.toFixed(2)}) is below minimum ($${settings.minOrderUsd})`);
     }
@@ -392,7 +446,7 @@ export class PricingService {
   async getPublicRates(): Promise<PublicRates> {
     const allRates = await this.fxService.getAllRatesWithMetadata('USD');
     
-    const publicSpreadBps = await this.getSystemConfig('public_spread_bps', this.DEFAULT_PUBLIC_SPREAD_BPS);
+    const publicSpreadBps = Number(await this.getSystemConfig('public_spread_bps', this.DEFAULT_PUBLIC_SPREAD_BPS));
     const publicSpread = publicSpreadBps / 10000;
 
     const rates: Record<string, { fxRate: number; midPrice: number; bidPrice: number; askPrice: number }> = {};
