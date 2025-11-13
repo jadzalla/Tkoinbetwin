@@ -405,6 +405,11 @@ export const agentCurrencySettings = pgTable("agent_currency_settings", {
   // Quote Settings
   quoteTtlSeconds: integer("quote_ttl_seconds").notNull().default(300), // 5 minutes default
   
+  // Order Limits (in USD equivalent)
+  minOrderUsd: decimal("min_order_usd", { precision: 20, scale: 2 }).notNull().default("10"),
+  maxOrderUsd: decimal("max_order_usd", { precision: 20, scale: 2 }).notNull().default("5000"),
+  dailyLimitUsd: decimal("daily_limit_usd", { precision: 20, scale: 2 }).notNull().default("10000"),
+  
   // Status
   isActive: boolean("is_active").notNull().default(true),
   
