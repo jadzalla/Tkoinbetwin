@@ -51,11 +51,11 @@ export default function Home() {
                 Token-2022 Powered
               </Badge>
               <h1 className="text-5xl md:text-7xl font-bold tracking-tight" data-testid="heading-hero">
-                Professional Tkoin Exchange
+                Buy & Redeem Tkoin
               </h1>
               <p className="text-xl text-muted-foreground" data-testid="text-hero-description">
-                Trusted agent network facilitating seamless fiat-to-crypto exchanges on Solana. 
-                2% burn mechanism, 100M max supply.
+                Trusted agent network for buying Tkoin to play and redeeming your winnings back to fiat. 
+                2% burn mechanism on all deposits, 100M max supply.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link href="#agents">
@@ -124,46 +124,104 @@ export default function Home() {
             <div className="text-center mb-12">
               <h2 className="text-3xl md:text-4xl font-bold mb-4">How It Works</h2>
               <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                Simple, secure, and transparent cryptocurrency exchanges
+                Buy Tkoin to play. Win and redeem back to fiat.
               </p>
             </div>
             
-            <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-              <Card>
-                <CardHeader>
-                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                    <Users className="h-6 w-6 text-primary" />
-                  </div>
-                  <CardTitle>1. Find an Agent</CardTitle>
-                  <CardDescription>
-                    Browse verified agents in your area or online
-                  </CardDescription>
-                </CardHeader>
-              </Card>
+            <div className="grid md:grid-cols-2 gap-12 max-w-6xl mx-auto">
+              <div className="space-y-6">
+                <h3 className="text-2xl font-bold text-center mb-8">Buying Tkoin</h3>
+                <div className="space-y-4">
+                  <Card>
+                    <CardHeader>
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                          <Users className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-lg">1. Find an Agent</CardTitle>
+                          <CardDescription>Browse verified agents in your area</CardDescription>
+                        </div>
+                      </div>
+                    </CardHeader>
+                  </Card>
 
-              <Card>
-                <CardHeader>
-                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                    <TrendingUp className="h-6 w-6 text-primary" />
-                  </div>
-                  <CardTitle>2. Exchange Funds</CardTitle>
-                  <CardDescription>
-                    Transfer fiat (cash/bank) or stablecoins (USDT/USDC/EURt)
-                  </CardDescription>
-                </CardHeader>
-              </Card>
+                  <Card>
+                    <CardHeader>
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                          <TrendingUp className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-lg">2. Pay with Fiat/Crypto</CardTitle>
+                          <CardDescription>Cash, bank transfer, or stablecoins (USDT/USDC/EURt)</CardDescription>
+                        </div>
+                      </div>
+                    </CardHeader>
+                  </Card>
 
-              <Card>
-                <CardHeader>
-                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                    <Coins className="h-6 w-6 text-primary" />
-                  </div>
-                  <CardTitle>3. Receive Tkoin</CardTitle>
-                  <CardDescription>
-                    Get Tkoin in your wallet instantly, ready for gaming
-                  </CardDescription>
-                </CardHeader>
-              </Card>
+                  <Card>
+                    <CardHeader>
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                          <Coins className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-lg">3. Receive Tkoin</CardTitle>
+                          <CardDescription>Get Tkoin instantly, ready for gaming (1 TKOIN = 100 Credits)</CardDescription>
+                        </div>
+                      </div>
+                    </CardHeader>
+                  </Card>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <h3 className="text-2xl font-bold text-center mb-8">Redeeming Winnings</h3>
+                <div className="space-y-4">
+                  <Card>
+                    <CardHeader>
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center shrink-0">
+                          <TrendingUp className="h-5 w-5 text-green-500" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-lg">1. Win & Withdraw</CardTitle>
+                          <CardDescription>Transfer casino winnings to your wallet as Tkoin</CardDescription>
+                        </div>
+                      </div>
+                    </CardHeader>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center shrink-0">
+                          <Users className="h-5 w-5 text-green-500" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-lg">2. Find an Agent</CardTitle>
+                          <CardDescription>Connect with agents for redemption</CardDescription>
+                        </div>
+                      </div>
+                    </CardHeader>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center shrink-0">
+                          <DollarSign className="h-5 w-5 text-green-500" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-lg">3. Get Paid</CardTitle>
+                          <CardDescription>Receive cash or bank transfer for your Tkoin</CardDescription>
+                        </div>
+                      </div>
+                    </CardHeader>
+                  </Card>
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -184,7 +242,7 @@ export default function Home() {
                     <Shield className="h-12 w-12 text-primary mx-auto" />
                     <h3 className="text-xl font-semibold">Ready to become an agent?</h3>
                     <p className="text-muted-foreground">
-                      Join our network of liquidity providers and earn commissions on every exchange
+                      Join our network of liquidity providers and earn commissions on both purchases and redemptions
                     </p>
                     <Link href="/api/login">
                       <Button size="lg" data-testid="button-apply-agent">

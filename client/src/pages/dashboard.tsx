@@ -245,21 +245,33 @@ export default function Dashboard() {
               <Card>
                 <CardHeader>
                   <CardTitle>Quick Actions</CardTitle>
-                  <CardDescription>Manage your agent operations</CardDescription>
+                  <CardDescription>Manage purchases and redemptions</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <Button className="w-full justify-start" variant="outline" disabled data-testid="button-create-order">
-                    <TrendingUp className="mr-2 h-4 w-4" />
-                    Create Exchange Order
-                  </Button>
+                  <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                    Buy Side (Sell to Users)
+                  </div>
                   <Button className="w-full justify-start" variant="outline" disabled data-testid="button-buy-inventory">
                     <Coins className="mr-2 h-4 w-4" />
                     Buy TKOIN Inventory
                   </Button>
-                  <Button className="w-full justify-start" variant="outline" disabled data-testid="button-view-transactions">
-                    <DollarSign className="mr-2 h-4 w-4" />
-                    View Transactions
+                  <Button className="w-full justify-start" variant="outline" disabled data-testid="button-sell-to-user">
+                    <TrendingUp className="mr-2 h-4 w-4" />
+                    Sell TKOIN to User
                   </Button>
+                  
+                  <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mt-6 mb-2">
+                    Redemption Side (Buy from Users)
+                  </div>
+                  <Button className="w-full justify-start" variant="outline" disabled data-testid="button-redemption-requests">
+                    <DollarSign className="mr-2 h-4 w-4" />
+                    View Redemption Requests
+                  </Button>
+                  <Button className="w-full justify-start" variant="outline" disabled data-testid="button-process-redemption">
+                    <Award className="mr-2 h-4 w-4" />
+                    Process User Redemption
+                  </Button>
+                  
                   <p className="text-xs text-muted-foreground pt-4">
                     Full agent features coming soon. This is a preview of your agent dashboard.
                   </p>

@@ -42,39 +42,62 @@ A complete Solana Token-2022 ecosystem integrating with the 1-Stake/BetWin gamin
    - Tkoin → 1Stake Credits
 3. **Earn Commissions**: Percentage of each transaction based on tier
 
-### Payment Flows
+### Payment Flows - Complete Bidirectional Exchange
 
-1. **Deposit (User → 1Stake Credits)**:
-   - User sends Tkoin to treasury wallet with memo (user ID)
-   - Blockchain monitor detects deposit
-   - 2% burn applied, credits calculated
-   - Webhook sent to Laravel platform
-   - Credits added to user's 1Stake account
+#### 1. User Buys Tkoin (Agent → User)
+**Agent sells from inventory:**
+- User contacts agent (cash/bank/stablecoins)
+- Agent transfers Tkoin from inventory to user wallet
+- User pays agent via chosen method
+- Agent earns commission on sale
+- User can now play (1 TKOIN = 100 Credits)
 
-2. **Agent Inventory Purchase**:
-   - Agent deposits USDT/USDC/EURt to smart contract
-   - SPL token swap executed
-   - Tkoin credited to agent's inventory
-   - Transaction recorded
+**Agent replenishes inventory:**
+- Agent deposits USDT/USDC/EURt to treasury
+- 2% burn applied automatically
+- Tkoin credited to agent inventory
+- Transaction recorded
 
-3. **Agent-to-User Transfer**:
-   - User pays agent (cash or stablecoin)
-   - Agent transfers Tkoin from dashboard
-   - Commission calculated and recorded
-   - User can deposit to 1Stake or hold
+#### 2. User Plays & Wins
+- User deposits Tkoin to 1Stake platform
+- Blockchain monitor detects treasury deposit
+- 2% burn applied, credits calculated  
+- Webhook sent to Laravel platform
+- Credits added to user's account
+- User plays and (hopefully) wins
 
-4. **QR Code Payment**:
-   - Agent generates QR code with amount and rate
-   - User scans and confirms
-   - Payment locked for 5 minutes
-   - Agent transfers Tkoin upon cash receipt
+#### 3. User Redeems Tkoin (User → Agent)
+**User withdraws winnings:**
+- User requests withdrawal from 1Stake
+- 24hr cooldown enforced
+- Daily cap validated
+- Tkoin sent to user's wallet
 
-5. **Withdrawal (1Stake Credits → Tkoin)**:
-   - User requests withdrawal from 1Stake
-   - 24hr cooldown enforced
-   - Daily cap validated
-   - Agent fulfills request
-   - Tkoin sent to user's wallet
+**User sells to agent:**
+- User contacts agent for redemption
+- User transfers Tkoin to agent wallet
+- Agent pays user (cash/bank/stablecoins)
+- Agent earns commission on redemption
+- Agent now has more inventory
+
+#### 4. QR Code Payments (Both Directions)
+**User Buying:**
+- Agent generates QR code with rate
+- User scans, confirms amount
+- User pays cash
+- Agent transfers Tkoin
+
+**User Redeeming:**
+- User generates QR code showing Tkoin amount
+- Agent scans, confirms
+- User transfers Tkoin
+- Agent pays cash
+
+### Key Points
+- **Agents act as market makers**: Buy from users (redemptions) AND sell to users (purchases)
+- **Inventory balancing**: Agents must manage inventory between buying and selling
+- **Commissions on both sides**: Agents earn on purchases AND redemptions
+- **2% burn only on deposits**: When Tkoin enters the treasury wallet (initial mints and game deposits)
 
 ## Database Schema
 
