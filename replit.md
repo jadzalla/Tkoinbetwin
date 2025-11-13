@@ -139,6 +139,15 @@ A complete Solana Token-2022 ecosystem integrating with the 1-Stake/BetWin gamin
 
 ## Recent Changes
 
+**2025-01-13**: Phase 1 Burn Rate Optimization Complete
+- Reduced Token-2022 transfer fee from 2% to 1% (100 basis points)
+- Implemented configurable burn rate system (0-2% range) via system_config
+- Created admin dashboard at /admin with burn rate controls
+- BurnService now reads and logs configured burn_rate
+- Added role-based access control for admin functions
+- Updated all documentation to reflect 1% default with configurability
+- Designed Phase 2 deflationary mechanisms (buyback, staking, events)
+
 **2024-01-13**: Initial project setup
 - Created comprehensive PostgreSQL schema for all entities
 - Established database relationships and indexes
@@ -176,28 +185,31 @@ A complete Solana Token-2022 ecosystem integrating with the 1-Stake/BetWin gamin
 
 ### Completed
 1. ✅ **Database Schema** - Complete PostgreSQL schema with 11 tables for agents, transactions, deposits, withdrawals, exchange orders, ratings, audit logs, promotional events, and system config
-2. ✅ **Solana Token-2022 Infrastructure** - Complete deployment scripts, wallet generation, automated burn service, and Token-2022 with 2% transfer fee
+2. ✅ **Solana Token-2022 Infrastructure** - Complete deployment scripts, wallet generation, automated burn service, and Token-2022 with 1% transfer fee (configurable)
 3. ✅ **Storage Layer** - Full PostgreSQL storage implementation with CRUD operations for all entities
 4. ✅ **Authentication System** - Replit Auth integration with user sessions, agent middleware, admin access control (all critical OAuth issues resolved)
 5. ✅ **Core API Routes** - Agent registration, approval workflows, system configuration, public stats, and agent directory
 6. ✅ **Design Guidelines** - Professional cryptocurrency exchange design system with purple branding, comprehensive component library
 7. ✅ **Frontend Pages** - Public homepage with tokenomics stats, agent dashboard with KPI cards, agent application form with validation
+8. ✅ **Burn Rate Optimization (Phase 1)** - Configurable burn rate system with admin controls, reduced from 2% to 1%, adjustable 0-2% via admin panel
 
 ### In Progress
-8. 🔄 **Frontend Enhancements** - Additional homepage sections (live chart, featured agents, trust badges, activity feed)
 9. 🔄 **Blockchain Monitoring Service** - Real-time deposit detection and processing
 10. 🔄 **Stablecoin Swap Engine** - Jupiter integration for USDT/USDC/EURt to Tkoin exchanges
 11. 🔄 **Webhook System** - Laravel integration for credit synchronization
 
 ### Planned
-10. ⏳ Agent-to-user transfer interface
-11. ⏳ QR code payment system
-12. ⏳ Withdrawal processing with cooldowns
-13. ⏳ Solana wallet adapter integration
-14. ⏳ Analytics dashboard
-15. ⏳ Agent discovery and ratings
-16. ⏳ Risk management features
-17. ⏳ Promotional events system
+12. ⏳ Agent-to-user transfer interface
+13. ⏳ QR code payment system
+14. ⏳ Withdrawal processing with cooldowns
+15. ⏳ Solana wallet adapter integration
+16. ⏳ Analytics dashboard
+17. ⏳ Agent discovery and ratings
+18. ⏳ Risk management features
+19. ⏳ Phase 2 Deflationary Mechanisms (see PHASE_2_DEFLATIONARY_MECHANISMS.md):
+   - Buyback-and-burn program
+   - Agent staking system
+   - Promotional burn events
 
 ## Architecture Implemented
 
