@@ -1,0 +1,394 @@
+
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance/public# cd /home/tkoin-betwin/htdocs/betwin.tkoin.finance/
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# ls -F config/
+app.php   broadcasting.php  database.php     hashing.php  mail.php   queue.php   sanctum.php   session.php   view.php
+auth.php  cache.php         filesystems.php  logging.php  oauth.php  reverb.php  services.php  settings.php
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# cat config/app.php
+<?php
+/**
+ *   1Stake iGaming Platform
+ *   -----------------------
+ *   app.php
+ * 
+ *   @copyright  Copyright (c) 1stake, All rights reserved
+ *   @author     1stake <sales@1stake.app>
+ *   @see        https://1stake.app
+*/
+
+return [
+
+    'version' => '3.2.5',
+
+    
+
+    'name' => env('APP_NAME', '1Stake'),
+
+    
+
+    'logo' => env('APP_LOGO', '/images/logo/logo.png'),
+
+    'og_image' => env('APP_OG_IMAGE', '/images/home/welcome-guest.webp'),
+
+    
+
+    'env' => env('APP_ENV', 'production'),
+
+    
+
+    'debug' => (bool) env('APP_DEBUG', false),
+
+    
+
+    'url' => env('APP_URL', ''),
+
+    'asset_url' => env('ASSET_URL'),
+
+    'force_ssl' => env('FORCE_SSL', FALSE),
+
+    
+
+    'timezone' => env('APP_TIMEZONE', 'UTC'),
+
+    
+
+    'locale' => env('LOCALE', 'en'),
+
+    'fallback_locale' => env('APP_FALLBACK_LOCALE', 'en'),
+
+    'faker_locale' => env('APP_FAKER_LOCALE', 'en_US'),
+
+    
+    
+    'default_locale' => env('LOCALE', 'en'),
+
+    'locales' => [
+        'en' => [
+            'flag'  => 'us',
+            'title' => 'English'
+        ],
+        'ru' => [
+            'title' => 'Русский'
+        ],
+        'de' => [
+            'title' => 'Deutsch',
+        ],
+        'es' => [
+            'title' => 'Español',
+        ],
+        'fr' => [
+            'title' => 'Français',
+        ],
+        'pt' => [
+            'title' => 'Português',
+        ],
+        'nl' => [
+            'title' => 'Nederlands',
+        ],
+        'cs' => [
+            'flag'  => 'cz',
+            'title' => 'Česky',
+        ],
+        'it' => [
+            'title' => 'Italiano',
+        ],
+        'fi' => [
+            'title' => 'Suomi',
+        ],
+        'sv' => [
+            'flag'  => 'se',
+            'title' => 'Svenska',
+        ],
+        'hu' => [
+            'title' => 'Magyar',
+        ],
+        'el' => [
+            'flag'  => 'gr',
+            'title' => 'Ελληνικά',
+        ],
+        'da' => [
+            'flag'  => 'dk',
+            'title' => 'Dansk',
+        ],
+        'lv' => [
+            'title' => 'Latviešu',
+        ],
+        'lt' => [
+            'title' => 'Lietuvių',
+        ],
+        'et' => [
+            'flag'  => 'ee',
+            'title' => 'Eesti',
+        ],
+        'sk' => [
+            'title' => 'Slovenčina',
+        ],
+        'sl' => [
+            'flag'  => 'si',
+            'title' => 'Slovenščina',
+        ],
+        'th' => [
+            'title' => 'ภาษาไทย',
+        ],
+        'ko' => [
+            'flag'  => 'kr',
+            'title' => '한국어',
+        ],
+        
+        'zh-cn' => [
+            'flag'  => 'cn',
+            'title' => '简体',
+        ],
+        
+        'zh-tw' => [
+            'flag'  => 'tw',
+            'title' => '繁体',
+        ],
+        'ja' => [
+            'flag'  => 'jp',
+            'title' => '日本語',
+        ],
+    ],
+
+    'translation_files_folder' => env('TRANSLATION_FILES_FOLDER', 'lang'), 
+
+    
+
+    'cipher' => 'AES-256-CBC',
+
+    'key' => env('APP_KEY'),
+
+    'hash' => 'da34b0aa975fddd5a90a1eb2bb8cb9d2',
+
+    'hashb' => '0dcd235baec3bed9c8374828935afa0d',
+
+    'previous_keys' => [
+        ...array_filter(
+            explode(',', env('APP_PREVIOUS_KEYS', ''))
+        ),
+    ],
+
+    
+
+    'api' => [
+        'releases' => [
+            'base_url' => env('API_RELEASES_BASE_URL', 'https://demo.1stake.app/api/')
+        ],
+        'products' => [
+            'base_url' => env('API_PRODUCTS_BASE_URL', 'https://financialplugins.com/api/')
+        ],
+    ],
+
+    
+
+    'maintenance' => [
+        'driver' => env('APP_MAINTENANCE_DRIVER', 'file'),
+        'store' => env('APP_MAINTENANCE_STORE', 'database'),
+    ],
+
+    
+
+    'csp_allowed_urls' => json_decode(env('CSP_ALLOWED_URLS', '[]')),
+];
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# php artisan route:list
+
+  POST            _ignition/execute-solution ............................................ ignition.executeSolution › Spatie\LaravelIgnition › ExecuteSolutionController
+  GET|HEAD        _ignition/health-check ........................................................ ignition.healthCheck › Spatie\LaravelIgnition › HealthCheckController
+  POST            _ignition/update-config ..................................................... ignition.updateConfig › Spatie\LaravelIgnition › UpdateConfigController
+  GET|HEAD        api/admin/accounts ............................................................................. admin.accounts.index › Admin\AccountController@index
+  GET|HEAD        api/admin/accounts/{account} ..................................................................... admin.accounts.show › Admin\AccountController@show
+  POST            api/admin/accounts/{account}/credit .......................................................... admin.accounts.credit › Admin\AccountController@credit
+  POST            api/admin/accounts/{account}/debit ............................................................. admin.accounts.debit › Admin\AccountController@debit
+  GET|HEAD        api/admin/accounts/{account}/summary ................................................. admin.accounts.summary.index › Admin\AccountController@summary
+  GET|HEAD        api/admin/accounts/{account}/transactions ........................................ admin.accounts.transactions › Admin\AccountController@transactions
+  GET|HEAD        api/admin/add-ons ................................................................................. admin.add-ons.index › Admin\AddonController@index
+  POST            api/admin/add-ons/register-bundle .............................................. admin.add-ons.bundle.register › Admin\AddonController@registerBundle
+  GET|HEAD        api/admin/add-ons/{packageId} ........................................................................ admin.add-ons.show › Admin\AddonController@get
+  GET|HEAD        api/admin/add-ons/{packageId}/changelog ................................................... admin.add-ons.changelog › Admin\AddonController@changelog
+  PATCH           api/admin/add-ons/{packageId}/disable ......................................................... admin.add-ons.disable › Admin\AddonController@disable
+  PATCH           api/admin/add-ons/{packageId}/enable ............................................................ admin.add-ons.enable › Admin\AddonController@enable
+  POST            api/admin/add-ons/{packageId}/install ......................................................... admin.add-ons.install › Admin\AddonController@install
+  GET|HEAD        api/admin/affiliates/commissions ......................................... admin.affiliates.commissions.index › Admin\AffiliateController@commissions
+  GET|HEAD        api/admin/affiliates/commissions/{commission} .................................... admin.affiliates.commissions.show › Admin\AffiliateController@show
+  PATCH           api/admin/affiliates/commissions/{commission}/approve ...................... admin.affiliates.commissions.approve › Admin\AffiliateController@approve
+  PATCH           api/admin/affiliates/commissions/{commission}/reject ......................... admin.affiliates.commissions.reject › Admin\AffiliateController@reject
+  GET|HEAD        api/admin/affiliates/tree .................................................................... admin.affiliates.tree › Admin\AffiliateController@tree
+  GET|HEAD        api/admin/audit-logs ........................................................................ admin.audit-logs.index › Admin\AuditLogController@index
+  GET|HEAD        api/admin/audit-logs/{audit_log} .............................................................. admin.audit-logs.show › Admin\AuditLogController@show
+  GET|HEAD        api/admin/bets ......................................................................................... admin.bets.index › Admin\BetController@index
+  GET|HEAD        api/admin/bonuses ................................................................................. admin.bonuses.index › Admin\BonusController@index
+  GET|HEAD        api/admin/bonuses/rules ................................................................. admin.bonuses.rules.index › Admin\BonusRuleController@index
+  POST            api/admin/bonuses/rules ................................................................. admin.bonuses.rules.store › Admin\BonusRuleController@store
+  GET|HEAD        api/admin/bonuses/rules/types ........................................................... admin.bonuses.rules.types › Admin\BonusRuleController@types
+  GET|HEAD        api/admin/bonuses/rules/{rule} ............................................................ admin.bonuses.rules.show › Admin\BonusRuleController@show
+  DELETE          api/admin/bonuses/rules/{rule} ...................................................... admin.bonuses.rules.destroy › Admin\BonusRuleController@destroy
+  GET|HEAD        api/admin/chat/messages ............................................................... admin.chat.messages.index › Admin\ChatMessageController@index
+  DELETE          api/admin/chat/messages/{message} ................................................. admin.chat.messages.destroy › Admin\ChatMessageController@destroy
+  GET|HEAD        api/admin/chat/rooms ........................................................................ admin.chat.rooms.index › Admin\ChatRoomController@index
+  POST            api/admin/chat/rooms ........................................................................ admin.chat.rooms.store › Admin\ChatRoomController@store
+  GET|HEAD        api/admin/chat/rooms/{room} ................................................................... admin.chat.rooms.show › Admin\ChatRoomController@show
+  PUT|PATCH       api/admin/chat/rooms/{room} ............................................................... admin.chat.rooms.update › Admin\ChatRoomController@update
+  DELETE          api/admin/chat/rooms/{room} ............................................................. admin.chat.rooms.destroy › Admin\ChatRoomController@destroy
+  GET|HEAD        api/admin/currencies ........................................................................ admin.currencies.index › Admin\CurrencyController@index
+  POST            api/admin/currencies ........................................................................ admin.currencies.store › Admin\CurrencyController@store
+  GET|HEAD        api/admin/currencies/{currency} ............................................................... admin.currencies.show › Admin\CurrencyController@show
+  PUT|PATCH       api/admin/currencies/{currency} ........................................................... admin.currencies.update › Admin\CurrencyController@update
+  DELETE          api/admin/currencies/{currency} ......................................................... admin.currencies.destroy › Admin\CurrencyController@destroy
+  GET|HEAD        api/admin/dashboard/data/{key} ............................................................. admin.dashboard.data › Admin\DashboardController@getData
+  GET|HEAD        api/admin/files ........................................................................................ admin.files.show › Admin\FileController@show
+  POST            api/admin/files ...................................................................................... admin.files.store › Admin\FileController@store
+  PATCH           api/admin/files .................................................................................... admin.files.update › Admin\FileController@update
+  DELETE          api/admin/files .................................................................................. admin.files.destroy › Admin\FileController@destroy
+  GET|HEAD        api/admin/help/{file} ................................................................................... admin.help.show › Admin\HelpController@show
+  GET|HEAD        api/admin/kyc ........................................................................................... admin.kyc.index › Admin\KycController@index
+  GET|HEAD        api/admin/kyc/providers ............................................................... admin.kyc.providers.index › Admin\KycProviderController@index
+  GET|HEAD        api/admin/kyc/providers/{kycProvider} ................................................... admin.kyc.providers.show › Admin\KycProviderController@show
+  PATCH           api/admin/kyc/providers/{kycProvider} ............................................... admin.kyc.providers.update › Admin\KycProviderController@update
+  GET|HEAD        api/admin/kyc/{kycRequest} ................................................................................ admin.kyc.show › Admin\KycController@show
+  DELETE          api/admin/kyc/{kycRequest} .......................................................................... admin.kyc.destroy › Admin\KycController@destroy
+  POST            api/admin/kyc/{kycRequest}/approve .................................................................. admin.kyc.approve › Admin\KycController@approve
+  POST            api/admin/kyc/{kycRequest}/reject ..................................................................... admin.kyc.reject › Admin\KycController@reject
+  GET|HEAD        api/admin/license ............................................................................... admin.license.index › Admin\LicenseController@index
+  POST            api/admin/license ......................................................................... admin.license.register › Admin\LicenseController@register
+  GET|HEAD        api/admin/maintenance ................................................................... admin.maintenance.index › Admin\MaintenanceController@index
+  POST            api/admin/maintenance/cache ............................................................. admin.maintenance.cache › Admin\MaintenanceController@cache
+  POST            api/admin/maintenance/command ....................................................... admin.maintenance.command › Admin\MaintenanceController@command
+  POST            api/admin/maintenance/cron/jobs ............................................... admin.maintenance.cron.jobs › Admin\MaintenanceController@getCronJobs
+  POST            api/admin/maintenance/down ................................................................ admin.maintenance.down › Admin\MaintenanceController@down
+  GET|HEAD        api/admin/maintenance/failed-jobs ............................................ admin.maintenance.failed-jobs › Admin\MaintenanceController@failedJobs
+  GET|HEAD        api/admin/maintenance/jobs ................................................................ admin.maintenance.jobs › Admin\MaintenanceController@jobs
+  GET|HEAD        api/admin/maintenance/logs/{file} .............................................. admin.maintenance.logs.show › Admin\MaintenanceController@getLogFile
+  DELETE          api/admin/maintenance/logs/{file} ......................................... admin.maintenance.logs.delete › Admin\MaintenanceController@deleteLogFile
+  GET|HEAD        api/admin/maintenance/logs/{file}/download ............................ admin.maintenance.logs.download › Admin\MaintenanceController@downloadLogFile
+  POST            api/admin/maintenance/migrate ....................................................... admin.maintenance.migrate › Admin\MaintenanceController@migrate
+  POST            api/admin/maintenance/queues/clear .......................................... admin.maintenance.queues.clear › Admin\MaintenanceController@clearQueue
+  POST            api/admin/maintenance/queues/supervisor/status ......... admin.maintenance.supervisor.status › Admin\MaintenanceController@getSupervisorServiceStatus
+  POST            api/admin/maintenance/queues/worker/restart ....................... admin.maintenance.worker.restart › Admin\MaintenanceController@restartQueueWorker
+  POST            api/admin/maintenance/up ...................................................................... admin.maintenance.up › Admin\MaintenanceController@up
+  POST            api/admin/maintenance/upgrade ....................................................... admin.maintenance.upgrade › Admin\MaintenanceController@upgrade
+  GET|HEAD        api/admin/promo-codes ..................................................................... admin.promo-codes.index › Admin\PromoCodeController@index
+  POST            api/admin/promo-codes ..................................................................... admin.promo-codes.store › Admin\PromoCodeController@store
+  GET|HEAD        api/admin/promo-codes/fields ............................................................ admin.promo-codes.fields › Admin\PromoCodeController@fields
+  GET|HEAD        api/admin/promo-codes/types ............................................................... admin.promo-codes.types › Admin\PromoCodeController@types
+  GET|HEAD        api/admin/promo-codes/{promoCode} ........................................................... admin.promo-codes.show › Admin\PromoCodeController@show
+  PUT|PATCH       api/admin/promo-codes/{promoCode} ....................................................... admin.promo-codes.update › Admin\PromoCodeController@update
+  DELETE          api/admin/promo-codes/{promoCode} ..................................................... admin.promo-codes.destroy › Admin\PromoCodeController@destroy
+  GET|HEAD        api/admin/promo-codes/{promoCode}/redemptions ........................... admin.promo-codes.redemptions.index › Admin\PromoCodeController@redemptions
+  GET|HEAD        api/admin/raffles ............................................... admin.raffles.index › Packages\Raffle\Http\Controllers\Admin\RaffleController@index
+  POST            api/admin/raffles ............................................... admin.raffles.store › Packages\Raffle\Http\Controllers\Admin\RaffleController@store
+  GET|HEAD        api/admin/raffles/{raffle} ........................................ admin.raffles.show › Packages\Raffle\Http\Controllers\Admin\RaffleController@show
+  PUT|PATCH       api/admin/raffles/{raffle} .................................... admin.raffles.update › Packages\Raffle\Http\Controllers\Admin\RaffleController@update
+  POST            api/admin/raffles/{raffle}/complete ....................... admin.raffles.complete › Packages\Raffle\Http\Controllers\Admin\RaffleController@complete
+  GET|HEAD        api/admin/raffles/{raffle}/tickets .......................... admin.raffles.tickets › Packages\Raffle\Http\Controllers\Admin\RaffleController@tickets
+  GET|HEAD        api/admin/rank-groups ..................................................................... admin.rank-groups.index › Admin\RankGroupController@index
+  POST            api/admin/rank-groups ..................................................................... admin.rank-groups.store › Admin\RankGroupController@store
+  GET|HEAD        api/admin/rank-groups/{rankGroup} ........................................................... admin.rank-groups.show › Admin\RankGroupController@show
+  PUT|PATCH       api/admin/rank-groups/{rankGroup} ....................................................... admin.rank-groups.update › Admin\RankGroupController@update
+  DELETE          api/admin/rank-groups/{rankGroup} ..................................................... admin.rank-groups.destroy › Admin\RankGroupController@destroy
+  GET|HEAD        api/admin/ranks ...................................................................................... admin.ranks.index › Admin\RankController@index
+  POST            api/admin/ranks ...................................................................................... admin.ranks.store › Admin\RankController@store
+  GET|HEAD        api/admin/ranks/{rank} ................................................................................. admin.ranks.show › Admin\RankController@show
+  PUT|PATCH       api/admin/ranks/{rank} ............................................................................. admin.ranks.update › Admin\RankController@update
+  DELETE          api/admin/ranks/{rank} ........................................................................... admin.ranks.destroy › Admin\RankController@destroy
+  GET|HEAD        api/admin/secure-files .................................................................... admin.secure-files.show › Admin\SecureFileController@show
+  PATCH           api/admin/seeders/asset ................................................................ admin.seeders.asset › Admin\SettingController@runAssetSeeder
+  GET|HEAD        api/admin/settings ............................................................................. admin.settings.index › Admin\SettingController@index
+  PATCH           api/admin/settings ........................................................................... admin.settings.update › Admin\SettingController@update
+  GET|HEAD        api/admin/settings/data .......................................................................... admin.settings.data › Admin\SettingController@data
+  POST            api/admin/tests/poker ................................................................................ admin.tests.poker › Admin\TestController@poker
+  GET|HEAD        api/admin/users ...................................................................................... admin.users.index › Admin\UserController@index
+  POST            api/admin/users/search ............................................................................. admin.users.search › Admin\UserController@search
+  GET|HEAD        api/admin/users/{user} ................................................................................. admin.users.show › Admin\UserController@show
+  PATCH           api/admin/users/{user} ............................................................................. admin.users.update › Admin\UserController@update
+  DELETE          api/admin/users/{user} ........................................................................... admin.users.destroy › Admin\UserController@destroy
+  GET|HEAD        api/admin/users/{user}/devices ............................................................... admin.users.devices › Admin\UserDeviceController@index
+  GET|HEAD        api/admin/users/{user}/ip-history ...................................................... admin.users.ip-history › Admin\UserIpHistoryController@index
+  POST            api/admin/users/{user}/mail ............................................................................ admin.users.mail › Admin\UserController@mail
+  GET|HEAD        api/admin/vip/xp-transactions .................................................... admin.vip.transactions.index › Admin\XpTransactionController@index
+  GET|HEAD        api/admin/xp-rates .............................................................................. admin.xp-rates.index › Admin\XpRateController@index
+  GET|HEAD        api/admin/xp-rates/{xpRate} ....................................................................... admin.xp-rates.show › Admin\XpRateController@show
+  PUT|PATCH       api/admin/xp-rates/{xpRate} ................................................................... admin.xp-rates.update › Admin\XpRateController@update
+  GET|HEAD        api/assets ..................................................................................................... assets.index › AssetController@index
+  POST            api/assets/search ............................................................................................ assets.search › AssetController@search
+  GET|HEAD        api/assets/{asset}/history ................................................................................. assets.history › AssetController@history
+  GET|HEAD        api/assets/{asset}/price ....................................................................................... assets.price › AssetController@price
+  POST            api/auth/login .............................................................................................. auth.login › Auth\LoginController@login
+  POST            api/auth/logout ........................................................................................... auth.logout › Auth\LoginController@logout
+  POST            api/auth/password/email ............................................................... auth.email › Auth\ForgotPasswordController@sendResetLinkEmail
+  POST            api/auth/password/reset ............................................................................. auth.reset › Auth\ResetPasswordController@reset
+  POST            api/auth/register .................................................................................. auth.register › Auth\RegisterController@register
+  GET|HEAD        api/auth/web3/nonce ................................................................................. auth.web3.nonce › Auth\Web3AuthController@nonce
+  POST            api/auth/web3/{provider} ............................................................................ auth.web3.login › Auth\Web3AuthController@login
+  GET|HEAD        api/bets/big ................................................................................................... bets.big › PageController@getBigBets
+  GET|HEAD        api/bets/biggest-win ................................................................................ bets.biggest-win › PageController@getBiggestWin
+  GET|HEAD        api/bets/count .............................................................................................. bets.count › PageController@getBetCount
+  GET|HEAD        api/bets/last-win ......................................................................................... bets.last-win › PageController@getLastWin
+  GET|HEAD        api/bets/latest .......................................................................................... bets.latest › PageController@getLatestBets
+  GET|POST|HEAD   api/broadcasting/auth .................................................................... Illuminate\Broadcasting › BroadcastController@authenticate
+  GET|HEAD        api/chat/rooms ........................................................................................... chat.rooms.index › ChatController@getRooms
+  GET|HEAD        api/chat/{room} .................................................................................... chat.messages.index › ChatController@getMessages
+  POST            api/chat/{room} .................................................................................... chat.messages.store › ChatController@sendMessage
+  POST            api/email/resend ........................................................................... verification.resend › Auth\VerificationController@resend
+  POST            api/games/baccarat/play ................................................. games.baccarat.play › Packages\Baccarat\Http\Controllers\BetController@play
+  POST            api/games/crash/{multiplayerGame}/bet ........................................... games.crash.bet › Packages\Crash\Http\Controllers\BetController@bet
+  POST            api/games/crash/{multiplayerGame}/cash-out ............................. games.crash.cash-out › Packages\Crash\Http\Controllers\BetController@cashOut
+  POST            api/games/keno/play ............................................................. games.keno.play › Packages\Keno\Http\Controllers\BetController@play
+  GET|HEAD        api/games/{packageId}/rooms ................................................................ multiplayer-games.rooms.index › GameRoomController@index
+  POST            api/games/{packageId}/rooms ............................................................... multiplayer-games.rooms.store › GameRoomController@create
+  POST            api/games/{packageId}/rooms/join ............................................................. multiplayer-games.rooms.join › GameRoomController@join
+  POST            api/games/{packageId}/rooms/leave .......................................................... multiplayer-games.rooms.leave › GameRoomController@leave
+  GET|HEAD        api/history/bets/{bet} ................................................................................ history.bets.show › BetHistoryController@show
+  GET|HEAD        api/history/bets/{bet}/package .................................................................. history.bets.package › BetHistoryController@package
+  GET|HEAD        api/history/bets/{bet}/verify ..................................................................... history.bets.verify › BetHistoryController@verify
+  GET|HEAD        api/history/losses ..................................................................................... history.losses › BetHistoryController@losses
+  GET|HEAD        api/history/recent ..................................................................................... history.recent › BetHistoryController@recent
+  GET|HEAD        api/history/wins ........................................................................................... history.wins › BetHistoryController@wins
+  GET|HEAD        api/leaderboard ........................................................................................... leaderboard › LeaderboardController@index
+  GET|HEAD        api/multiplayer-games/{packageId} ......................................................... multiplayer-games.index › MultiplayerGameController@index
+  GET|HEAD        api/oauth/{provider}/callback ......................................................................................... Auth\OauthController@callback
+  POST            api/oauth/{provider}/url ....................................................................................... oauth.url › Auth\OauthController@url
+  GET|HEAD        api/pages/{page} ................................................................................................. pages.static › PageController@show
+  POST            api/predictions/assets/{asset} ........ markets.crypto-prediction.open › Packages\CryptoPrediction\Http\Controllers\AssetPredictionController@openBet
+  GET|HEAD        api/predictions/completed markets.crypto-prediction.completed-bets › Packages\CryptoPrediction\Http\Controllers\AssetPredictionController@getComplet…
+  GET|HEAD        api/predictions/open ......... markets.crypto-prediction.open-bets › Packages\CryptoPrediction\Http\Controllers\AssetPredictionController@getOpenBets
+  POST            api/predictions/{bet} ............... markets.crypto-prediction.close › Packages\CryptoPrediction\Http\Controllers\AssetPredictionController@closeBet
+  GET|HEAD        api/pub/raffles ................................................ public.raffles.featured › Packages\Raffle\Http\Controllers\RaffleController@featured
+  GET|HEAD        api/raffles/completed ............................................... raffles.completed › Packages\Raffle\Http\Controllers\RaffleController@completed
+  GET|HEAD        api/raffles/current ..................................................... raffles.current › Packages\Raffle\Http\Controllers\RaffleController@current
+  GET|HEAD        api/raffles/tickets ..................................................... raffles.tickets › Packages\Raffle\Http\Controllers\RaffleController@tickets
+  POST            api/raffles/{raffle} .................................................. raffles.tickets.store › Packages\Raffle\Http\Controllers\RaffleController@buy
+  GET|HEAD        api/user ....................................................................................................... user.show › User\UserController@show
+  GET|HEAD        api/user/account/bets ............................................................................... user.account.bets › User\AccountController@bets
+  GET|HEAD        api/user/account/cashback ......................................................................... user.cashback.show › User\CashbackController@show
+  POST            api/user/account/cashback ....................................................................... user.cashback.claim › User\CashbackController@claim
+  GET|HEAD        api/user/account/faucet ............................................................................... user.faucet.show › User\FaucetController@show
+  POST            api/user/account/faucet ............................................................................. user.faucet.claim › User\FaucetController@claim
+  POST            api/user/account/promo-codes ................................................................... user.promo-codes.redeem › PromoCodeController@redeem
+  GET|HEAD        api/user/account/transactions ....................................................... user.account.transactions › User\AccountController@transactions
+  PATCH           api/user/accounts/currencies/{currency}/select ...................................... user.accounts.currencies.select › User\AccountController@select
+  GET|HEAD        api/user/affiliates/commissions .................................................. user.affiliates.commissions › User\AffiliateController@commissions
+  GET|HEAD        api/user/affiliates/info ....................................................................... user.affiliates.info › User\AffiliateController@info
+  GET|HEAD        api/user/affiliates/stats .................................................................... user.affiliates.stats › User\AffiliateController@stats
+  GET|HEAD        api/user/kyc ..................................................................................................... user.kyc.show › KycController@show
+  POST            api/user/kyc ................................................................................................... user.kyc.store › KycController@store
+  GET|HEAD        api/user/profile ......................................................................................... user.profile › User\UserController@profile
+  POST            api/user/provable-bets/create ......................................................... user.provable-bets.create › User\ProvableBetController@create
+  POST            api/user/security/2fa/confirm ...................................................... user.security.2fa.confirm › User\TwoFactorAuthController@confirm
+  POST            api/user/security/2fa/disable ...................................................... user.security.2fa.disable › User\TwoFactorAuthController@disable
+  POST            api/user/security/2fa/enable ......................................................... user.security.2fa.enable › User\TwoFactorAuthController@enable
+  POST            api/user/security/2fa/verify ......................................................... user.security.2fa.verify › User\TwoFactorAuthController@verify
+  PATCH           api/user/security/password/update .................................................... user.security.password.update › User\PasswordController@update
+  POST            api/user/update ............................................................................................ user.update › User\UserController@update
+  GET|HEAD        api/users/{user} .................................................................................... users.profile › User\UserController@userProfile
+  POST            api/users/{user}/tip ............................................................................................ users.tip › User\TipController@send
+  GET|HEAD        api/vip ............................................................................................................. vip.index › VipController@index
+  POST            api/webhooks/kyc ........................................................................................ webhooks.kyc › KycController@processWebhook
+  GET|HEAD        email/verify/{id}/{hash} ................................................................... verification.verify › Auth\VerificationController@verify
+  GET|HEAD        install/{step} .......................................................... install.view › Packages\Installer\Http\Controllers\InstallerController@view
+  POST            install/{step}/process ............................................ install.process › Packages\Installer\Http\Controllers\InstallerController@process
+  GET|HEAD        login .................................................................................................................. login › PageController@index
+  GET|HEAD        manifest.json ....................................................................................................... PageController@makeManifestFile
+  GET|HEAD        sanctum/csrf-cookie ............................................................... sanctum.csrf-cookie › Laravel\Sanctum › CsrfCookieController@show
+  GET|HEAD        validate/{key} ...................................................................................................................................... 
+  GET|HEAD        {path} ......................................................................................................................... PageController@index
+
+                                                                                                                                                   Showing [199] routes

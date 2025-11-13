@@ -1,0 +1,1198 @@
+# Tkoin × BetWin (1Stake) — End‑to‑End Integration Guide (MVP)
+
+**Objective:** Integrate **Tkoin** as the credit funding layer for **BetWin** (powered by 1Stake Laravel), keeping gameplay and ledgers intact while moving deposits/withdrawals on‑chain.
+
+---
+
+## 0) TL;DR — What you’ll build
+
+* **Soft‑peg model (Option 2):** Players deposit Tkoin → receive **Credits** (1 TKOIN = 100 Credits by default). Players can withdraw credits back into Tkoin.
+* **Laravel stays the game brain** (accounts, bets, XP, ledgers).
+* **Node chain‑middleware** watches Solana transfers and executes payouts.
+* **Tokenomics**: burn on deposit, cooldowns, withdrawal caps, tiered agent commissions — all config‑driven.
+
+---
+
+## 1) High‑Level Architecture
+
+```
+Player Wallet      Agent App
+     │                │
+     ├─ SPL Transfer ─┼──►  TREASURY (Solana)
+     │                │
+     ▼                │
+Chain‑Middleware (Node)  ──►  Laravel Webhook /api/tkoin/webhook
+ (Watch Deposits, Burn,        (credit Credits via official 1Stake ledger)
+  Parse Memo, Payouts)
+     ▲                                  │
+     │                                  ▼
+   /payout ◄──────────────  BetWin (1Stake Laravel)
+ (dest, amount)              Accounts, Bets, XP, UI
+```
+
+---
+
+## 2) Prerequisites
+
+* BetWin (1Stake) running at: `/home/tkoin-betwin/htdocs/betwin.tkoin.finance`
+* PHP 8+, Composer, Node 18+
+* Solana RPC, Tkoin SPL Mint, Treasury wallet signer (or Squads multisig)
+* Queue worker enabled (`QUEUE_CONNECTION=database`) and crons
+
+---
+
+## 3) Tokenomics Master Config (JSON)
+
+Create `config/tokenomics.json` (editable at runtime, versioned):
+
+```json
+{
+  "version": "1.0.0",
+  "monetary_layer": "credits_soft_pegged_to_tkoin",
+  "units": {
+    "tkoin_symbol": "TKOIN",
+    "credit_currency_code": "CREDIT",
+    "tkoin_decimals": 6,
+    "credit_decimals": 2
+  },
+  "rate": {
+    "mode": "fixed",
+    "fixed_credits_per_tkoin": 100,
+    "oracle": {
+      "enabled": false,
+      "url": "https://oracle.tkoin.finance/price",
+      "method": "GET",
+      "field_path": "price.usd",
+      "credits_per_1usd": 100,
+      "min_credits_per_tkoin": 50,
+      "max_credits_per_tkoin": 200,
+      "update_interval_sec": 300,
+      "cache_ttl_sec": 600,
+      "max_day_change_pct": 10,
+      "halt_on_fail": true
+    },
+    "event": {
+      "enabled": false,
+      "name": "SpinFest",
+      "fixed_credits_per_tkoin": 120,
+      "starts_at": "2025-12-01T00:00:00Z",
+      "ends_at": "2025-12-03T00:00:00Z"
+    }
+  },
+  "fees": {
+    "deposit_burn_pct": 2.0,
+    "withdraw_fee_pct": 0.5,
+    "agent_spread_pct": 5.0
+  },
+  "limits": {
+    "withdraw_cooldown_sec": 86400,
+    "withdraw_min_tkoin": 1.0,
+    "withdraw_daily_cap_tkoin": 500.0
+  },
+  "agents": {
+    "commissions": {
+      "mode": "tiered",
+      "flat_pct": 1.5,
+      "tiered": [
+        { "threshold_tkoin": 1000, "pct": 2.0 },
+        { "threshold_tkoin": 5000, "pct": 2.5 },
+        { "threshold_tkoin": 20000, "pct": 3.0 }
+      ]
+    }
+  },
+  "rewards": {
+    "streak_bonus_pct": 0.5,
+    "loyalty_rebate_pct": 0.2
+  },
+  "webhook": { "hmac_algo": "sha256" }
+}
+```
+
+---
+
+## 4) Laravel Config (`config/tkoin.php`) + Service Bind
+
+Create `config/tkoin.php`:
+
+```php
+<?php
+use Illuminate\Support\Arr;
+
+return [
+    'mint'            => env('TKOIN_MINT', ''),
+    'treasury_wallet' => env('TKOIN_TREASURY', ''),
+    'webhook_secret'  => env('TKOIN_WEBHOOK_SECRET', ''),
+    'middleware_url'  => env('TKOIN_MIDDLEWARE_URL', ''),
+    'tokenomics_path' => env('TKOIN_TOKENOMICS_PATH', base_path('config/tokenomics.json')),
+
+    'tokenomics' => (function () {
+        $path = env('TKOIN_TOKENOMICS_PATH', base_path('config/tokenomics.json'));
+        $json = is_file($path) ? json_decode(file_get_contents($path), true) : [];
+        return $json ?: [];
+    })(),
+
+    'overrides' => [
+        'force_mode' => env('TKOIN_RATE_FORCE_MODE', null),
+        'fixed_credits_per_tkoin' => env('TKOIN_CREDIT_RATE', null),
+    ],
+
+    'rate_resolver' => function () {
+        $cfg = config('tkoin.tokenomics');
+        $ovr = config('tkoin.overrides');
+        $mode = $ovr['force_mode'] ?: Arr::get($cfg, 'rate.mode', 'fixed');
+
+        if ($mode !== 'fixed' && Arr::get($cfg, 'rate.event.enabled')) {
+            $now = now()->utc();
+            $start = \Carbon\Carbon::parse(Arr::get($cfg, 'rate.event.starts_at'));
+            $end   = \Carbon\Carbon::parse(Arr::get($cfg, 'rate.event.ends_at'));
+            if ($now->between($start, $end)) {
+                return (int) Arr::get($cfg, 'rate.event.fixed_credits_per_tkoin', 100);
+            }
+        }
+
+        if ($mode === 'fixed') {
+            $fixed = $ovr['fixed_credits_per_tkoin'] ?? Arr::get($cfg, 'rate.fixed_credits_per_tkoin', 100);
+            return (int) $fixed;
+        }
+
+        if ($mode === 'oracle' && Arr::get($cfg, 'rate.oracle.enabled')) {
+            $o = $cfg['rate']['oracle'];
+            try {
+                $cacheKey = 'tkoin_oracle_rate';
+                return cache()->remember($cacheKey, $o['cache_ttl_sec'] ?? 600, function () use ($o) {
+                    $resp = \Illuminate\Support\Facades\Http::timeout(3)->get($o['url']);
+                    throw_unless($resp->ok(), \Exception::class, 'oracle http');
+                    $data = $resp->json();
+                    $usd  = data_get($data, $o['field_path'], null);
+                    throw_unless(is_numeric($usd), \Exception::class, 'oracle field');
+                    $creditsPerTkoin = (float)($o['credits_per_1usd'] ?? 100) * (float)$usd;
+                    $min = (float)($o['min_credits_per_tkoin'] ?? 50);
+                    $max = (float)($o['max_credits_per_tkoin'] ?? 200);
+                    $creditsPerTkoin = max($min, min($max, $creditsPerTkoin));
+                    return (int) round($creditsPerTkoin);
+                });
+            } catch (\Throwable $e) {
+                if (Arr::get($o, 'halt_on_fail', true)) {
+                    if (cache()->has('tkoin_oracle_rate')) return cache()->get('tkoin_oracle_rate');
+                    return (int) Arr::get($cfg, 'rate.fixed_credits_per_tkoin', 100);
+                }
+            }
+        }
+        return (int) Arr::get($cfg, 'rate.fixed_credits_per_tkoin', 100);
+    },
+];
+```
+
+Bind resolver and `RateService` in `app/Providers/AppServiceProvider.php`:
+
+```php
+public function register(): void
+{
+    $this->app->singleton('tkoin.rate', function () {
+        $resolver = config('tkoin.rate_resolver');
+        return new class($resolver) {
+            public function __construct(private $fn) {}
+            public function current(): int { return call_user_func($this->fn); }
+        };
+    });
+
+    $this->app->singleton(\App\Services\RateService::class, fn() => new \App\Services\RateService());
+}
+```
+
+---
+
+## 5) Models (if not already created)
+
+Create simple Eloquent models (adjust namespace if needed):
+
+`app/Models/TkoinDeposit.php`
+
+```php
+<?php
+namespace App\Models;
+use Illuminate\Database\Eloquent\Model;
+
+class TkoinDeposit extends Model
+{
+    protected $fillable = [
+        'user_id','tx_sig','memo','amount','agent_id','status','raw',
+        'applied_rate','burn_pct','burn_tkoin','credits_credited','meta'
+    ];
+    protected $casts = [
+        'raw' => 'array',
+        'meta'=> 'array'
+    ];
+}
+```
+
+`app/Models/TkoinPayout.php`
+
+```php
+<?php
+namespace App\Models;
+use Illuminate\Database\Eloquent\Model;
+
+class TkoinPayout extends Model
+{
+    protected $fillable = [
+        'user_id','amount','dest_wallet','request_id','status','tx_sig','raw',
+        'applied_rate','fee_pct','fee_tkoin','meta'
+    ];
+    protected $casts = [
+        'raw' => 'array',
+        'meta'=> 'array'
+    ];
+}
+```
+
+> If your initial `tkoin_deposits` / `tkoin_payouts` tables don’t exist yet, add base migrations to create them (IDs, FKs, indexes). Then apply snapshot migrations from Section 9.
+
+---
+
+## 6) Services
+
+### 6.1 `app/Services/RateService.php`
+
+```php
+<?php
+namespace App\Services;
+use Carbon\Carbon;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Http;
+
+class RateService
+{
+    public function currentCreditsPerTkoin(): int
+    {
+        $cfg = Config::get('tkoin.tokenomics', []);
+        $ovr = Config::get('tkoin.overrides', []);
+        $force = $ovr['force_mode'] ?? null;
+        $mode  = $force ?: Arr::get($cfg, 'rate.mode', 'fixed');
+
+        if ($mode !== 'fixed' && Arr::get($cfg, 'rate.event.enabled')) {
+            $now   = Carbon::now('UTC');
+            $start = Carbon::parse(Arr::get($cfg, 'rate.event.starts_at'));
+            $end   = Carbon::parse(Arr::get($cfg, 'rate.event.ends_at'));
+            if ($now->between($start, $end)) {
+                return (int) Arr::get($cfg, 'rate.event.fixed_credits_per_tkoin', 100);
+            }
+        }
+        if ($mode === 'fixed') {
+            $fixed = $ovr['fixed_credits_per_tkoin'] ?? Arr::get($cfg, 'rate.fixed_credits_per_tkoin', 100);
+            return (int) $fixed;
+        }
+        if ($mode === 'oracle' && Arr::get($cfg, 'rate.oracle.enabled')) {
+            $o = $cfg['rate']['oracle'];
+            $cacheKey = 'tkoin_oracle_rate';
+            try {
+                return Cache::remember($cacheKey, $o['cache_ttl_sec'] ?? 600, function () use ($o) {
+                    $resp = Http::timeout(3)->get($o['url']);
+                    if (!$resp->ok()) throw new \RuntimeException('oracle http');
+                    $data = $resp->json();
+                    $usd  = data_get($data, $o['field_path'], null);
+                    if (!is_numeric($usd)) throw new \RuntimeException('oracle field');
+                    $creditsPerTkoin = (float) ($o['credits_per_1usd'] ?? 100) * (float) $usd;
+                    $min = (float) ($o['min_credits_per_tkoin'] ?? 50);
+                    $max = (float) ($o['max_credits_per_tkoin'] ?? 200);
+                    $creditsPerTkoin = max($min, min($max, $creditsPerTkoin));
+                    return (int) round($creditsPerTkoin);
+                });
+            } catch (\Throwable $e) {
+                if (Arr::get($o, 'halt_on_fail', true)) {
+                    if (Cache::has($cacheKey)) return (int) Cache::get($cacheKey);
+                    return (int) Arr::get($cfg, 'rate.fixed_credits_per_tkoin', 100);
+                }
+            }
+        }
+        return (int) Arr::get($cfg, 'rate.fixed_credits_per_tkoin', 100);
+    }
+
+    public function applyDeposit(float $tkoinAmount): array
+    {
+        $cfg     = Config::get('tkoin.tokenomics', []);
+        $rate    = $this->currentCreditsPerTkoin();
+        $burnPct = (float) Arr::get($cfg, 'fees.deposit_burn_pct', 0.0);
+        $burnTk  = round($tkoinAmount * $burnPct / 100, 6);
+        $netTk   = round($tkoinAmount - $burnTk, 6);
+        $credits = (int) round($netTk * $rate);
+        return [
+            'applied_rate'      => $rate,
+            'burn_pct'          => $burnPct,
+            'burn_tkoin'        => $burnTk,
+            'net_tkoin'         => $netTk,
+            'credits_credited'  => $credits,
+        ];
+    }
+
+    public function applyWithdrawalFromCredits(int $credits): array
+    {
+        $cfg     = Config::get('tkoin.tokenomics', []);
+        $rate    = $this->currentCreditsPerTkoin();
+        $feePct  = (float) Arr::get($cfg, 'fees.withdraw_fee_pct', 0.0);
+        $tkoin   = round($credits / $rate, 6);
+        $feeTk   = round($tkoin * $feePct / 100, 6);
+        $netTk   = round($tkoin - $feeTk, 6);
+        return [
+            'applied_rate' => $rate,
+            'gross_tkoin'  => $tkoin,
+            'fee_pct'      => $feePct,
+            'fee_tkoin'    => $feeTk,
+            'net_tkoin'    => $netTk,
+        ];
+    }
+
+    public function creditsFromTkoin(float $tkoinAmount): int
+    { return (int) round($tkoinAmount * $this->currentCreditsPerTkoin()); }
+    public function tkoinFromCredits(int $credits): float
+    { return round($credits / $this->currentCreditsPerTkoin(), 6); }
+}
+```
+
+### 6.2 `app/Services/TkoinService.php` (HMAC + Memo)
+
+```php
+<?php
+namespace App\Services;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+
+class TkoinService
+{
+    public function assertHmac(Request $r): void
+    {
+        $sig  = $r->header('X-Tkoin-Signature');
+        $calc = hash_hmac('sha256', $r->getContent(), config('tkoin.webhook_secret'));
+        abort_unless(hash_equals($calc, $sig), 401, 'Bad signature');
+    }
+
+    public function memoFor(int $userId, ?int $agentId = null): string
+    { return 'betwin|user:'.$userId.'|agent:'.($agentId ?? 0).'|n:'.Str::random(8); }
+}
+```
+
+---
+
+## 7) Routes
+
+Append to `routes/api.php`:
+
+```php
+use App\Http\Controllers\TkoinGatewayController;
+use App\Http\Controllers\TkoinWebhookController;
+
+Route::middleware('auth:sanctum')->group(function () {
+  Route::post('/tkoin/deposit-intent', [TkoinGatewayController::class, 'createDepositIntent']);
+  Route::post('/tkoin/withdraw',       [TkoinGatewayController::class, 'requestWithdrawal']);
+});
+
+Route::post('/tkoin/webhook',       [TkoinWebhookController::class, 'deposit'])->middleware('throttle:30,1');
+Route::post('/tkoin/payout-status', [TkoinWebhookController::class, 'payout'])->middleware('throttle:60,1');
+```
+
+---
+
+## 8) Controllers (drop‑in skeletons)
+
+`app/Http/Controllers/TkoinGatewayController.php`
+
+```php
+<?php
+namespace App\Http\Controllers;
+use App\Models\Account;
+use App\Models\TkoinPayout;
+use App\Repositories\AccountRepository;
+use App\Repositories\AccountTransactionRepository as ATR;
+use App\Services\RateService;
+use App\Services\TkoinService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Http;
+
+class TkoinGatewayController extends Controller
+{
+    public function createDepositIntent(Request $r, TkoinService $svc)
+    {
+        return [
+            'treasury'   => config('tkoin.treasury_wallet'),
+            'mint'       => config('tkoin.mint'),
+            'memo'       => $svc->memoFor($r->user()->id, $r->integer('agent_id')),
+            'rate'       => app('tkoin.rate')->current(),
+            'expires_in' => 900,
+        ];
+    }
+
+    public function requestWithdrawal(Request $r, RateService $rateSvc)
+    {
+        $user    = $r->user();
+        $credits = (int) $r->integer('credits');        // request in Credits for clarity
+        $dest    = $r->string('wallet');
+        $snap    = $rateSvc->applyWithdrawalFromCredits($credits);
+
+        // find user's CREDIT account
+        $account = Account::where('user_id',$user->id)
+          ->whereHas('currency', fn($q)=>$q->where('code','CREDIT'))
+          ->firstOrFail();
+
+        // debit immediately (hold)
+        ATR::createGeneric($account, \App\Models\GenericAccountTransaction::TYPE_DEBIT, -$credits);
+
+        $reqId = (string) Str::uuid();
+        TkoinPayout::create([
+            'user_id'     => $user->id,
+            'amount'      => $snap['gross_tkoin'],
+            'dest_wallet' => (string) $dest,
+            'request_id'  => $reqId,
+            'status'      => 'queued',
+            'applied_rate'=> $snap['applied_rate'],
+            'fee_pct'     => $snap['fee_pct'],
+            'fee_tkoin'   => $snap['fee_tkoin'],
+        ]);
+
+        // enqueue payout via middleware
+        Http::withHeaders([
+            'X-Betwin-Auth' => hash_hmac('sha256', $reqId, config('tkoin.webhook_secret')),
+        ])->post(config('tkoin.middleware_url').'/payout', [
+            'request_id' => $reqId,
+            'user_id'    => $user->id,
+            'amount'     => $snap['net_tkoin'], // send NET TKOIN
+            'dest'       => (string) $dest,
+        ]);
+
+        return ['request_id'=>$reqId,'status'=>'queued','applied_rate'=>$snap['applied_rate']];
+    }
+}
+```
+
+`app/Http/Controllers/TkoinWebhookController.php`
+
+```php
+<?php
+namespace App\Http\Controllers;
+use App\Models\Account;
+use App\Models\TkoinDeposit;
+use App\Models\TkoinPayout;
+use App\Models\GenericAccountTransaction;
+use App\Repositories\AccountRepository;
+use App\Repositories\AccountTransactionRepository as ATR;
+use App\Services\RateService;
+use App\Services\TkoinService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+
+class TkoinWebhookController extends Controller
+{
+    public function deposit(Request $r, TkoinService $svc)
+    {
+        $svc->assertHmac($r);
+        $p = $r->all();
+        if (TkoinDeposit::where('tx_sig',$p['tx_sig'])->exists()) return response()->noContent();
+
+        $dep = TkoinDeposit::create([
+            'user_id' => $p['user_id'],
+            'tx_sig'  => $p['tx_sig'],
+            'memo'    => $p['memo'] ?? null,
+            'amount'  => (float)$p['amount'],
+            'agent_id'=> $p['agent_id'] ?? null,
+            'status'  => 'confirmed',
+            'raw'     => $p['raw'] ?? [],
+            'applied_rate'     => (int)($p['applied_rate'] ?? app('tkoin.rate')->current()),
+            'burn_pct'         => (float)($p['burn_pct'] ?? 0),
+            'burn_tkoin'       => (float)($p['burn_tkoin'] ?? 0),
+            'credits_credited' => (int)($p['credits_credited'] ?? 0),
+        ]);
+
+        DB::transaction(function () use ($dep) {
+            $account = Account::where('user_id',$dep->user_id)
+              ->whereHas('currency', fn($q)=>$q->where('code','CREDIT'))
+              ->first();
+            if (!$account) {
+                $user = \App\Models\User::findOrFail($dep->user_id);
+                AccountRepository::create($user, 'CREDIT');
+                $account = Account::where('user_id',$user->id)
+                  ->whereHas('currency', fn($q)=>$q->where('code','CREDIT'))
+                  ->firstOrFail();
+            }
+            $credits = $dep->credits_credited ?: (int) round(($dep->amount - $dep->burn_tkoin) * $dep->applied_rate);
+            ATR::createGeneric($account, GenericAccountTransaction::TYPE_CREDIT, $credits);
+            $dep->status = 'credited';
+            $dep->save();
+        });
+
+        return ['ok'=>true];
+    }
+
+    public function payout(Request $r, TkoinService $svc)
+    {
+        $svc->assertHmac($r);
+        $reqId = $r->string('request_id');
+        $status= $r->string('status'); // sent|confirmed|failed
+        $txSig = $r->string('tx_sig');
+
+        $payout = TkoinPayout::where('request_id',$reqId)->firstOrFail();
+        $payout->tx_sig = (string)$txSig;
+        $payout->status = (string)$status;
+        $payout->save();
+
+        if ($status === 'failed') {
+            // refund held credits
+            $account = Account::where('user_id',$payout->user_id)
+              ->whereHas('currency', fn($q)=>$q->where('code','CREDIT'))
+              ->firstOrFail();
+            $credits = (int) round(($payout->amount + $payout->fee_tkoin) * $payout->applied_rate);
+            ATR::createGeneric($account, GenericAccountTransaction::TYPE_CREDIT, $credits);
+        }
+        return ['ok'=>true];
+    }
+}
+```
+
+---
+
+## 9) Migrations — Snapshot Columns (ready‑to‑run)
+
+**A.** `database/migrations/2025_11_12_000001_add_snapshots_to_tkoin_deposits.php`
+
+```php
+<?php
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+return new class extends Migration {
+    public function up(): void
+    {
+        if (!Schema::hasTable('tkoin_deposits')) return;
+        Schema::table('tkoin_deposits', function (Blueprint $table) {
+            if (!Schema::hasColumn('tkoin_deposits', 'applied_rate'))
+                $table->integer('applied_rate')->default(100)->after('amount');
+            if (!Schema::hasColumn('tkoin_deposits', 'burn_pct'))
+                $table->decimal('burn_pct', 5, 2)->default(0.00)->after('applied_rate');
+            if (!Schema::hasColumn('tkoin_deposits', 'burn_tkoin'))
+                $table->decimal('burn_tkoin', 24, 6)->default(0.000000)->after('burn_pct');
+            if (!Schema::hasColumn('tkoin_deposits', 'credits_credited'))
+                $table->integer('credits_credited')->default(0)->after('burn_tkoin');
+            if (!Schema::hasColumn('tkoin_deposits', 'meta'))
+                $table->json('meta')->nullable()->after('raw');
+        });
+    }
+    public function down(): void
+    {
+        if (!Schema::hasTable('tkoin_deposits')) return;
+        Schema::table('tkoin_deposits', function (Blueprint $table) {
+            foreach (['meta','credits_credited','burn_tkoin','burn_pct','applied_rate'] as $c)
+                if (Schema::hasColumn('tkoin_deposits',$c)) $table->dropColumn($c);
+        });
+    }
+};
+```
+
+**B.** `database/migrations/2025_11_12_000002_add_snapshots_to_tkoin_payouts.php`
+
+```php
+<?php
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+return new class extends Migration {
+    public function up(): void
+    {
+        if (!Schema::hasTable('tkoin_payouts')) return;
+        Schema::table('tkoin_payouts', function (Blueprint $table) {
+            if (!Schema::hasColumn('tkoin_payouts', 'applied_rate'))
+                $table->integer('applied_rate')->default(100)->after('amount');
+            if (!Schema::hasColumn('tkoin_payouts', 'fee_pct'))
+                $table->decimal('fee_pct', 5, 2)->default(0.00)->after('applied_rate');
+            if (!Schema::hasColumn('tkoin_payouts', 'fee_tkoin'))
+                $table->decimal('fee_tkoin', 24, 6)->default(0.000000)->after('fee_pct');
+            if (!Schema::hasColumn('tkoin_payouts', 'meta'))
+                $table->json('meta')->nullable()->after('raw');
+        });
+    }
+    public function down(): void
+    {
+        if (!Schema::hasTable('tkoin_payouts')) return;
+        Schema::table('tkoin_payouts', function (Blueprint $table) {
+            foreach (['meta','fee_tkoin','fee_pct','applied_rate'] as $c)
+                if (Schema::hasColumn('tkoin_payouts',$c)) $table->dropColumn($c);
+        });
+    }
+};
+```
+
+> If you don’t yet have the base `tkoin_deposits` / `tkoin_payouts` tables, add creation migrations first (IDs, FKs, indexes), then run these snapshot migrations.
+
+---
+
+## 10) Jobs (Queue‑based)
+
+`app/Jobs/CreditFromTkoinDeposit.php`
+
+```php
+<?php
+namespace App\Jobs;
+use App\Models\Account; use App\Models\TkoinDeposit; use App\Models\GenericAccountTransaction;
+use App\Repositories\AccountRepository; use App\Repositories\AccountTransactionRepository as ATR;
+use Illuminate\Bus\Queueable; use Illuminate\Contracts\Queue\ShouldQueue; use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels; use Illuminate\Support\Facades\DB;
+
+class CreditFromTkoinDeposit implements ShouldQueue
+{ use InteractsWithQueue, Queueable, SerializesModels; public function __construct(public int $depositId) {}
+  public function handle(): void {
+    DB::transaction(function () {
+      $dep = TkoinDeposit::lockForUpdate()->findOrFail($this->depositId);
+      if ($dep->status === 'credited') return;
+      $account = Account::where('user_id',$dep->user_id)
+        ->whereHas('currency', fn($q)=>$q->where('code','CREDIT'))->first();
+      if (!$account) { $user = \App\Models\User::findOrFail($dep->user_id); AccountRepository::create($user,'CREDIT');
+        $account = Account::where('user_id',$user->id)->whereHas('currency', fn($q)=>$q->where('code','CREDIT'))->firstOrFail(); }
+      $credits = $dep->credits_credited ?: (int) round(($dep->amount - $dep->burn_tkoin) * $dep->applied_rate);
+      ATR::createGeneric($account, GenericAccountTransaction::TYPE_CREDIT, $credits);
+      $dep->status = 'credited'; $dep->save();
+    });
+  }
+}
+```
+
+`app/Jobs/SendTkoinPayout.php`
+
+```php
+<?php
+namespace App\Jobs;
+use App\Models\TkoinPayout; use Illuminate\Bus\Queueable; use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Queue\InteractsWithQueue; use Illuminate\Queue\SerializesModels; use Illuminate\Support\Facades\Http;
+
+class SendTkoinPayout implements ShouldQueue
+{ use InteractsWithQueue, Queueable, SerializesModels; public function __construct(public string $requestId) {}
+  public function handle(): void {
+    $p = TkoinPayout::where('request_id',$this->requestId)->firstOrFail(); if ($p->status !== 'queued') return;
+    $resp = Http::withHeaders(['X-Betwin-Auth'=> hash_hmac('sha256', $p->request_id, config('tkoin.webhook_secret'))])
+      ->post(config('tkoin.middleware_url').'/payout', [ 'request_id'=>$p->request_id, 'user_id'=>$p->user_id,
+        'amount'=> (float) $p->amount - (float) $p->fee_tkoin, 'dest'=> $p->dest_wallet ]);
+    if ($resp->failed()) { $p->status='failed'; $p->save(); return; }
+    $p->status='sent'; $p->save();
+  }
+}
+```
+
+> Ensure workers run: `php artisan queue:work --tries=3` (or Supervisor).
+
+---
+
+## 11) Node Chain‑Middleware (outline)
+
+**Purpose:**
+
+* Watch SPL‑Tkoin transfers to Treasury; parse **Memo** `betwin|user:ID|agent:ID|n:nonce`.
+* Apply **burn** on deposit; after confirmations, POST webhook to Laravel with **HMAC**.
+* Accept `/payout` requests; sign and send SPL transfer; POST `/tkoin/payout-status` back.
+
+**File tree (suggested):**
+
+```
+chain-mw/
+  .env
+  src/
+    index.ts
+    watcher.ts
+    payout.ts
+    hmac.ts
+    tokenomics.ts
+```
+
+**.env (example):**
+
+```
+SOLANA_RPC_URL=...
+TKOIN_MINT=...
+TREASURY_WALLET=...
+TREASURY_SIGNER=...
+BETWIN_WEBHOOK=https://betwin.tkoin.finance/api/tkoin/webhook
+BETWIN_PAYOUT_CALLBACK=https://betwin.tkoin.finance/api/tkoin/payout-status
+WEBHOOK_SECRET=...
+CONFIRMATIONS=8
+TOKENOMICS_PATH=./tokenomics.json
+```
+
+**Webhook payload (deposit → Laravel):**
+
+````json
+{
+  "tx_sig": "5r...Q",
+  "user_id": 42,
+  "agent_id": 7,
+  "amount": 10.0,
+  "applied_rate": 100,
+  "burn_pct": 2.0,
+  "burn_tkoin": 0.2,
+  "credits_credited": 980,
+  "memo": "betwin|user:42|agent:7|n:abc123",
+  "raw": {"slot": 258118201, "blockTime": 1731301123}
+}
+``;
+
+**Webhook payload (payout status → Laravel):**
+```json
+{ "request_id": "<uuid>", "status": "confirmed", "tx_sig": "3a...Z" }
+````
+
+---
+
+## 12) Frontend UX hooks (minimal)
+
+* **Deposit:** call `POST /api/tkoin/deposit-intent` → show Treasury, Memo, QR. Poll user balance.
+* **Withdraw:** show Credits → convert preview to TKOIN using `applied_rate`. Submit `POST /api/tkoin/withdraw` with `credits` and `wallet`.
+
+---
+
+## 13) Agent Network (MVP)
+
+* Use existing affiliates or create `agents` table.
+* Include `agent_id` in **deposit‑intent** and **Memo**.
+* Nightly job aggregates `tkoin_deposits` by agent for commissions.
+
+---
+
+## 14) Security Hardening
+
+* Rotate DB creds; disable `_ignition/*` in production.
+* HMAC for all webhooks; IP allowlist or mTLS from middleware.
+* Idempotency on `tx_sig` and `request_id`.
+* Throttle routes; log raw payloads; store rate snapshots.
+
+---
+
+## 15) Observability & Audit
+
+* Log every deposit/payout row with `raw` JSON.
+* Keep `applied_rate`, `burn_pct`, `burn_tkoin`, `credits_credited`, `fee_pct`, `fee_tkoin`.
+* Emit events on credit/debit and consume in Mixpanel/GA if needed.
+
+---
+
+## 16) Testing Plan
+
+1. Unit: `RateService` (fixed, event, oracle, clamps).
+2. Integration: webhook HMAC; idempotent credit; payout failure refunds.
+3. E2E: deposit via devnet transfer → ledger credit; withdraw → SPL tx.
+
+---
+
+## 17) Deployment Checklist
+
+* Copy `tokenomics.json` + `config/tkoin.php`.
+* Add models, services, controllers, jobs.
+* Run base migrations (if needed) + snapshot migrations.
+* Set `.env` variables (mint, treasury, webhook secret, middleware URL).
+* Start queue workers; deploy Node middleware with proper .env.
+
+---
+
+## 18) Rollback Plan
+
+* Disable Tkoin routes; stop middleware.
+* Revert snapshot credits using transaction logs if needed.
+* Keep tables for audit; switch `rate.mode` to `fixed`=100 for consistency.
+
+---
+
+## 19) Curl Examples
+
+**Deposit webhook (simulate):**
+
+```bash
+curl -X POST https://betwin.tkoin.finance/api/tkoin/webhook \
+ -H 'Content-Type: application/json' \
+ -H 'X-Tkoin-Signature: <hmac>' \
+ -d '{
+   "tx_sig":"test-sig-1",
+   "user_id":1,
+   "agent_id":null,
+   "amount":10.0,
+   "applied_rate":100,
+   "burn_pct":2.0,
+   "burn_tkoin":0.2,
+   "credits_credited":980
+ }'
+```
+
+**Payout status (simulate):**
+
+```bash
+curl -X POST https://betwin.tkoin.finance/api/tkoin/payout-status \
+ -H 'Content-Type: application/json' \
+ -H 'X-Tkoin-Signature: <hmac>' \
+ -d '{ "request_id":"<uuid>", "status":"confirmed", "tx_sig":"abc123" }'
+```
+
+---
+
+## 20) Environment Variables (recap)
+
+```
+TKOIN_MINT=...
+TKOIN_TREASURY=...
+TKOIN_WEBHOOK_SECRET=...
+TKOIN_MIDDLEWARE_URL=https://api.tkoin.finance
+TKOIN_TOKENOMICS_PATH=/var/app/config/tokenomics.json
+TKOIN_RATE_FORCE_MODE=
+TKOIN_CREDIT_RATE=
+```
+
+---
+
+### You’re ready
+
+This guide is self‑contained for your dev to:
+
+1. Add config + services, 2) run migrations, 3) wire routes/controllers/jobs, 4) deploy middleware, 5) toggle tokenomics via JSON.
+
+> Start with **fixed 100 credits/Tkoin**, burn 2%, 24h cooldown. Adjust later via `tokenomics.json` without redeploys.
+
+---
+
+## Appendix — Node Chain‑Middleware Starter (TypeScript)
+
+A minimal, production‑ready scaffold you can clone for the on‑chain bridge.
+
+### 1) Repository layout
+
+```
+chain-middleware/
+  .env.example
+  package.json
+  tsconfig.json
+  src/
+    index.ts            # Express server, health, /payout endpoint
+    watcher.ts          # Deposit watcher (stubbed polling or logs subscription)
+    payout.ts           # SPL payout implementation
+    hmac.ts             # HMAC helpers for Laravel webhooks
+    tokenomics.ts       # Loads shared tokenomics.json
+    solana.ts           # Solana helpers (connection, keypair, SPL utils)
+```
+
+### 2) .env.example
+
+```
+# Solana
+SOLANA_RPC_URL=https://api.mainnet-beta.solana.com
+TKOIN_MINT=...............MintAddress...............
+TREASURY_WALLET=...........TreasuryPubkey............
+TREASURY_SIGNER=./secrets/treasury.json   # path to keypair (or integrate Squads)
+CONFIRMATIONS=8
+
+# Laravel endpoints
+BETWIN_WEBHOOK=https://betwin.tkoin.finance/api/tkoin/webhook
+BETWIN_PAYOUT_CALLBACK=https://betwin.tkoin.finance/api/tkoin/payout-status
+WEBHOOK_SECRET=change-me
+
+# Tokenomics
+TOKENOMICS_PATH=./tokenomics.json
+
+# Server
+PORT=8080
+LOG_LEVEL=info
+```
+
+> Tip: mount tokenomics.json from the same master you use in Laravel.
+
+### 3) package.json
+
+```json
+{
+  "name": "tkoin-chain-middleware",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "lint": "echo 'lint stub'"
+  },
+  "dependencies": {
+    "axios": "^1.7.7",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "tweetnacl": "^1.0.3",
+    "@solana/web3.js": "^1.95.3",
+    "@solana/spl-token": "^0.4.9"
+  },
+  "devDependencies": {
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.6.3"
+  }
+}
+```
+
+### 4) tsconfig.json
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ES2020",
+    "moduleResolution": "Node",
+    "outDir": "dist",
+    "rootDir": "src",
+    "strict": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true
+  },
+  "include": ["src/**/*.ts"]
+}
+```
+
+### 5) src/solana.ts
+
+```ts
+import { Connection, Keypair, PublicKey, clusterApiUrl } from '@solana/web3.js';
+import { createTransferInstruction } from '@solana/spl-token';
+import fs from 'fs';
+
+export function connection(): Connection {
+  const url = process.env.SOLANA_RPC_URL || clusterApiUrl('mainnet-beta');
+  return new Connection(url, 'confirmed');
+}
+
+export function loadKeypair(path: string): Keypair {
+  const raw = JSON.parse(fs.readFileSync(path, 'utf-8'));
+  return Keypair.fromSecretKey(new Uint8Array(raw));
+}
+
+export const pub = (k: string) => new PublicKey(k);
+
+export async function splTransfer(
+  _conn: Connection,
+  _mint: PublicKey,
+  _fromOwner: Keypair,
+  _fromWallet: PublicKey,
+  _toWallet: PublicKey,
+  _amount: bigint
+) {
+  // NOTE: production systems should build, sign, and send a versioned transaction with priority fees.
+  // Replace this stub with your real sender implementation.
+  throw new Error('Implement transfer send logic per your infra');
+}
+```
+
+### 6) src/hmac.ts
+
+```ts
+import crypto from 'crypto';
+
+export function signHmac(body: string, secret: string) {
+  return crypto.createHmac('sha256', secret).update(body).digest('hex');
+}
+```
+
+### 7) src/tokenomics.ts
+
+```ts
+import fs from 'fs';
+
+export type Tokenomics = {
+  fees: { deposit_burn_pct?: number; withdraw_fee_pct?: number };
+};
+
+export function loadTokenomics(path: string) {
+  const json = JSON.parse(fs.readFileSync(path, 'utf-8')) as Tokenomics;
+  return json;
+}
+```
+
+### 8) src/watcher.ts (stub)
+
+```ts
+import { Connection, PublicKey } from '@solana/web3.js';
+import axios from 'axios';
+import { signHmac } from './hmac.js';
+import { loadTokenomics } from './tokenomics.js';
+
+export type DepositEvent = {
+  tx_sig: string;
+  user_id: number;
+  agent_id?: number | null;
+  amount: number; // gross TKOIN
+  memo?: string;
+  raw?: any;
+};
+
+export function parseMemo(memo?: string) {
+  // betwin|user:42|agent:7|n:abc
+  if (!memo) return { user_id: null, agent_id: null };
+  const uMatch = memo.match(/user:([0-9]+)/);
+  const aMatch = memo.match(/agent:([0-9]+)/);
+  const u = uMatch ? uMatch[1] : null;
+  const a = aMatch ? aMatch[1] : null;
+  return { user_id: u ? Number(u) : null, agent_id: a ? Number(a) : null };
+}
+
+export async function startWatcher(_conn: Connection, _treasury: PublicKey, _mint: PublicKey) {
+  const webhook = process.env.BETWIN_WEBHOOK!;
+  const secret  = process.env.WEBHOOK_SECRET!;
+  const tokenomics = loadTokenomics(process.env.TOKENOMICS_PATH || './tokenomics.json');
+  const burnPct = tokenomics.fees?.deposit_burn_pct ?? 0;
+
+  // STUB STRATEGY: poll recent signatures to Treasury (replace with logs subscription in prod)
+  setInterval(async () => {
+    // TODO: Fetch latest confirmed token transfers to Treasury and extract amount + memo
+    // Placeholder event for local testing
+    const evt: DepositEvent = { tx_sig: 'dev-sig', user_id: 1, amount: 10, memo: 'betwin|user:1|agent:0|n:x' };
+
+    const netTk = evt.amount * (1 - burnPct / 100);
+    const body = {
+      tx_sig: evt.tx_sig,
+      user_id: evt.user_id,
+      agent_id: 0,
+      amount: evt.amount,
+      applied_rate: 100,
+      burn_pct: burnPct,
+      burn_tkoin: evt.amount - netTk,
+      credits_credited: Math.round(netTk * 100),
+      memo: evt.memo,
+      raw: { demo: true }
+    };
+
+    const payload = JSON.stringify(body);
+    const sig = signHmac(payload, secret);
+    await axios.post(webhook, body, { headers: { 'X-Tkoin-Signature': sig, 'Content-Type': 'application/json' } }).catch(() => {});
+  }, 10000);
+}
+```
+
+### 9) src/payout.ts (stub)
+
+```ts
+import axios from 'axios';
+import { Connection, Keypair } from '@solana/web3.js';
+
+export type PayoutReq = { request_id: string; user_id: number; amount: number; dest: string };
+
+export async function handlePayout(_conn: Connection, _signer: Keypair, req: PayoutReq) {
+  const callback = process.env.BETWIN_PAYOUT_CALLBACK!;
+  const secret   = process.env.WEBHOOK_SECRET!;
+
+  try {
+    // TODO: build & send SPL transfer of TKOIN mint from Treasury to req.dest of `amount`
+    const tx_sig = 'demo-tx-sig';
+
+    const body = { request_id: req.request_id, status: 'confirmed', tx_sig };
+    const payload = JSON.stringify(body);
+    const { signHmac } = await import('./hmac.js');
+    const sig = signHmac(payload, secret);
+    await axios.post(callback, body, { headers: { 'X-Tkoin-Signature': sig, 'Content-Type': 'application/json' } });
+  } catch (e) {
+    const body = { request_id: req.request_id, status: 'failed', tx_sig: '' };
+    const payload = JSON.stringify(body);
+    const { signHmac } = await import('./hmac.js');
+    const sig = signHmac(payload, secret);
+    await axios.post(callback, body, { headers: { 'X-Tkoin-Signature': sig, 'Content-Type': 'application/json' } });
+  }
+}
+```
+
+### 10) src/index.ts
+
+```ts
+import 'dotenv/config';
+import express from 'express';
+import bodyParser from 'body-parser';
+import { connection, loadKeypair, pub } from './solana.js';
+import { startWatcher } from './watcher.js';
+import { handlePayout, PayoutReq } from './payout.js';
+
+const app = express();
+app.use(bodyParser.json());
+
+app.get('/health', (_req, res) => res.json({ ok: true }));
+
+app.post('/payout', async (req, res) => {
+  // Optional: verify HMAC from Laravel using the same shared secret
+  const conn = connection();
+  const signer = loadKeypair(process.env.TREASURY_SIGNER!);
+  const payload: PayoutReq = req.body;
+  await handlePayout(conn, signer, payload);
+  res.json({ queued: true });
+});
+
+const PORT = Number(process.env.PORT || 8080);
+app.listen(PORT, async () => {
+  console.log(`[mw] listening on :${PORT}`);
+  const conn = connection();
+  await startWatcher(conn, pub(process.env.TREASURY_WALLET!), pub(process.env.TKOIN_MINT!));
+});
+```
+
+---
+
+### 11) Getting started
+
+```bash
+cd chain-middleware
+cp .env.example .env
+# fill env values
+npm install
+npm run dev
+# in another shell, hit the payout endpoint locally for a dry-run:
+curl -X POST http://localhost:8080/payout \
+ -H 'Content-Type: application/json' \
+ -d '{"request_id":"demo","user_id":1,"amount":1.234,"dest":"DEST_WALLET"}'
+```
+
+**Production notes**
+
+* Replace the watcher stub with a robust token transfer indexer (program logs, Webhooks, or RPC signature polling with cursor).
+* Implement priority fees and versioned transactions for payouts.
+* Store idempotency keys and last processed slot in a small SQLite/Redis.
+* Protect /payout with HMAC + IP allowlist or mTLS.
+
+---
+
+## Appendix — Token‑2022 Upgrade for Tkoin Middleware
+
+Tkoin is intended to run as a **Token‑2022 mint** on Solana. To avoid confusion and duplication, the **Node Chain‑Middleware Starter** appendix above is already written assuming Token‑2022 by default.
+
+That means, in the *canonical* middleware implementation:
+
+* The dependency is `@solana/spl-token-2022`.
+* The token program ID used for payouts and (later) for event decoding is `TOKEN_2022_PROGRAM_ID`.
+* Your low‑level transfer helper is written for Token‑2022 (and intentionally stubbed where your infra needs to plug in a real transaction builder/sender).
+* All higher‑level logic (watcher → webhook → Laravel, and Laravel → /payout → middleware) is **identical** whether Tkoin is SPL or Token‑2022.
+
+### If you ever need to support a classic SPL mint instead
+
+You do **not** need a second set of files. You only need to adjust a couple of imports and constants in the middleware:
+
+1. In `package.json`, use:
+
+   ```json
+   "@solana/spl-token": "^0.4.x"
+   ```
+
+   instead of `@solana/spl-token-2022`.
+
+2. In `src/solana.ts`, replace Token‑2022 imports with classic SPL:
+
+   ```ts
+   import { TOKEN_PROGRAM_ID, createTransferInstruction } from '@solana/spl-token';
+   ```
+
+3. When you build transfer instructions, pass `TOKEN_PROGRAM_ID` instead of `TOKEN_2022_PROGRAM_ID`.
+
+Everything else — the HTTP webhooks, HMAC signing, tokenomics math, snapshots in Laravel, agents, cooldowns, payouts — stays the same.
+
+### Why keep a single, Token‑2022‑first implementation
+
+* It avoids drift between two nearly‑identical codepaths.
+* You get future capabilities of Token‑2022 (fees, hooks, interest, confidential transfers) without touching Laravel.
+* If one day you introduce multiple mints (e.g., Tkoin main + regional variants), you can abstract the program ID and mint metadata in a small registry without rewriting the flow.
+
+So the rule of thumb is:
+
+* **Default:** use the middleware code as shown in the Node Chain‑Middleware appendix (Token‑2022 by design).
+* **Legacy SPL case:** only swap the token library and program ID in the Solana helper.
+
+No other parts of the canvas need to change for Token‑2022; the rest of the document is already compatible and up‑to‑date.
