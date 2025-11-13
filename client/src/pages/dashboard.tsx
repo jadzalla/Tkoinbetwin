@@ -8,6 +8,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebarAgent } from "@/components/app-sidebar-agent";
 import DashboardIndex from "@/pages/dashboard/index";
 import Pricing from "@/pages/dashboard/pricing";
+import Transactions from "@/pages/dashboard/transactions";
 import type { Agent } from "@shared/schema";
 
 export default function Dashboard() {
@@ -117,12 +118,7 @@ export default function Dashboard() {
             <Switch>
               <Route path="/dashboard" component={() => <DashboardIndex agent={agent!} />} />
               <Route path="/dashboard/pricing" component={() => <Pricing agent={agent!} />} />
-              <Route path="/dashboard/transactions" component={() => (
-                <div className="text-center py-12">
-                  <h2 className="text-2xl font-bold mb-2">Transactions</h2>
-                  <p className="text-muted-foreground">Coming soon</p>
-                </div>
-              )} />
+              <Route path="/dashboard/transactions" component={() => <Transactions agent={agent!} />} />
               <Route path="/dashboard/commissions" component={() => (
                 <div className="text-center py-12">
                   <h2 className="text-2xl font-bold mb-2">Commissions & Earnings</h2>

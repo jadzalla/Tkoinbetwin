@@ -140,6 +140,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to update availability" });
     }
   });
+
+  // Get agent transactions
+  app.get('/api/agents/me/transactions', isAuthenticated, isApprovedAgent, async (req: any, res) => {
+    try {
+      const agent = req.agent;
+      const transactions = await storage.getTransactionsByAgent(agent.id);
+      res.json(transactions);
+    } catch (error) {
+      console.error("Error fetching transactions:", error);
+      res.status(500).json({ message: "Failed to fetch transactions" });
+    }
+  });
   
   // ========================================
   // Admin Routes - Agent Management
