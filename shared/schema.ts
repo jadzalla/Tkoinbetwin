@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, decimal, integer, boolean, jsonb, index } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, decimal, integer, boolean, jsonb, index, uniqueIndex } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -106,6 +106,12 @@ export const exchangeOrders = pgTable("exchange_orders", {
   fromAmount: decimal("from_amount", { precision: 20, scale: 8 }).notNull(),
   toAmount: decimal("to_amount", { precision: 20, scale: 8 }).notNull(),
   exchangeRate: decimal("exchange_rate", { precision: 20, scale: 8 }).notNull(),
+  
+  // Cost Tracking (Phase 2)
+  burnAmountTkoin: decimal("burn_amount_tkoin", { precision: 20, scale: 8 }).default("0"), // 1% burn on mints
+  effectiveCostPerTkoin: decimal("effective_cost_per_tkoin", { precision: 20, scale: 8 }), // Actual cost after burn
+  burnRebateAmountTkoin: decimal("burn_rebate_amount_tkoin", { precision: 20, scale: 8 }).default("0"), // Staking rebate
+  netCostPerTkoin: decimal("net_cost_per_tkoin", { precision: 20, scale: 8 }), // Cost after rebate
   
   // Transaction Details
   status: text("status").notNull().default("pending"), // pending, processing, completed, failed
@@ -384,6 +390,193 @@ export const promotionalEvents = pgTable("promotional_events", {
   timeIdx: index("promotional_events_time_idx").on(table.startTime, table.endTime),
 }));
 
+// Agent Currency Settings (Pricing Configuration)
+export const agentCurrencySettings = pgTable("agent_currency_settings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  
+  agentId: varchar("agent_id").notNull().references(() => agents.id),
+  currency: text("currency").notNull(), // USD, EUR, PHP, etc.
+  
+  // Spread Configuration (in basis points)
+  askSpreadBps: integer("ask_spread_bps").notNull().default(250), // Default 2.5% markup when selling to users
+  bidSpreadBps: integer("bid_spread_bps").notNull().default(150), // Default 1.5% discount when buying from users
+  fxBufferBps: integer("fx_buffer_bps").notNull().default(75), // Default 0.75% FX safety buffer
+  
+  // Quote Settings
+  quoteTtlSeconds: integer("quote_ttl_seconds").notNull().default(300), // 5 minutes default
+  
+  // Status
+  isActive: boolean("is_active").notNull().default(true),
+  
+  // Metadata
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => ({
+  agentCurrencyUniqueIdx: uniqueIndex("agent_currency_settings_unique_idx").on(table.agentId, table.currency),
+  agentIdIdx: index("agent_currency_settings_agent_id_idx").on(table.agentId),
+}));
+
+// FX Rates (Daily Exchange Rates)
+export const fxRates = pgTable("fx_rates", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  
+  baseCurrency: text("base_currency").notNull().default("USD"),
+  quoteCurrency: text("quote_currency").notNull(), // EUR, PHP, GBP, etc.
+  
+  // Rate Details
+  rate: decimal("rate", { precision: 20, scale: 8 }).notNull(), // e.g., 56.50 for USD/PHP
+  source: text("source").notNull(), // exchangerate-api, manual, etc.
+  
+  // Metadata
+  effectiveDate: timestamp("effective_date").notNull().defaultNow(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => ({
+  currencyDateIdx: index("fx_rates_currency_date_idx").on(table.baseCurrency, table.quoteCurrency, table.effectiveDate),
+  effectiveDateIdx: index("fx_rates_effective_date_idx").on(table.effectiveDate),
+}));
+
+// Agent Quotes (Time-Locked Pricing)
+export const agentQuotes = pgTable("agent_quotes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  
+  agentId: varchar("agent_id").notNull().references(() => agents.id),
+  
+  // Quote Details
+  currency: text("currency").notNull(),
+  tkoinAmount: decimal("tkoin_amount", { precision: 20, scale: 8 }).notNull(),
+  fiatAmount: decimal("fiat_amount", { precision: 20, scale: 2 }).notNull(),
+  exchangeRate: decimal("exchange_rate", { precision: 20, scale: 8 }).notNull(),
+  
+  // Pricing Breakdown
+  spotRate: decimal("spot_rate", { precision: 20, scale: 8 }).notNull(), // USD base rate
+  fxRate: decimal("fx_rate", { precision: 20, scale: 8 }), // USD to local currency
+  askSpreadBps: integer("ask_spread_bps").notNull(),
+  bidSpreadBps: integer("bid_spread_bps").notNull(),
+  
+  // Type & Status
+  quoteType: text("quote_type").notNull(), // buy_from_agent, sell_to_agent
+  status: text("status").notNull().default("active"), // active, used, expired
+  
+  // Expiry
+  expiresAt: timestamp("expires_at").notNull(),
+  
+  // Fulfillment
+  transactionId: varchar("transaction_id").references(() => transactions.id),
+  usedAt: timestamp("used_at"),
+  
+  // Metadata
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => ({
+  agentIdIdx: index("agent_quotes_agent_id_idx").on(table.agentId),
+  statusIdx: index("agent_quotes_status_idx").on(table.status),
+  expiresAtIdx: index("agent_quotes_expires_at_idx").on(table.expiresAt),
+}));
+
+// Monthly Agent Metrics (Volume Tracking for Tiers)
+export const monthlyAgentMetrics = pgTable("monthly_agent_metrics", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  
+  agentId: varchar("agent_id").notNull().references(() => agents.id),
+  
+  // Time Period
+  year: integer("year").notNull(),
+  month: integer("month").notNull(), // 1-12
+  
+  // Volume Metrics (in USD equivalent)
+  totalBuyVolumeUsd: decimal("total_buy_volume_usd", { precision: 20, scale: 2 }).notNull().default("0"), // User buys from agent
+  totalSellVolumeUsd: decimal("total_sell_volume_usd", { precision: 20, scale: 2 }).notNull().default("0"), // User sells to agent
+  totalMintVolumeUsd: decimal("total_mint_volume_usd", { precision: 20, scale: 2 }).notNull().default("0"), // Agent mints inventory
+  grossVolumeUsd: decimal("gross_volume_usd", { precision: 20, scale: 2 }).notNull().default("0"), // Total user-facing volume
+  
+  // Transaction Counts
+  buyTransactionCount: integer("buy_transaction_count").notNull().default(0),
+  sellTransactionCount: integer("sell_transaction_count").notNull().default(0),
+  mintTransactionCount: integer("mint_transaction_count").notNull().default(0),
+  
+  // Commission & Earnings (in USD)
+  spreadIncomeUsd: decimal("spread_income_usd", { precision: 20, scale: 2 }).notNull().default("0"),
+  tierCommissionUsd: decimal("tier_commission_usd", { precision: 20, scale: 2 }).notNull().default("0"),
+  houseEdgeShareUsd: decimal("house_edge_share_usd", { precision: 20, scale: 2 }).notNull().default("0"),
+  burnRebateUsd: decimal("burn_rebate_usd", { precision: 20, scale: 2 }).notNull().default("0"),
+  totalEarningsUsd: decimal("total_earnings_usd", { precision: 20, scale: 2 }).notNull().default("0"),
+  
+  // Tier Assignment
+  commissionTier: text("commission_tier").notNull(), // bronze, silver, gold
+  commissionRateBps: integer("commission_rate_bps").notNull(), // 50, 75, 100 (0.5%, 0.75%, 1.0%)
+  
+  // Settlement
+  settlementStatus: text("settlement_status").notNull().default("pending"), // pending, processed, paid
+  settlementId: varchar("settlement_id"),
+  
+  // Metadata
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => ({
+  agentPeriodUniqueIdx: uniqueIndex("monthly_agent_metrics_unique_idx").on(table.agentId, table.year, table.month),
+  agentIdIdx: index("monthly_agent_metrics_agent_id_idx").on(table.agentId),
+  periodIdx: index("monthly_agent_metrics_period_idx").on(table.year, table.month),
+  settlementIdx: index("monthly_agent_metrics_settlement_idx").on(table.settlementStatus),
+}));
+
+// Commission Ledger (Payout Records)
+export const commissionLedger = pgTable("commission_ledger", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  
+  agentId: varchar("agent_id").notNull().references(() => agents.id),
+  metricsId: varchar("metrics_id").notNull().references(() => monthlyAgentMetrics.id),
+  
+  // Payout Details
+  payoutType: text("payout_type").notNull(), // monthly_commission, burn_rebate, house_edge_share, bonus
+  amountUsd: decimal("amount_usd", { precision: 20, scale: 2 }).notNull(),
+  amountUsdc: decimal("amount_usdc", { precision: 20, scale: 8 }), // USDC payout amount
+  
+  // Settlement
+  status: text("status").notNull().default("pending"), // pending, processing, completed, failed
+  solanaSignature: text("solana_signature"),
+  recipientWallet: text("recipient_wallet"),
+  
+  // Period Reference
+  year: integer("year").notNull(),
+  month: integer("month").notNull(),
+  
+  // Metadata
+  notes: text("notes"),
+  errorMessage: text("error_message"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  processedAt: timestamp("processed_at"),
+}, (table) => ({
+  agentIdIdx: index("commission_ledger_agent_id_idx").on(table.agentId),
+  metricsIdIdx: index("commission_ledger_metrics_id_idx").on(table.metricsId),
+  statusIdx: index("commission_ledger_status_idx").on(table.status),
+  periodIdx: index("commission_ledger_period_idx").on(table.year, table.month),
+}));
+
+// Burn Rebate Credits (Staking Tier Benefits)
+export const burnRebateCredits = pgTable("burn_rebate_credits", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  
+  agentId: varchar("agent_id").notNull().references(() => agents.id),
+  exchangeOrderId: varchar("exchange_order_id").references(() => exchangeOrders.id),
+  
+  // Rebate Details
+  stakingTier: text("staking_tier").notNull(), // bronze, silver, gold
+  rebatePercentage: integer("rebate_percentage").notNull(), // 10, 25, 50
+  
+  // Amounts
+  burnAmountTkoin: decimal("burn_amount_tkoin", { precision: 20, scale: 8 }).notNull(),
+  rebateAmountTkoin: decimal("rebate_amount_tkoin", { precision: 20, scale: 8 }).notNull(),
+  rebateAmountUsd: decimal("rebate_amount_usd", { precision: 20, scale: 2 }).notNull(),
+  
+  // Status
+  status: text("status").notNull().default("credited"), // credited, reversed
+  
+  // Metadata
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => ({
+  agentIdIdx: index("burn_rebate_credits_agent_id_idx").on(table.agentId),
+  orderIdIdx: index("burn_rebate_credits_order_id_idx").on(table.exchangeOrderId),
+}));
+
 // Zod Schemas for Validation
 
 // System Config
@@ -483,3 +676,56 @@ export const insertPromotionalEventSchema = createInsertSchema(promotionalEvents
 });
 export type InsertPromotionalEvent = z.infer<typeof insertPromotionalEventSchema>;
 export type PromotionalEvent = typeof promotionalEvents.$inferSelect;
+
+// Agent Currency Settings
+export const insertAgentCurrencySettingsSchema = createInsertSchema(agentCurrencySettings).omit({ 
+  id: true, 
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertAgentCurrencySettings = z.infer<typeof insertAgentCurrencySettingsSchema>;
+export type AgentCurrencySettings = typeof agentCurrencySettings.$inferSelect;
+
+// FX Rates
+export const insertFxRateSchema = createInsertSchema(fxRates).omit({ 
+  id: true, 
+  createdAt: true,
+  effectiveDate: true,
+});
+export type InsertFxRate = z.infer<typeof insertFxRateSchema>;
+export type FxRate = typeof fxRates.$inferSelect;
+
+// Agent Quotes
+export const insertAgentQuoteSchema = createInsertSchema(agentQuotes).omit({ 
+  id: true, 
+  createdAt: true,
+  usedAt: true,
+});
+export type InsertAgentQuote = z.infer<typeof insertAgentQuoteSchema>;
+export type AgentQuote = typeof agentQuotes.$inferSelect;
+
+// Monthly Agent Metrics
+export const insertMonthlyAgentMetricsSchema = createInsertSchema(monthlyAgentMetrics).omit({ 
+  id: true, 
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertMonthlyAgentMetrics = z.infer<typeof insertMonthlyAgentMetricsSchema>;
+export type MonthlyAgentMetrics = typeof monthlyAgentMetrics.$inferSelect;
+
+// Commission Ledger
+export const insertCommissionLedgerSchema = createInsertSchema(commissionLedger).omit({ 
+  id: true, 
+  createdAt: true,
+  processedAt: true,
+});
+export type InsertCommissionLedger = z.infer<typeof insertCommissionLedgerSchema>;
+export type CommissionLedger = typeof commissionLedger.$inferSelect;
+
+// Burn Rebate Credits
+export const insertBurnRebateCreditSchema = createInsertSchema(burnRebateCredits).omit({ 
+  id: true, 
+  createdAt: true,
+});
+export type InsertBurnRebateCredit = z.infer<typeof insertBurnRebateCreditSchema>;
+export type BurnRebateCredit = typeof burnRebateCredits.$inferSelect;
