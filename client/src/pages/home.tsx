@@ -26,7 +26,6 @@ interface TokenomicsStats {
 
 export default function Home() {
   const { user } = useAuth();
-  const isAdmin = user?.claims?.role === 'admin';
   
   const { data: stats } = useQuery<TokenomicsStats>({
     queryKey: ["/api/stats/tokenomics"],
@@ -49,14 +48,14 @@ export default function Home() {
           </nav>
           
           <div className="flex items-center gap-2">
-            {isAdmin && (
-              <Link href="/admin">
-                <Button variant="ghost" size="sm" data-testid="button-admin">Admin</Button>
+            {user?.isAgent && (
+              <Link href="/dashboard">
+                <Button variant="ghost" size="sm" data-testid="button-dashboard">Dashboard</Button>
               </Link>
             )}
-            <Link href="/api/login">
+            <a href="/api/login">
               <Button variant="outline" size="sm" data-testid="button-login">Agent Login</Button>
-            </Link>
+            </a>
           </div>
         </div>
       </header>

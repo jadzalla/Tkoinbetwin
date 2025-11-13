@@ -44,9 +44,9 @@ export default function Dashboard() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Link href="/api/login">
+            <a href="/api/login" className="block">
               <Button className="w-full" data-testid="button-login">Login to Continue</Button>
-            </Link>
+            </a>
           </CardContent>
         </Card>
       </div>
