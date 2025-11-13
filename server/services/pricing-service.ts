@@ -8,6 +8,8 @@ import {
 } from "@shared/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { FxRateService } from "./fx-rate-service";
+import { z } from "zod";
+import Decimal from "decimal.js";
 
 export interface AgentPricing {
   currency: string;
@@ -60,6 +62,24 @@ export interface PublicRates {
   }>;
 }
 
+/**
+ * Zod schema for validating system_config.pricing_defaults JSON
+ * - Uses coercion to handle legacy string values from JSON
+ * - Strict mode catches unsupported fields
+ * - Falls back to hardcoded defaults on validation failure
+ */
+const PricingDefaultsSchema = z.object({
+  bidSpreadBps: z.coerce.number().pipe(z.number().min(50).max(500)),
+  askSpreadBps: z.coerce.number().pipe(z.number().min(50).max(500)),
+  fxBufferBps: z.coerce.number().pipe(z.number().min(0).max(200)),
+  minOrderUsd: z.coerce.number().pipe(z.number().positive()),
+  maxOrderUsd: z.coerce.number().pipe(z.number().positive()),
+  dailyLimitUsd: z.coerce.number().pipe(z.number().positive()),
+  quoteTtlMinutes: z.coerce.number().pipe(z.number().positive()),
+}).strict();
+
+type PricingDefaults = z.infer<typeof PricingDefaultsSchema>;
+
 export class PricingService {
   private readonly fxService: FxRateService;
   
@@ -81,6 +101,12 @@ export class PricingService {
 
   constructor() {
     this.fxService = new FxRateService();
+    
+    // Configure Decimal.js for financial precision
+    Decimal.set({ 
+      precision: 28,
+      rounding: Decimal.ROUND_HALF_UP 
+    });
   }
 
   private async getSystemConfig<T>(key: string, defaultValue: T): Promise<T> {
@@ -100,6 +126,27 @@ export class PricingService {
     return defaultValue;
   }
 
+  /**
+   * Get agent-specific pricing settings for a currency with robust fallback handling
+   * 
+   * Fallback precedence:
+   * 1. Agent-specific overrides from agent_currency_settings (if active)
+   * 2. Validated system defaults from getDefaultSettings()
+   * 3. Hardcoded constants (if all else fails)
+   * 
+   * Null/NaN handling:
+   * - Null DB values fall back to defaults (not coerced to 0)
+   * - NaN after conversion triggers full default fallback with error log
+   * - Invalid limit ordering (min > max) uses defaults with warning
+   * 
+   * Global caps:
+   * - dailyLimitUsd capped at agent.dailyLimit from agents table
+   * - Protects against per-currency exposure exceeding global agent limit
+   * 
+   * @param agentId - Agent ID
+   * @param currency - ISO currency code (PHP, EUR, USD, etc.)
+   * @returns Settings with all numeric values guaranteed, isActive flag
+   */
   private async getAgentSettings(agentId: string, currency: string) {
     const settings = await db
       .select()
@@ -187,7 +234,16 @@ export class PricingService {
     };
   }
 
-  private async getDefaultSettings() {
+  /**
+   * Get validated default pricing settings from system_config
+   * 
+   * Fallback precedence:
+   * 1. Validated system_config.pricing_defaults (with Zod schema)
+   * 2. Hardcoded constants (if validation fails)
+   * 
+   * @returns Validated pricing defaults with all numeric values guaranteed
+   */
+  private async getDefaultSettings(): Promise<PricingDefaults> {
     const config = await this.getSystemConfig('pricing_defaults', {
       bidSpreadBps: this.DEFAULT_BID_SPREAD_BPS,
       askSpreadBps: this.DEFAULT_ASK_SPREAD_BPS,
@@ -198,16 +254,18 @@ export class PricingService {
       quoteTtlMinutes: this.DEFAULT_QUOTE_TTL_MINUTES,
     });
 
-    const bidSpreadBps = Number(config.bidSpreadBps ?? this.DEFAULT_BID_SPREAD_BPS);
-    const askSpreadBps = Number(config.askSpreadBps ?? this.DEFAULT_ASK_SPREAD_BPS);
-    const fxBufferBps = Number(config.fxBufferBps ?? this.DEFAULT_FX_BUFFER_BPS);
-    const minOrderUsd = Number(config.minOrderUsd ?? this.DEFAULT_MIN_ORDER_USD);
-    const maxOrderUsd = Number(config.maxOrderUsd ?? this.DEFAULT_MAX_ORDER_USD);
-    const dailyLimitUsd = Number(config.dailyLimitUsd ?? this.DEFAULT_DAILY_LIMIT_USD);
-    const quoteTtlMinutes = Number(config.quoteTtlMinutes ?? this.DEFAULT_QUOTE_TTL_MINUTES);
-
-    if (isNaN(bidSpreadBps) || isNaN(askSpreadBps) || isNaN(fxBufferBps) || isNaN(minOrderUsd) || isNaN(maxOrderUsd) || isNaN(dailyLimitUsd) || isNaN(quoteTtlMinutes)) {
-      console.error('[Pricing] NaN values detected in system config, using hardcoded defaults');
+    try {
+      // Validate with Zod schema (handles string coercion + range validation)
+      const validated = await PricingDefaultsSchema.parseAsync(config);
+      return validated;
+    } catch (error) {
+      // Log validation failure with full details for operators
+      console.error('[Pricing] System config validation failed, using hardcoded defaults', {
+        error: error instanceof Error ? error.message : String(error),
+        receivedConfig: config,
+      });
+      
+      // Fall back to hardcoded constants
       return {
         bidSpreadBps: this.DEFAULT_BID_SPREAD_BPS,
         askSpreadBps: this.DEFAULT_ASK_SPREAD_BPS,
@@ -218,16 +276,6 @@ export class PricingService {
         quoteTtlMinutes: this.DEFAULT_QUOTE_TTL_MINUTES,
       };
     }
-
-    return {
-      bidSpreadBps,
-      askSpreadBps,
-      fxBufferBps,
-      minOrderUsd,
-      maxOrderUsd,
-      dailyLimitUsd,
-      quoteTtlMinutes,
-    };
   }
 
   private validateSpreadBps(spreadBps: number, name: string): void {
@@ -279,6 +327,25 @@ export class PricingService {
     };
   }
 
+  /**
+   * Create a time-locked quote for buying/selling TKOIN
+   * 
+   * Uses Decimal.js for all monetary calculations to ensure:
+   * - Exact decimal precision (no IEEE floating point errors)
+   * - Deterministic rounding (ROUND_HALF_UP)
+   * - Safe handling of large amounts (>$1M)
+   * 
+   * Validation gates:
+   * 1. Agent exists and is active
+   * 2. Currency is supported by agent
+   * 3. FX rate is available and fresh
+   * 4. Amounts within min/max/daily limits
+   * 5. Agent has sufficient inventory (for buy_from_agent)
+   * 6. Precision bounds respected (12 digits integer + 8 decimal for TKOIN)
+   * 
+   * @param params - Quote creation parameters
+   * @returns Created quote with time lock and status='active'
+   */
   async createQuote(params: CreateQuoteParams): Promise<Quote> {
     const { agentId, currency, quoteType, fiatAmount, tkoinAmount } = params;
 
@@ -307,26 +374,35 @@ export class PricingService {
     }
 
     const fxRateData = await this.fxService.getRateWithMetadata('USD', currency);
-    const baseRate = fxRateData.rate;
+    const baseRateDec = new Decimal(fxRateData.rate);
 
-    const bidSpread = settings.bidSpreadBps / 10000;
-    const askSpread = settings.askSpreadBps / 10000;
-    const fxBuffer = settings.fxBufferBps / 10000;
+    // Calculate effective rate using Decimal for precision
+    const bidSpreadDec = new Decimal(settings.bidSpreadBps).div(10000);
+    const askSpreadDec = new Decimal(settings.askSpreadBps).div(10000);
+    const fxBufferDec = new Decimal(settings.fxBufferBps).div(10000);
+    const usdAnchorDec = new Decimal(this.USD_ANCHOR);
 
-    const effectiveRate = quoteType === 'sell_to_agent'
-      ? baseRate * this.USD_ANCHOR * (1 - bidSpread - fxBuffer)
-      : baseRate * this.USD_ANCHOR * (1 + askSpread + fxBuffer);
+    const effectiveRateDec = quoteType === 'sell_to_agent'
+      ? baseRateDec.mul(usdAnchorDec).mul(new Decimal(1).minus(bidSpreadDec).minus(fxBufferDec))
+      : baseRateDec.mul(usdAnchorDec).mul(new Decimal(1).plus(askSpreadDec).plus(fxBufferDec));
 
-    let finalFiatAmount: number;
-    let finalTkoinAmount: number;
+    // Calculate final amounts with Decimal precision
+    let finalFiatAmountDec: Decimal;
+    let finalTkoinAmountDec: Decimal;
 
     if (fiatAmount) {
-      finalFiatAmount = fiatAmount;
-      finalTkoinAmount = fiatAmount / effectiveRate;
+      finalFiatAmountDec = new Decimal(fiatAmount);
+      finalTkoinAmountDec = finalFiatAmountDec.div(effectiveRateDec);
     } else {
-      finalTkoinAmount = tkoinAmount!;
-      finalFiatAmount = tkoinAmount! * effectiveRate;
+      finalTkoinAmountDec = new Decimal(tkoinAmount!);
+      finalFiatAmountDec = finalTkoinAmountDec.mul(effectiveRateDec);
     }
+
+    // Convert to numbers for validation (Decimal → number is safe for these ranges)
+    const finalFiatAmount = finalFiatAmountDec.toNumber();
+    const finalTkoinAmount = finalTkoinAmountDec.toNumber();
+    const effectiveRate = effectiveRateDec.toNumber();
+    const baseRate = baseRateDec.toNumber();
 
     const orderValueUsd = finalFiatAmount / baseRate;
 
