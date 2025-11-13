@@ -78,6 +78,7 @@ export interface IStorage {
   getTransactionBySignature(signature: string): Promise<Transaction | undefined>;
   createTransaction(transaction: InsertTransaction): Promise<Transaction>;
   updateTransaction(id: string, updates: Partial<Transaction>): Promise<Transaction | undefined>;
+  recordTransactionWebhookAttempt(id: string, delivered: boolean): Promise<void>;
   
   // Deposit Operations
   getDeposit(id: string): Promise<Deposit | undefined>;
@@ -86,6 +87,7 @@ export interface IStorage {
   getPendingDeposits(): Promise<Deposit[]>;
   createDeposit(deposit: InsertDeposit): Promise<Deposit>;
   updateDeposit(id: string, updates: Partial<Deposit>): Promise<Deposit | undefined>;
+  updateDepositWebhookStatus(id: string, delivered: boolean, webhookUrl?: string, response?: any): Promise<void>;
   
   // Withdrawal Operations
   getWithdrawal(id: string): Promise<Withdrawal | undefined>;
@@ -306,6 +308,15 @@ export class PostgresStorage implements IStorage {
     return result[0];
   }
 
+  async recordTransactionWebhookAttempt(id: string, delivered: boolean): Promise<void> {
+    await db.update(transactions)
+      .set({
+        webhookAttempts: sql`${transactions.webhookAttempts} + 1`,
+        webhookDelivered: delivered,
+      })
+      .where(eq(transactions.id, id));
+  }
+
   // Deposit Operations
   async getDeposit(id: string): Promise<Deposit | undefined> {
     const result = await db.select().from(deposits).where(eq(deposits.id, id)).limit(1);
@@ -342,6 +353,16 @@ export class PostgresStorage implements IStorage {
       .where(eq(deposits.id, id))
       .returning();
     return result[0];
+  }
+
+  async updateDepositWebhookStatus(id: string, delivered: boolean, webhookUrl?: string, response?: any): Promise<void> {
+    await db.update(deposits)
+      .set({
+        webhookDelivered: delivered,
+        webhookUrl: webhookUrl || null,
+        webhookResponse: response || null,
+      })
+      .where(eq(deposits.id, id));
   }
 
   // Withdrawal Operations

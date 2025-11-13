@@ -741,6 +741,210 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+
+  // ========================================
+  // Webhook Routes (1Stake Integration)
+  // ========================================
+
+  // Send credit notification to 1Stake (for testing/manual triggering - admin only)
+  app.post('/api/webhooks/send/credit', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { userId, depositId, tkoinAmount, creditsAmount, burnAmount, solanaSignature, memo } = req.body;
+
+      if (!userId || !depositId || !tkoinAmount || !creditsAmount) {
+        return res.status(400).json({ 
+          message: "Missing required fields: userId, depositId, tkoinAmount, creditsAmount" 
+        });
+      }
+
+      // Get webhook configuration
+      const webhookUrlConfig = await storage.getSystemConfig('1stake_webhook_url');
+      const webhookSecret = process.env.TKOIN_WEBHOOK_SECRET;
+
+      if (!webhookUrlConfig?.value || !webhookSecret) {
+        return res.status(500).json({ 
+          message: "Webhook not configured. Set 1stake_webhook_url in system config and TKOIN_WEBHOOK_SECRET env var" 
+        });
+      }
+
+      const webhookUrl = String(webhookUrlConfig.value);
+
+      // Import webhook service
+      const { WebhookService } = await import('./services/webhook-service');
+
+      // Send webhook
+      const result = await WebhookService.sendCreditNotification(
+        webhookUrl,
+        webhookSecret,
+        {
+          userId,
+          depositId,
+          tkoinAmount,
+          creditsAmount,
+          burnAmount: burnAmount || '0',
+          solanaSignature: solanaSignature || '',
+          memo,
+        }
+      );
+
+      // Update deposit webhook status in database
+      await storage.updateDepositWebhookStatus(
+        depositId,
+        result.success,
+        webhookUrl,
+        {
+          attempts: result.attempts,
+          statusCode: result.statusCode,
+          response: result.response,
+          error: result.error,
+          deliveredAt: result.deliveredAt,
+        }
+      );
+
+      // Log audit trail
+      await storage.createAuditLog({
+        eventType: 'webhook_sent',
+        entityType: 'deposit',
+        entityId: depositId,
+        actorId: req.user.claims.sub,
+        actorType: 'admin',
+        metadata: {
+          webhookUrl,
+          success: result.success,
+          attempts: result.attempts,
+          statusCode: result.statusCode,
+          error: result.error,
+        },
+      });
+
+      res.json({
+        success: result.success,
+        message: result.success ? 'Webhook delivered successfully' : 'Webhook delivery failed',
+        result,
+      });
+    } catch (error) {
+      console.error("Error sending webhook:", error);
+      res.status(500).json({ 
+        message: "Failed to send webhook",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Receive withdrawal request from 1Stake platform
+  app.post('/api/webhooks/1stake/withdrawal', async (req, res) => {
+    try {
+      const signature = req.headers['x-tkoin-signature'];
+      const timestamp = req.headers['x-tkoin-timestamp'];
+      const webhookSecret = process.env.TKOIN_WEBHOOK_SECRET;
+
+      if (!webhookSecret) {
+        console.error("[Webhook] TKOIN_WEBHOOK_SECRET not configured");
+        return res.status(500).json({ message: "Webhook secret not configured" });
+      }
+
+      if (!signature || typeof signature !== 'string') {
+        return res.status(401).json({ message: "Missing or invalid signature" });
+      }
+
+      // Verify timestamp format and freshness (prevent replay attacks)
+      if (!timestamp || typeof timestamp !== 'string') {
+        return res.status(401).json({ message: "Missing or invalid timestamp" });
+      }
+
+      const requestTime = parseInt(timestamp);
+      if (isNaN(requestTime)) {
+        return res.status(401).json({ message: "Invalid timestamp format" });
+      }
+
+      const now = Date.now();
+      const fiveMinutes = 5 * 60 * 1000;
+      
+      if (Math.abs(now - requestTime) > fiveMinutes) {
+        return res.status(401).json({ message: "Request timestamp expired" });
+      }
+
+      // Verify signature (includes timestamp to prevent tampering)
+      const { WebhookService } = await import('./services/webhook-service');
+      const payloadString = JSON.stringify(req.body);
+      
+      const isValid = WebhookService.verifySignature(
+        payloadString,
+        requestTime,
+        signature,
+        webhookSecret
+      );
+
+      if (!isValid) {
+        console.warn("[Webhook] Invalid signature for withdrawal request");
+        return res.status(401).json({ message: "Invalid signature" });
+      }
+
+      const { event, data } = req.body;
+
+      if (event !== 'casino.withdrawal.request') {
+        return res.status(400).json({ message: "Invalid event type" });
+      }
+
+      const { user_id, withdrawal_id, credits_amount, user_wallet } = data;
+
+      if (!user_id || !withdrawal_id || !credits_amount || !user_wallet) {
+        return res.status(400).json({ 
+          message: "Missing required fields: user_id, withdrawal_id, credits_amount, user_wallet" 
+        });
+      }
+
+      // Get conversion rate from system config
+      const conversionConfig = await storage.getSystemConfig('conversion_rate');
+      const conversionRate = conversionConfig?.value ? Number(conversionConfig.value) : 100;
+
+      // Calculate Tkoin amount (credits / 100)
+      const tkoinAmount = (parseFloat(credits_amount) / conversionRate).toFixed(8);
+
+      // Create withdrawal request (no fee for now - can be configured later)
+      const withdrawal = await storage.createWithdrawal({
+        userId: user_id,
+        userWallet: user_wallet,
+        creditsAmount: credits_amount,
+        tkoinAmount,
+        feeAmount: '0',
+        status: 'pending',
+        // 24-hour cooldown
+        cooldownEnd: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      });
+
+      // Log the webhook receipt
+      await storage.createAuditLog({
+        eventType: 'webhook_received',
+        entityType: 'withdrawal',
+        entityId: withdrawal.id,
+        actorId: user_id,
+        actorType: 'system',
+        metadata: {
+          event,
+          withdrawal_id,
+          credits_amount,
+          tkoin_amount: tkoinAmount,
+          source: '1stake',
+        },
+      });
+
+      res.json({
+        success: true,
+        withdrawal_id: withdrawal.id,
+        tkoin_amount: tkoinAmount,
+        status: 'pending',
+        cooldown_end: withdrawal.cooldownEnd,
+        message: 'Withdrawal request created. 24-hour cooldown applies.',
+      });
+    } catch (error) {
+      console.error("Error processing withdrawal webhook:", error);
+      res.status(500).json({ 
+        message: "Failed to process withdrawal request",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
   
   // Warm cache on server startup
   console.log("[FX] Initializing FX rate service...");
