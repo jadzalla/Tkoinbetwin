@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated, isApprovedAgent, isAdmin } from "./replitAuth";
 import { fxRateService } from "./services/fx-rate-service";
+import { PricingService } from "./services/pricing-service";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
@@ -297,7 +298,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get current burn rate from system config
       const allConfig = await storage.getAllSystemConfig();
       const burnRateConfig = allConfig.find(c => c.key === 'burn_rate');
-      const burnRateBasisPoints = parseInt(burnRateConfig?.value || '100'); // Default to 1% if not set
+      const burnRateValue = typeof burnRateConfig?.value === 'string' ? burnRateConfig.value : '100';
+      const burnRateBasisPoints = parseInt(burnRateValue);
       const burnRatePercent = (burnRateBasisPoints / 100).toString();
       
       // TODO: Implement actual stats from blockchain
@@ -447,6 +449,254 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error cleaning up FX rates:", error);
       res.status(500).json({ 
         message: "Failed to cleanup FX rates",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // ========================================
+  // Pricing API Routes
+  // ========================================
+  
+  const pricingService = new PricingService();
+
+  // Get agent's pricing for a specific currency
+  app.get('/api/agents/me/pricing/:currency', isAuthenticated, isApprovedAgent, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const agent = await storage.getAgentByReplitUserId(userId);
+      
+      if (!agent) {
+        return res.status(404).json({ message: "Agent not found" });
+      }
+
+      const currency = req.params.currency.toUpperCase();
+      const pricing = await pricingService.getAgentPricing(agent.id, currency);
+      
+      res.json(pricing);
+    } catch (error) {
+      console.error("Error fetching agent pricing:", error);
+      res.status(500).json({ 
+        message: "Failed to fetch pricing",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Get public exchange rates (no auth required)
+  app.get('/api/public/rates', async (req, res) => {
+    try {
+      const currencies = ['PHP', 'EUR', 'USD', 'SGD', 'GBP', 'JPY'];
+      const rates: Record<string, { rate: number; bidPrice: number; askPrice: number }> = {};
+      
+      for (const currency of currencies) {
+        try {
+          const pricing = await pricingService.getPublicPricing(currency);
+          rates[currency] = {
+            rate: pricing.fxRate,
+            bidPrice: pricing.bidPricePer1kTkoin,
+            askPrice: pricing.askPricePer1kTkoin,
+          };
+        } catch (error) {
+          console.warn(`Failed to fetch pricing for ${currency}:`, error);
+        }
+      }
+      
+      res.json({
+        rates,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Error fetching public rates:", error);
+      res.status(500).json({ 
+        message: "Failed to fetch public rates",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Create a time-locked quote for buying/selling TKOIN
+  app.post('/api/agents/pricing/quote', isAuthenticated, isApprovedAgent, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const agent = await storage.getAgentByReplitUserId(userId);
+      
+      if (!agent) {
+        return res.status(404).json({ message: "Agent not found" });
+      }
+
+      const { currency, quoteType, fiatAmount, tkoinAmount } = req.body;
+      
+      if (!currency || !quoteType) {
+        return res.status(400).json({ message: "Currency and quoteType are required" });
+      }
+
+      if (quoteType !== 'buy_from_agent' && quoteType !== 'sell_to_agent') {
+        return res.status(400).json({ message: "Invalid quoteType. Must be 'buy_from_agent' or 'sell_to_agent'" });
+      }
+
+      // Validate exactly one amount is provided
+      const hasFiat = fiatAmount !== undefined && fiatAmount !== null && fiatAmount !== '';
+      const hasTkoin = tkoinAmount !== undefined && tkoinAmount !== null && tkoinAmount !== '';
+
+      if (!hasFiat && !hasTkoin) {
+        return res.status(400).json({ message: "Either fiatAmount or tkoinAmount must be provided" });
+      }
+
+      if (hasFiat && hasTkoin) {
+        return res.status(400).json({ message: "Provide either fiatAmount or tkoinAmount, not both" });
+      }
+
+      // Validate numeric and positive
+      const parsedFiat = hasFiat ? parseFloat(fiatAmount) : undefined;
+      const parsedTkoin = hasTkoin ? parseFloat(tkoinAmount) : undefined;
+
+      if (parsedFiat !== undefined && (isNaN(parsedFiat) || parsedFiat <= 0)) {
+        return res.status(400).json({ message: "fiatAmount must be a positive number" });
+      }
+
+      if (parsedTkoin !== undefined && (isNaN(parsedTkoin) || parsedTkoin <= 0)) {
+        return res.status(400).json({ message: "tkoinAmount must be a positive number" });
+      }
+
+      const quote = await pricingService.createQuote({
+        agentId: agent.id,
+        currency: currency.toUpperCase(),
+        quoteType,
+        fiatAmount: parsedFiat,
+        tkoinAmount: parsedTkoin,
+      });
+      
+      res.json(quote);
+    } catch (error) {
+      console.error("Error creating quote:", error);
+      
+      // Business logic errors return 400
+      const isBusinessError = error instanceof Error && (
+        error.message.includes('Insufficient') ||
+        error.message.includes('not active') ||
+        error.message.includes('does not support') ||
+        error.message.includes('below minimum') ||
+        error.message.includes('exceeds maximum') ||
+        error.message.includes('exceeds maximum precision')
+      );
+      
+      res.status(isBusinessError ? 400 : 500).json({ 
+        message: error instanceof Error ? error.message : "Failed to create quote"
+      });
+    }
+  });
+
+  // Validate an existing quote (check if still active and not expired)
+  app.post('/api/agents/pricing/validate-quote', isAuthenticated, isApprovedAgent, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const agent = await storage.getAgentByReplitUserId(userId);
+      
+      if (!agent) {
+        return res.status(404).json({ message: "Agent not found" });
+      }
+
+      const { quoteId } = req.body;
+      
+      if (!quoteId) {
+        return res.status(400).json({ message: "quoteId is required" });
+      }
+
+      const isValid = await pricingService.validateQuote(quoteId);
+      
+      res.json({ 
+        valid: isValid,
+        quoteId,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Error validating quote:", error);
+      res.status(500).json({ 
+        message: error instanceof Error ? error.message : "Failed to validate quote"
+      });
+    }
+  });
+
+  // Configure custom spreads for an agent (admin or self-service)
+  app.post('/api/agents/pricing/configure', isAuthenticated, isApprovedAgent, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const agent = await storage.getAgentByReplitUserId(userId);
+      
+      if (!agent) {
+        return res.status(404).json({ message: "Agent not found" });
+      }
+
+      const { currency, bidSpreadBps, askSpreadBps, fxBufferBps, minOrderUsd, maxOrderUsd, dailyLimitUsd, isActive } = req.body;
+      
+      if (!currency) {
+        return res.status(400).json({ message: "Currency is required" });
+      }
+
+      // Validate numeric inputs if provided
+      if (bidSpreadBps !== undefined && (typeof bidSpreadBps !== 'number' || bidSpreadBps < 50 || bidSpreadBps > 500)) {
+        return res.status(400).json({ message: "bidSpreadBps must be between 50 and 500" });
+      }
+
+      if (askSpreadBps !== undefined && (typeof askSpreadBps !== 'number' || askSpreadBps < 50 || askSpreadBps > 500)) {
+        return res.status(400).json({ message: "askSpreadBps must be between 50 and 500" });
+      }
+
+      if (fxBufferBps !== undefined && (typeof fxBufferBps !== 'number' || fxBufferBps < 0 || fxBufferBps > 200)) {
+        return res.status(400).json({ message: "fxBufferBps must be between 0 and 200" });
+      }
+
+      if (minOrderUsd !== undefined && (typeof minOrderUsd !== 'number' || minOrderUsd <= 0)) {
+        return res.status(400).json({ message: "minOrderUsd must be a positive number" });
+      }
+
+      if (maxOrderUsd !== undefined && (typeof maxOrderUsd !== 'number' || maxOrderUsd <= 0)) {
+        return res.status(400).json({ message: "maxOrderUsd must be a positive number" });
+      }
+
+      if (dailyLimitUsd !== undefined && (typeof dailyLimitUsd !== 'number' || dailyLimitUsd <= 0)) {
+        return res.status(400).json({ message: "dailyLimitUsd must be a positive number" });
+      }
+
+      if (isActive !== undefined && typeof isActive !== 'boolean') {
+        return res.status(400).json({ message: "isActive must be a boolean" });
+      }
+
+      // Validate min/max order logic
+      if (minOrderUsd !== undefined && maxOrderUsd !== undefined && minOrderUsd > maxOrderUsd) {
+        return res.status(400).json({ message: "minOrderUsd cannot be greater than maxOrderUsd" });
+      }
+
+      // Fetch existing settings to merge with updates
+      const existing = await storage.getAgentCurrencySettings(agent.id, currency.toUpperCase());
+
+      // Build settings object with proper defaults and type conversion
+      // Note: integer columns (bidSpreadBps, askSpreadBps, fxBufferBps) stay as numbers
+      // decimal columns (minOrderUsd, maxOrderUsd, dailyLimitUsd) must be strings
+      // Defaults match schema: bidSpreadBps=150 (1.5% discount buying from users), askSpreadBps=250 (2.5% markup selling to users)
+      const settings = {
+        agentId: agent.id,
+        currency: currency.toUpperCase(),
+        bidSpreadBps: bidSpreadBps ?? existing?.bidSpreadBps ?? 150,  // 1.5% discount when buying from users
+        askSpreadBps: askSpreadBps ?? existing?.askSpreadBps ?? 250,  // 2.5% markup when selling to users
+        fxBufferBps: fxBufferBps ?? existing?.fxBufferBps ?? 75,
+        minOrderUsd: minOrderUsd !== undefined ? minOrderUsd.toString() : (existing?.minOrderUsd ?? "10"),
+        maxOrderUsd: maxOrderUsd !== undefined ? maxOrderUsd.toString() : (existing?.maxOrderUsd ?? "5000"),
+        dailyLimitUsd: dailyLimitUsd !== undefined ? dailyLimitUsd.toString() : (existing?.dailyLimitUsd ?? "10000"),
+        isActive: isActive ?? existing?.isActive ?? true,
+      };
+
+      const result = await storage.upsertAgentCurrencySettings(settings);
+      
+      res.json({
+        message: "Pricing configuration updated successfully",
+        settings: result
+      });
+    } catch (error) {
+      console.error("Error configuring pricing:", error);
+      res.status(500).json({ 
+        message: "Failed to configure pricing",
         error: error instanceof Error ? error.message : "Unknown error"
       });
     }

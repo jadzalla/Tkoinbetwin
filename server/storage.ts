@@ -25,6 +25,8 @@ import type {
   InsertPromotionalEvent,
   SystemConfig,
   InsertSystemConfig,
+  AgentCurrencySettings,
+  InsertAgentCurrencySettings,
 } from '@shared/schema';
 import {
   users,
@@ -39,6 +41,7 @@ import {
   agentInventoryHistory,
   promotionalEvents,
   systemConfig,
+  agentCurrencySettings,
 } from '@shared/schema';
 
 // Storage Interface
@@ -55,6 +58,11 @@ export interface IStorage {
   createAgent(agent: InsertAgent): Promise<Agent>;
   updateAgent(id: string, updates: Partial<Agent>): Promise<Agent | undefined>;
   updateAgentBalance(id: string, newBalance: string): Promise<void>;
+  
+  // Agent Currency Settings Operations
+  getAgentCurrencySettings(agentId: string, currency: string): Promise<AgentCurrencySettings | undefined>;
+  getAllAgentCurrencySettings(agentId: string): Promise<AgentCurrencySettings[]>;
+  upsertAgentCurrencySettings(settings: InsertAgentCurrencySettings): Promise<AgentCurrencySettings>;
   
   // Exchange Order Operations
   getExchangeOrder(id: string): Promise<ExchangeOrder | undefined>;
@@ -192,6 +200,42 @@ export class PostgresStorage implements IStorage {
     await db.update(agents)
       .set({ tkoinBalance: newBalance, updatedAt: new Date() })
       .where(eq(agents.id, id));
+  }
+
+  // Agent Currency Settings Operations
+  async getAgentCurrencySettings(agentId: string, currency: string): Promise<AgentCurrencySettings | undefined> {
+    const result = await db
+      .select()
+      .from(agentCurrencySettings)
+      .where(and(
+        eq(agentCurrencySettings.agentId, agentId),
+        eq(agentCurrencySettings.currency, currency)
+      ))
+      .limit(1);
+    return result[0];
+  }
+
+  async getAllAgentCurrencySettings(agentId: string): Promise<AgentCurrencySettings[]> {
+    return db
+      .select()
+      .from(agentCurrencySettings)
+      .where(eq(agentCurrencySettings.agentId, agentId))
+      .orderBy(agentCurrencySettings.currency);
+  }
+
+  async upsertAgentCurrencySettings(settings: InsertAgentCurrencySettings): Promise<AgentCurrencySettings> {
+    const result = await db
+      .insert(agentCurrencySettings)
+      .values({ ...settings, updatedAt: new Date() })
+      .onConflictDoUpdate({
+        target: [agentCurrencySettings.agentId, agentCurrencySettings.currency],
+        set: { 
+          ...settings, 
+          updatedAt: new Date() 
+        }
+      })
+      .returning();
+    return result[0];
   }
 
   // Exchange Order Operations

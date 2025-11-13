@@ -83,9 +83,10 @@ type PricingDefaults = z.infer<typeof PricingDefaultsSchema>;
 export class PricingService {
   private readonly fxService: FxRateService;
   
-  private readonly DEFAULT_BID_SPREAD_BPS = 150;
-  private readonly DEFAULT_ASK_SPREAD_BPS = 250;
-  private readonly DEFAULT_FX_BUFFER_BPS = 50;
+  // Economic defaults matching agent_currency_settings schema
+  private readonly DEFAULT_BID_SPREAD_BPS = 150; // 1.5% discount when buying from users
+  private readonly DEFAULT_ASK_SPREAD_BPS = 250; // 2.5% markup when selling to users
+  private readonly DEFAULT_FX_BUFFER_BPS = 75; // 0.75% FX safety buffer
   private readonly DEFAULT_MIN_ORDER_USD = 10;
   private readonly DEFAULT_MAX_ORDER_USD = 5000;
   private readonly DEFAULT_DAILY_LIMIT_USD = 10000;
@@ -517,6 +518,39 @@ export class PricingService {
     }
 
     return true;
+  }
+
+  async getPublicPricing(currency: string): Promise<AgentPricing> {
+    const fxRateData = await this.fxService.getRateWithMetadata('USD', currency);
+    const publicSpreadBps = Number(await this.getSystemConfig('public_spread_bps', this.DEFAULT_PUBLIC_SPREAD_BPS));
+    const publicFxBufferBps = Number(await this.getSystemConfig('public_fx_buffer_bps', this.DEFAULT_FX_BUFFER_BPS));
+    
+    const baseRate = fxRateData.rate;
+    const publicSpread = publicSpreadBps / 10000;
+    const publicFxBuffer = publicFxBufferBps / 10000;
+    
+    const bidPricePer1Tkoin = baseRate * this.USD_ANCHOR * (1 - publicSpread - publicFxBuffer);
+    const askPricePer1Tkoin = baseRate * this.USD_ANCHOR * (1 + publicSpread + publicFxBuffer);
+    
+    const bidPricePer1kTkoin = bidPricePer1Tkoin * 1000;
+    const askPricePer1kTkoin = askPricePer1Tkoin * 1000;
+    const margin = askPricePer1kTkoin - bidPricePer1kTkoin;
+
+    return {
+      currency,
+      isActive: true,
+      bidPricePer1kTkoin: Math.floor(bidPricePer1kTkoin * 100) / 100,
+      askPricePer1kTkoin: Math.ceil(askPricePer1kTkoin * 100) / 100,
+      margin: Math.floor(margin * 100) / 100,
+      fxRate: baseRate,
+      fxRateAge: fxRateData.ageHours,
+      bidSpreadBps: publicSpreadBps,
+      askSpreadBps: publicSpreadBps,
+      fxBufferBps: publicFxBufferBps,
+      minOrderUsd: 0,
+      maxOrderUsd: 0,
+      dailyLimitUsd: 0,
+    };
   }
 
   async getPublicRates(): Promise<PublicRates> {
