@@ -139,6 +139,28 @@ A complete Solana Token-2022 ecosystem integrating with the 1-Stake/BetWin gamin
 
 ## Recent Changes
 
+**2025-01-13**: Phase 2 Task 7 - Pricing Configurator UI Complete
+- Restructured agent portal with Shadcn Sidebar navigation system
+- Created AppSidebarAgent component with 7 navigation items (Dashboard, Pricing, Transactions, Commissions, Analytics, Inventory, Settings)
+- Implemented pricing configurator page with:
+  * Currency selector (PHP, EUR, USD, JPY, GBP, AUD)
+  * Bid/Ask spread sliders (0.5%-5.0%, 50-500 bps)
+  * FX buffer slider (0%-2.0%, 0-200 bps)
+  * Live pricing preview cards (bid/ask/margin)
+  * Order limits display (min/max/daily in USD)
+  * Profit calculator with example transactions
+  * Save configuration via POST /api/agents/pricing/configure
+- Fixed useEffect-based state hydration to sync fetched pricing data with sliders
+- Dashboard index page with 4 KPI cards (inventory, commissions, volume, rating)
+- Fixed Agent schema property name mismatches (tkoinBalance, dailyLimit, totalCommissionEarned)
+- All LSP errors resolved, architect-approved
+
+**2025-01-13**: Phase 2 Task 2 - Homepage Transformation Complete
+- Transformed homepage to "Tkoin Liquidity Network" positioning
+- Dual CTAs (Find an Agent / Become a Liquidity Provider)
+- Live marketplace metrics with defensive NaN handling
+- Backend defaults prevent frontend crashes
+
 **2025-01-13**: Phase 1 Burn Rate Optimization Complete
 - Reduced Token-2022 transfer fee from 2% to 1% (100 basis points)
 - Implemented configurable burn rate system (0-2% range) via system_config
@@ -186,27 +208,35 @@ A complete Solana Token-2022 ecosystem integrating with the 1-Stake/BetWin gamin
 ### Completed
 1. ✅ **Database Schema** - Complete PostgreSQL schema with 11 tables for agents, transactions, deposits, withdrawals, exchange orders, ratings, audit logs, promotional events, and system config
 2. ✅ **Solana Token-2022 Infrastructure** - Complete deployment scripts, wallet generation, automated burn service, and Token-2022 with 1% transfer fee (configurable)
-3. ✅ **Storage Layer** - Full PostgreSQL storage implementation with CRUD operations for all entities
+3. ✅ **Storage Layer** - Full PostgreSQL storage implementation with CRUD operations for all entities, including getAllTransactions() for 24h volume
 4. ✅ **Authentication System** - Replit Auth integration with user sessions, agent middleware, admin access control (all critical OAuth issues resolved)
-5. ✅ **Core API Routes** - Agent registration, approval workflows, system configuration, public stats, and agent directory
+5. ✅ **Core API Routes** - Agent registration, approval workflows, system configuration, public stats, agent directory, pricing API (GET /api/agents/me/pricing/:currency, POST /api/agents/pricing/configure)
 6. ✅ **Design Guidelines** - Professional cryptocurrency exchange design system with purple branding, comprehensive component library
-7. ✅ **Frontend Pages** - Public homepage with tokenomics stats, agent dashboard with KPI cards, agent application form with validation
-8. ✅ **Burn Rate Optimization (Phase 1)** - Configurable burn rate system with admin controls, reduced from 2% to 1%, adjustable 0-2% via admin panel
+7. ✅ **Public Homepage** - "Tkoin Liquidity Network" positioning with dual CTAs, live marketplace metrics (totalLiquidity, volume24h, agentsByTier, supportedCurrencies), defensive NaN handling
+8. ✅ **Agent Portal Architecture** - Shadcn Sidebar navigation with 7 items (Dashboard, Pricing, Transactions, Commissions, Analytics, Inventory, Settings), tier badges, header with toggle/logo/user/logout
+9. ✅ **Agent Dashboard** - KPI cards (inventory, commissions, volume/minted, rating), agent information card, quick stats card with correct Agent schema properties
+10. ✅ **Pricing Configurator** - Currency selector, bid/ask/FX buffer sliders, live pricing preview, order limits, profit calculator, save functionality, useEffect state sync, unsaved changes detection
+11. ✅ **Burn Rate Optimization (Phase 1)** - Configurable burn rate system with admin controls, reduced from 2% to 1%, adjustable 0-2% via admin panel
 
 ### In Progress
-9. 🔄 **Blockchain Monitoring Service** - Real-time deposit detection and processing
-10. 🔄 **Stablecoin Swap Engine** - Jupiter integration for USDT/USDC/EURt to Tkoin exchanges
-11. 🔄 **Webhook System** - Laravel integration for credit synchronization
+12. 🔄 **Blockchain Monitoring Service** - Real-time deposit detection and processing
+13. 🔄 **Stablecoin Swap Engine** - Jupiter integration for USDT/USDC/EURt to Tkoin exchanges
+14. 🔄 **Webhook System** - Laravel integration for credit synchronization
 
 ### Planned
-12. ⏳ Agent-to-user transfer interface
-13. ⏳ QR code payment system
-14. ⏳ Withdrawal processing with cooldowns
-15. ⏳ Solana wallet adapter integration
-16. ⏳ Analytics dashboard
-17. ⏳ Agent discovery and ratings
-18. ⏳ Risk management features
-19. ⏳ Phase 2 Deflationary Mechanisms (see PHASE_2_DEFLATIONARY_MECHANISMS.md):
+15. ⏳ Transaction History with profit/margin columns
+16. ⏳ Commission Dashboard with tier progression tracking
+17. ⏳ Analytics Dashboard with charts and KPIs
+18. ⏳ Admin Agent Profitability Monitoring
+19. ⏳ Admin System Config UI
+20. ⏳ Agent-to-user transfer interface
+21. ⏳ QR code payment system
+22. ⏳ Withdrawal processing with cooldowns
+23. ⏳ Solana wallet adapter integration
+24. ⏳ Agent directory page with search/filters
+25. ⏳ Live rates page (multi-currency comparison)
+26. ⏳ Risk management features
+27. ⏳ Phase 2 Deflationary Mechanisms (see PHASE_2_DEFLATIONARY_MECHANISMS.md):
    - Buyback-and-burn program
    - Agent staking system
    - Promotional burn events
