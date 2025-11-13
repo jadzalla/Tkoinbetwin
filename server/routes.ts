@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated, isApprovedAgent, isAdmin } from "./replitAuth";
+import { fxRateService } from "./services/fx-rate-service";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
@@ -296,7 +297,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get current burn rate from system config
       const allConfig = await storage.getAllSystemConfig();
       const burnRateConfig = allConfig.find(c => c.key === 'burn_rate');
-      const burnRateBasisPoints = burnRateConfig?.value || 100; // Default to 1% if not set
+      const burnRateBasisPoints = parseInt(burnRateConfig?.value || '100'); // Default to 1% if not set
       const burnRatePercent = (burnRateBasisPoints / 100).toString();
       
       // TODO: Implement actual stats from blockchain
@@ -359,6 +360,102 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error fetching agent directory:", error);
       res.status(500).json({ message: "Failed to fetch agent directory" });
     }
+  });
+
+  // ========================================
+  // FX Rate Routes
+  // ========================================
+  
+  // Get all current FX rates (public)
+  app.get('/api/fx-rates', async (req, res) => {
+    try {
+      const { baseCurrency } = req.query;
+      const base = typeof baseCurrency === 'string' ? baseCurrency : 'USD';
+      
+      const rates = await fxRateService.getAllRates(base);
+      
+      res.json({
+        base,
+        rates,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Error fetching FX rates:", error);
+      res.status(500).json({ 
+        message: "Failed to fetch FX rates",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+  
+  // Get specific FX rate (public)
+  app.get('/api/fx-rates/:baseCurrency/:quoteCurrency', async (req, res) => {
+    try {
+      const { baseCurrency, quoteCurrency } = req.params;
+      
+      const rate = await fxRateService.getRate(
+        baseCurrency.toUpperCase(), 
+        quoteCurrency.toUpperCase()
+      );
+      
+      res.json({
+        base: baseCurrency.toUpperCase(),
+        quote: quoteCurrency.toUpperCase(),
+        rate,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Error fetching FX rate:", error);
+      res.status(500).json({ 
+        message: "Failed to fetch FX rate",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+  
+  // Warm FX rate cache (admin only)
+  app.post('/api/admin/fx-rates/warm-cache', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      await fxRateService.warmCache();
+      
+      res.json({ 
+        message: "FX rate cache warmed successfully",
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Error warming FX cache:", error);
+      res.status(500).json({ 
+        message: "Failed to warm FX cache",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+  
+  // Cleanup old FX rates (admin only)
+  app.post('/api/admin/fx-rates/cleanup', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const { daysToKeep } = req.body;
+      const days = typeof daysToKeep === 'number' ? daysToKeep : 30;
+      
+      await fxRateService.cleanupOldRates(days);
+      
+      res.json({ 
+        message: `FX rates older than ${days} days cleaned up successfully`,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Error cleaning up FX rates:", error);
+      res.status(500).json({ 
+        message: "Failed to cleanup FX rates",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+  
+  // Warm cache on server startup
+  console.log("[FX] Initializing FX rate service...");
+  fxRateService.warmCache().catch((error) => {
+    console.warn("[FX] Failed to warm cache on startup, will retry on first request:", error.message);
   });
 
   const httpServer = createServer(app);
