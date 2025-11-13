@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
-import { Coins, TrendingUp, Users, Shield, ArrowRight, Flame } from "lucide-react";
+import { Coins, TrendingUp, Users, Shield, ArrowRight, Flame, DollarSign } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 interface TokenomicsStats {
   maxSupply: string;
@@ -15,6 +16,9 @@ interface TokenomicsStats {
 }
 
 export default function Home() {
+  const { user } = useAuth();
+  const isAdmin = user?.claims?.role === 'admin';
+  
   const { data: stats } = useQuery<TokenomicsStats>({
     queryKey: ["/api/stats/tokenomics"],
   });
@@ -35,6 +39,11 @@ export default function Home() {
           </nav>
           
           <div className="flex items-center gap-2">
+            {isAdmin && (
+              <Link href="/admin">
+                <Button variant="ghost" size="sm" data-testid="button-admin">Admin</Button>
+              </Link>
+            )}
             <Link href="/api/login">
               <Button variant="outline" size="sm" data-testid="button-login">Agent Login</Button>
             </Link>
@@ -55,7 +64,7 @@ export default function Home() {
               </h1>
               <p className="text-xl text-muted-foreground" data-testid="text-hero-description">
                 Trusted agent network for buying Tkoin to play and redeeming your winnings back to fiat. 
-                2% burn mechanism on all deposits, 100M max supply.
+                1% burn mechanism on all deposits (configurable), 100M max supply.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link href="#agents">

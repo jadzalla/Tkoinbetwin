@@ -2,7 +2,13 @@
  * Automated Burn Service
  * 
  * Periodically harvests and burns withheld transfer fees to maintain
- * the 2% burn mechanism. This service should run as a background job.
+ * the deflationary burn mechanism (default 1%, configurable 0-2% via system_config).
+ * 
+ * Note: The actual burn rate is enforced at the blockchain level via Token-2022
+ * transfer fee extension. This service simply harvests and burns the withheld fees.
+ * The system_config burn_rate setting is used for frontend display and calculations.
+ * 
+ * This service should run as a background job.
  */
 
 import { Connection, Keypair, PublicKey } from '@solana/web3.js';
@@ -17,6 +23,7 @@ import {
 } from '@solana/spl-token';
 import { db } from '../db';
 import { auditLogs } from '@shared/schema';
+import { storage } from '../storage';
 
 export class BurnService {
   private connection: Connection;
@@ -70,6 +77,20 @@ export class BurnService {
   }
 
   /**
+   * Get current burn rate from system config
+   */
+  private async getBurnRate(): Promise<number> {
+    try {
+      const config = await storage.getAllSystemConfig();
+      const burnRateConfig = config.find(c => c.key === 'burn_rate');
+      return burnRateConfig?.value || 100; // Default to 1% (100 basis points)
+    } catch (error) {
+      console.warn('⚠️  Could not fetch burn_rate from config, using default 1%');
+      return 100;
+    }
+  }
+
+  /**
    * Execute burn process once
    */
   private async executeBurn(): Promise<void> {
@@ -77,6 +98,11 @@ export class BurnService {
       console.log('\n🔥 [Burn Service] Starting burn cycle...');
       
       const startTime = Date.now();
+      
+      // Get current configured burn rate for logging/reporting
+      const configuredBurnRate = await this.getBurnRate();
+      const burnRatePercent = configuredBurnRate / 100;
+      console.log(`   📋 Configured burn rate: ${configuredBurnRate} basis points (${burnRatePercent}%)`);
 
       // Ensure treasury token account exists
       const treasuryTokenAccount = await getAssociatedTokenAddress(
@@ -245,6 +271,8 @@ export class BurnService {
               amountBurned: burnedAmount,
               supplyBefore: supplyBefore / (10 ** mintInfo.decimals),
               supplyAfter: supplyAfter / (10 ** mintInfo.decimals),
+              configuredBurnRateBasisPoints: configuredBurnRate,
+              configuredBurnRatePercent: burnRatePercent,
               timestamp: new Date().toISOString(),
               executionTimeMs: Date.now() - startTime,
             },

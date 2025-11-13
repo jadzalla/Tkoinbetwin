@@ -20,12 +20,13 @@ A complete Solana Token-2022 ecosystem integrating with the 1-Stake/BetWin gamin
 
 - **Max Supply**: 100,000,000 TKOIN
 - **Soft-Peg**: 1 TKOIN = 100 Credits (configurable)
-- **Burn Mechanism**: 2% burn on all deposits to treasury wallet
-- **Transfer Fees**: Configurable via Token-2022 extension
+- **Burn Mechanism**: 1% burn on all deposits to treasury wallet (configurable 0-2% via system_config)
+- **Transfer Fees**: Implemented via Token-2022 extension, adjustable by admins
 - **Commission Tiers**:
   - Bronze: < 1,000 TKOIN minted
   - Silver: 1,000 - 5,000 TKOIN
   - Gold: > 5,000 TKOIN
+- **Deflationary Levers**: Base burn rate + future buyback program + agent staking + promotional events
 
 ### Agent System
 
@@ -54,14 +55,14 @@ A complete Solana Token-2022 ecosystem integrating with the 1-Stake/BetWin gamin
 
 **Agent replenishes inventory:**
 - Agent deposits USDT/USDC/EURt to treasury
-- 2% burn applied automatically
+- 1% burn applied automatically (configurable)
 - Tkoin credited to agent inventory
 - Transaction recorded
 
 #### 2. User Plays & Wins
 - User deposits Tkoin to 1Stake platform
 - Blockchain monitor detects treasury deposit
-- 2% burn applied, credits calculated  
+- 1% burn applied (configurable), credits calculated  
 - Webhook sent to Laravel platform
 - Credits added to user's account
 - User plays and (hopefully) wins
@@ -97,7 +98,9 @@ A complete Solana Token-2022 ecosystem integrating with the 1-Stake/BetWin gamin
 - **Agents act as market makers**: Buy from users (redemptions) AND sell to users (purchases)
 - **Inventory balancing**: Agents must manage inventory between buying and selling
 - **Commissions on both sides**: Agents earn on purchases AND redemptions
-- **2% burn only on deposits**: When Tkoin enters the treasury wallet (initial mints and game deposits)
+- **1% burn only on deposits**: When Tkoin enters the treasury wallet (agent inventory purchases + user game deposits)
+- **Configurable burn rate**: Admins can adjust from 0-2% based on market conditions via system_config
+- **Future deflationary mechanisms**: Buyback-and-burn program, agent staking, promotional burn events
 
 ## Database Schema
 

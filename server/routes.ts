@@ -248,9 +248,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { value, description } = req.body;
       const adminId = req.user.claims.sub;
       
+      // Validate burn_rate specifically
+      if (key === 'burn_rate') {
+        const burnRate = Number(value);
+        if (isNaN(burnRate) || burnRate < 0 || burnRate > 200) {
+          return res.status(400).json({ 
+            message: "Invalid burn rate. Must be between 0 and 200 basis points (0-2%)" 
+          });
+        }
+      }
+      
       const config = await storage.setSystemConfig(key, value, description, adminId);
       
-      // Log config change
+      // Log config change with old value for audit
       await storage.createAuditLog({
         eventType: 'config_changed',
         entityType: 'config',
@@ -258,7 +268,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         actorId: adminId,
         actorType: 'admin',
         newValue: value,
+        metadata: {
+          description: description || config.description,
+          timestamp: new Date().toISOString(),
+        },
       });
+      
+      // Special alert for burn_rate changes
+      if (key === 'burn_rate') {
+        console.log(`🔥 [ALERT] Burn rate changed to ${value} basis points (${value / 100}%) by admin ${adminId}`);
+      }
       
       res.json(config);
     } catch (error) {
@@ -274,14 +293,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get public tokenomics stats
   app.get('/api/stats/tokenomics', async (req, res) => {
     try {
+      // Get current burn rate from system config
+      const allConfig = await storage.getAllSystemConfig();
+      const burnRateConfig = allConfig.find(c => c.key === 'burn_rate');
+      const burnRateBasisPoints = burnRateConfig?.value || 100; // Default to 1% if not set
+      const burnRatePercent = (burnRateBasisPoints / 100).toString();
+      
       // TODO: Implement actual stats from blockchain
       // For now, return mock data structure
       const stats = {
         maxSupply: "100000000",
         circulatingSupply: "0",
         totalBurned: "0",
-        burnRate: "2",
-        conversionRate: "100",
+        burnRate: burnRatePercent, // Now uses configurable rate
+        burnRateBasisPoints: burnRateBasisPoints,
+        conversionRate: "100", // 1 TKOIN = 100 Credits
         activeAgents: await storage.getAllAgents({ status: 'active' }).then(a => a.length),
       };
       

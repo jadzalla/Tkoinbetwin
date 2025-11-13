@@ -4,7 +4,7 @@
  * 
  * This script deploys the Tkoin token on Solana with:
  * - Token-2022 standard (latest SPL token implementation)
- * - Transfer fee extension (2% burn on deposits)
+ * - Transfer fee extension (1% burn on deposits - configurable via system config)
  * - 100,000,000 max supply
  * - 8 decimal places
  * 
@@ -26,7 +26,7 @@ const TOKEN_CONFIG = {
   symbol: 'TKOIN',
   decimals: 8,
   maxSupply: 100_000_000, // 100 million
-  transferFeeBasisPoints: 200, // 2% = 200 basis points
+  transferFeeBasisPoints: 100, // 1% = 100 basis points (configurable via system_config)
   maxTransferFee: BigInt(1_000_000 * 10 ** 8), // 1M TKOIN max fee
 };
 
