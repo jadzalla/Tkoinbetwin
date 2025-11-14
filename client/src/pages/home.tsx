@@ -325,18 +325,18 @@ export default function Home() {
               </Badge>
               
               <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-white" data-testid="heading-hero">
-                P2P Gaming Payment Gateway
+                The Sovereignty Stack
               </h1>
               
               <p className="text-2xl md:text-4xl font-semibold text-purple-200" data-testid="text-hero-tagline">
-                Gamers Play. Agents Profit. Everyone Wins.
+                Foundational liquidity for sovereign digital economies
               </p>
               
               <div className="max-w-3xl mx-auto space-y-4">
                 <p className="text-lg md:text-xl text-white/90" data-testid="text-hero-description">
-                  The first decentralized liquidity network connecting gaming platforms with local payment agents. 
-                  <span className="font-semibold text-purple-200"> Agents earn commissions</span> by providing instant buy/sell liquidity for Tkoin. 
-                  <span className="font-semibold text-purple-200"> Players get seamless</span> access to gaming credits across 6 currencies.
+                  A protocol-layer infrastructure enabling any platform—casinos, metaverses, DAOs—to offer instant fiat-to-token conversion through a shared agent network. 
+                  <span className="font-semibold text-purple-200"> BetWin casino</span> is our flagship integration.
+                  <span className="font-semibold text-purple-200"> Your platform</span> could be next.
                 </p>
                 
                 <div className="flex flex-wrap gap-3 justify-center items-center text-sm text-white/80">
@@ -534,41 +534,41 @@ export default function Home() {
                 </CardContent>
               </Card>
 
-              {/* For Platform */}
+              {/* For Sovereign Platforms */}
               <Card className="hover-elevate">
                 <CardHeader>
                   <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
                     <Shield className="h-6 w-6 text-primary" />
                   </div>
-                  <CardTitle>For Platform</CardTitle>
-                  <CardDescription>Secure, compliant, transparent</CardDescription>
+                  <CardTitle>For Sovereign Platforms</CardTitle>
+                  <CardDescription>Plug into shared liquidity</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="flex items-start gap-3">
                     <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-                      <Shield className="h-3 w-3 text-primary" />
+                      <span className="text-xs font-bold text-primary">1</span>
                     </div>
                     <div>
-                      <p className="font-medium">Blockchain Verified</p>
-                      <p className="text-sm text-muted-foreground">Solana Token-2022, full transparency</p>
+                      <p className="font-medium">Register Platform</p>
+                      <p className="text-sm text-muted-foreground">Get webhook credentials & API access</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
                     <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-                      <Target className="h-3 w-3 text-primary" />
+                      <span className="text-xs font-bold text-primary">2</span>
                     </div>
                     <div>
-                      <p className="font-medium">1% Burn Mechanism</p>
-                      <p className="text-sm text-muted-foreground">Deflationary tokenomics (configurable 0-2%)</p>
+                      <p className="font-medium">Integrate Webhooks</p>
+                      <p className="text-sm text-muted-foreground">Bidirectional credit sync (HMAC-secured)</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
                     <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-                      <Users className="h-3 w-3 text-primary" />
+                      <span className="text-xs font-bold text-primary">3</span>
                     </div>
                     <div>
-                      <p className="font-medium">Agent Verification</p>
-                      <p className="text-sm text-muted-foreground">KYC-approved agents, community ratings</p>
+                      <p className="font-medium">Launch & Scale</p>
+                      <p className="text-sm text-muted-foreground">Instant access to agent network</p>
                     </div>
                   </div>
                 </CardContent>

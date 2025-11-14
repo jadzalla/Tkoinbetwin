@@ -597,6 +597,41 @@ export const burnRebateCredits = pgTable("burn_rebate_credits", {
   orderIdIdx: index("burn_rebate_credits_order_id_idx").on(table.exchangeOrderId),
 }));
 
+// Sovereign Platforms (Multi-Tenant Platform Management)
+export const sovereignPlatforms = pgTable("sovereign_platforms", {
+  id: text("id").primaryKey(), // e.g., 'platform_betwin', 'platform_metaverse_x'
+  
+  // Platform Details
+  name: text("name").notNull(), // Human-readable name
+  displayName: text("display_name"), // Optional display name
+  description: text("description"),
+  
+  // Webhook Configuration
+  webhookUrl: text("webhook_url"), // Platform's webhook endpoint
+  webhookSecret: text("webhook_secret").notNull(), // HMAC secret for signature verification
+  
+  // Status & Visibility
+  isActive: boolean("is_active").notNull().default(true),
+  isPublic: boolean("is_public").notNull().default(false), // Show in public platform directory
+  
+  // Contact & Support
+  contactEmail: text("contact_email"),
+  supportUrl: text("support_url"),
+  
+  // API Configuration
+  apiKey: text("api_key"), // Optional API key for platform-to-Tkoin requests
+  rateLimit: integer("rate_limit").default(1000), // Requests per hour
+  
+  // Metadata
+  metadata: jsonb("metadata"), // Additional platform-specific configuration
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => ({
+  idIdx: index("sovereign_platforms_id_idx").on(table.id),
+  activeIdx: index("sovereign_platforms_active_idx").on(table.isActive),
+  publicIdx: index("sovereign_platforms_public_idx").on(table.isPublic),
+}));
+
 // Zod Schemas for Validation
 
 // System Config
@@ -757,3 +792,11 @@ export const insertBurnRebateCreditSchema = createInsertSchema(burnRebateCredits
 });
 export type InsertBurnRebateCredit = z.infer<typeof insertBurnRebateCreditSchema>;
 export type BurnRebateCredit = typeof burnRebateCredits.$inferSelect;
+
+// Sovereign Platforms
+export const insertSovereignPlatformSchema = createInsertSchema(sovereignPlatforms).omit({ 
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertSovereignPlatform = z.infer<typeof insertSovereignPlatformSchema>;
+export type SovereignPlatform = typeof sovereignPlatforms.$inferSelect;
