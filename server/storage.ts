@@ -578,4 +578,6 @@ export class PostgresStorage implements IStorage {
 }
 
 // Export singleton instance
+// Note: This project uses PostgreSQL via Drizzle ORM exclusively.
+// MemStorage is not supported as the schema requires Drizzle-specific features.
 export const storage = new PostgresStorage();
