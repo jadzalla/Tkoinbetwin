@@ -28,8 +28,8 @@ The frontend utilizes React, TypeScript, Vite, Tailwind CSS, and shadcn/ui. The 
 - **Agent System**: Agents are tiered (Basic, Verified, Premium) with varying daily/monthly transaction limits and commission structures. They manage Tkoin inventory by buying from users (redemptions) and selling to users (purchases), earning commissions on both.
 - **Payment Flows**: Supports bidirectional exchange through agents, including user purchases of Tkoin from agents, user deposits to sovereign platforms, user withdrawals from platforms, and user sales of Tkoin to agents. QR code payments facilitate transactions.
 - **Webhook Infrastructure**: A robust, platform-agnostic webhook delivery system for secure communication with sovereign platforms, featuring per-platform webhook secrets, HMAC-SHA256 signatures, timestamp binding, DoS protection, and exponential backoff retry logic.
-- **Sovereign Platform Management**: Admin interface to register new platforms, manage webhook credentials, and monitor platform-specific transaction volumes.
-- **Authentication & Authorization**: Replit Auth (OpenID Connect) with session management and a three-tier access control system (user, agent, admin).
+- **Sovereign Platform Management**: Admin interface to register new platforms, manage webhook credentials, and monitor platform-specific transaction volumes. **Security Update (Nov 2025)**: Webhook secrets are permanently masked in all API responses (backend maskWebhookSecret) and UI (no reveal/copy functionality) to prevent secret exposure. Secrets must be securely captured during creation/regeneration.
+- **Authentication & Authorization**: Replit Auth (OpenID Connect) with session management and role-based access control. **Updated (Nov 2025)**: Users table now includes `role` enum ('user', 'agent', 'admin'). Admin privileges determined by `user.role === 'admin'` instead of agent status, providing proper separation of concerns. Test admin: admin@tkoin.protocol (role='admin').
 - **Burn Service**: Automated harvest, withdraw, and burn cycle for token management.
 
 ### Feature Specifications
