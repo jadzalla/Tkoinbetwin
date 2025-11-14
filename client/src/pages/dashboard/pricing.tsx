@@ -9,16 +9,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { DollarSign, TrendingUp, TrendingDown, AlertCircle } from "lucide-react";
-import type { Agent } from "@shared/schema";
-
-const SUPPORTED_CURRENCIES = [
-  { code: "PHP", flag: "🇵🇭", name: "Philippine Peso" },
-  { code: "EUR", flag: "🇪🇺", name: "Euro" },
-  { code: "USD", flag: "🇺🇸", name: "US Dollar" },
-  { code: "JPY", flag: "🇯🇵", name: "Japanese Yen" },
-  { code: "GBP", flag: "🇬🇧", name: "British Pound" },
-  { code: "AUD", flag: "🇦🇺", name: "Australian Dollar" },
-];
+import type { Agent, Currency } from "@shared/schema";
 
 interface AgentPricing {
   currency: string;
@@ -47,6 +38,12 @@ export default function Pricing({ agent }: PricingProps) {
   const [askSpreadBps, setAskSpreadBps] = useState(250);
   const [fxBufferBps, setFxBufferBps] = useState(75);
 
+  // Fetch supported currencies
+  const { data: currencies, isLoading: currenciesLoading } = useQuery<Currency[]>({
+    queryKey: ["/api/currencies"],
+    staleTime: 60 * 60 * 1000, // 1 hour
+  });
+
   // Fetch current pricing for selected currency
   const { data: pricing, isLoading } = useQuery<AgentPricing>({
     queryKey: ["/api/agents/me/pricing", selectedCurrency],
@@ -61,6 +58,16 @@ export default function Pricing({ agent }: PricingProps) {
       setFxBufferBps(pricing.fxBufferBps);
     }
   }, [pricing]);
+
+  // Initialize selectedCurrency from first available currency if current selection is invalid
+  useEffect(() => {
+    if (currencies && currencies.length > 0) {
+      const currentExists = currencies.some(c => c.code === selectedCurrency);
+      if (!currentExists) {
+        setSelectedCurrency(currencies[0].code);
+      }
+    }
+  }, [currencies, selectedCurrency]);
 
   // Save configuration mutation
   const saveMutation = useMutation({
@@ -94,7 +101,7 @@ export default function Pricing({ agent }: PricingProps) {
     fxBufferBps !== pricing.fxBufferBps
   );
 
-  const currencyInfo = SUPPORTED_CURRENCIES.find(c => c.code === selectedCurrency);
+  const currencyInfo = currencies?.find(c => c.code === selectedCurrency);
 
   return (
     <div className="space-y-6">
@@ -112,18 +119,14 @@ export default function Pricing({ agent }: PricingProps) {
           <CardDescription>Choose a currency to configure pricing</CardDescription>
         </CardHeader>
         <CardContent>
-          <Select value={selectedCurrency} onValueChange={setSelectedCurrency}>
+          <Select value={selectedCurrency} onValueChange={setSelectedCurrency} disabled={currenciesLoading}>
             <SelectTrigger className="w-full" data-testid="select-currency">
-              <SelectValue />
+              <SelectValue placeholder={currenciesLoading ? "Loading currencies..." : "Select currency"} />
             </SelectTrigger>
             <SelectContent>
-              {SUPPORTED_CURRENCIES.map((currency) => (
-                <SelectItem key={currency.code} value={currency.code}>
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg">{currency.flag}</span>
-                    <span className="font-medium">{currency.code}</span>
-                    <span className="text-muted-foreground">- {currency.name}</span>
-                  </div>
+              {currencies?.map((currency) => (
+                <SelectItem key={currency.code} value={currency.code} data-testid={`currency-option-${currency.code}`}>
+                  {currency.symbol} {currency.code} – {currency.name}
                 </SelectItem>
               ))}
             </SelectContent>

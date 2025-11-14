@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Wallet, QrCode, Clock, CheckCircle2, XCircle, Plus, TrendingDown } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
-import type { Agent } from "@shared/schema";
+import type { Agent, Currency } from "@shared/schema";
 
 interface PaymentRequest {
   id: string;
@@ -29,9 +29,24 @@ export default function Inventory({ agent }: { agent: Agent }) {
   const [fiatAmount, setFiatAmount] = useState("");
   const [currency, setCurrency] = useState("USD");
 
+  const { data: currencies, isLoading: currenciesLoading } = useQuery<Currency[]>({
+    queryKey: ["/api/currencies"],
+    staleTime: 60 * 60 * 1000, // 1 hour
+  });
+
   const { data: paymentRequests, isLoading } = useQuery<PaymentRequest[]>({
     queryKey: ["/api/payment-requests/me"],
   });
+
+  // Initialize currency from first available if current selection is invalid
+  useEffect(() => {
+    if (currencies && currencies.length > 0) {
+      const currentExists = currencies.some(c => c.code === currency);
+      if (!currentExists) {
+        setCurrency(currencies[0].code);
+      }
+    }
+  }, [currencies, currency]);
 
   const createPaymentMutation = useMutation({
     mutationFn: async (data: { fiatAmount: string; currency: string }) => {
@@ -168,17 +183,16 @@ export default function Inventory({ agent }: { agent: Agent }) {
 
             <div>
               <Label htmlFor="currency">Currency</Label>
-              <Select value={currency} onValueChange={setCurrency}>
+              <Select value={currency} onValueChange={setCurrency} disabled={currenciesLoading}>
                 <SelectTrigger id="currency" data-testid="select-currency">
-                  <SelectValue />
+                  <SelectValue placeholder={currenciesLoading ? "Loading..." : "Select currency"} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="USD">USD ($)</SelectItem>
-                  <SelectItem value="EUR">EUR (€)</SelectItem>
-                  <SelectItem value="PHP">PHP (₱)</SelectItem>
-                  <SelectItem value="SGD">SGD (S$)</SelectItem>
-                  <SelectItem value="GBP">GBP (£)</SelectItem>
-                  <SelectItem value="JPY">JPY (¥)</SelectItem>
+                  {currencies?.map((curr) => (
+                    <SelectItem key={curr.code} value={curr.code} data-testid={`currency-option-${curr.code}`}>
+                      {curr.symbol} {curr.code} – {curr.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

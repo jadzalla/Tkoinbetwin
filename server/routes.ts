@@ -376,7 +376,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           silver: agentsByTier.silver || 0,
           gold: agentsByTier.gold || 0,
         },
-        supportedCurrencies: 6, // PHP, EUR, USD, JPY, GBP, AUD
+        supportedCurrencies: (await storage.getCurrencies(true)).length,
       };
       
       res.json(stats);
@@ -426,6 +426,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching agent directory:", error);
       res.status(500).json({ message: "Failed to fetch agent directory" });
+    }
+  });
+
+  // Get supported currencies (public)
+  app.get('/api/currencies', async (req, res) => {
+    try {
+      const currencies = await storage.getCurrencies(true); // Active only
+      res.json(currencies);
+    } catch (error) {
+      console.error("Error fetching currencies:", error);
+      res.status(500).json({ message: "Failed to fetch currencies" });
     }
   });
 
@@ -516,6 +527,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "Failed to cleanup FX rates",
         error: error instanceof Error ? error.message : "Unknown error"
       });
+    }
+  });
+
+  // ========================================
+  // Currency Management (Admin)
+  // ========================================
+
+  // Get all currencies (admin only - includes inactive)
+  app.get('/api/admin/currencies', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const currencies = await storage.getCurrencies(false); // All currencies
+      res.json(currencies);
+    } catch (error) {
+      console.error("Error fetching currencies:", error);
+      res.status(500).json({ message: "Failed to fetch currencies" });
+    }
+  });
+
+  // Create new currency (admin only)
+  app.post('/api/admin/currencies', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { code, name, symbol, decimals, isActive, sortOrder } = req.body;
+
+      // Validate required fields
+      if (!code || !name || !symbol) {
+        return res.status(400).json({ message: "Code, name, and symbol are required" });
+      }
+
+      // Validate code format (2-3 uppercase letters)
+      if (!/^[A-Z]{2,3}$/.test(code.toUpperCase())) {
+        return res.status(400).json({ message: "Currency code must be 2-3 uppercase letters (ISO 4217)" });
+      }
+
+      // Check if currency already exists
+      const existing = await storage.getCurrency(code);
+      if (existing) {
+        return res.status(409).json({ message: "Currency with this code already exists" });
+      }
+
+      const currency = await storage.createCurrency({
+        code: code.toUpperCase(),
+        name,
+        symbol,
+        decimals: decimals ?? 2,
+        isActive: isActive ?? true,
+        sortOrder: sortOrder ?? 0,
+      });
+
+      res.status(201).json(currency);
+    } catch (error) {
+      console.error("Error creating currency:", error);
+      res.status(500).json({ message: "Failed to create currency" });
+    }
+  });
+
+  // Update currency (admin only - handles all updates including toggling isActive)
+  app.patch('/api/admin/currencies/:code', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { code } = req.params;
+      const { name, symbol, decimals, isActive, sortOrder } = req.body;
+
+      const existing = await storage.getCurrency(code);
+      if (!existing) {
+        return res.status(404).json({ message: "Currency not found" });
+      }
+
+      const updates: Partial<typeof existing> = {};
+      if (name !== undefined) updates.name = name;
+      if (symbol !== undefined) updates.symbol = symbol;
+      if (decimals !== undefined) updates.decimals = decimals;
+      if (isActive !== undefined) updates.isActive = isActive;
+      if (sortOrder !== undefined) updates.sortOrder = sortOrder;
+
+      const updated = await storage.updateCurrency(code, updates);
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating currency:", error);
+      res.status(500).json({ message: "Failed to update currency" });
     }
   });
 
