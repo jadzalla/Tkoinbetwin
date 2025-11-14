@@ -421,6 +421,21 @@ export const agentCurrencySettings = pgTable("agent_currency_settings", {
   agentIdIdx: index("agent_currency_settings_agent_id_idx").on(table.agentId),
 }));
 
+// Currencies (Admin-managed supported currencies)
+export const currencies = pgTable("currencies", {
+  code: varchar("code", { length: 3 }).primaryKey(), // ISO 4217 (USD, EUR, etc.)
+  name: text("name").notNull(), // Full name (US Dollar, Euro)
+  symbol: text("symbol").notNull(), // Symbol ($, €, ¥)
+  decimals: integer("decimals").notNull().default(2), // Decimal places (usually 2)
+  isActive: boolean("is_active").notNull().default(true), // Admin can enable/disable
+  sortOrder: integer("sort_order").notNull().default(0), // Display order
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => ({
+  codeIdx: index("currencies_code_idx").on(table.code),
+  activeIdx: index("currencies_active_idx").on(table.isActive),
+}));
+
 // FX Rates (Daily Exchange Rates)
 export const fxRates = pgTable("fx_rates", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -690,6 +705,14 @@ export const insertAgentCurrencySettingsSchema = createInsertSchema(agentCurrenc
 });
 export type InsertAgentCurrencySettings = z.infer<typeof insertAgentCurrencySettingsSchema>;
 export type AgentCurrencySettings = typeof agentCurrencySettings.$inferSelect;
+
+// Currencies
+export const insertCurrencySchema = createInsertSchema(currencies).omit({ 
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertCurrency = z.infer<typeof insertCurrencySchema>;
+export type Currency = typeof currencies.$inferSelect;
 
 // FX Rates
 export const insertFxRateSchema = createInsertSchema(fxRates).omit({ 

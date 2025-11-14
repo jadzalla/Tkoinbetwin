@@ -27,6 +27,8 @@ import type {
   InsertSystemConfig,
   AgentCurrencySettings,
   InsertAgentCurrencySettings,
+  Currency,
+  InsertCurrency,
 } from '@shared/schema';
 import {
   users,
@@ -42,6 +44,7 @@ import {
   promotionalEvents,
   systemConfig,
   agentCurrencySettings,
+  currencies,
 } from '@shared/schema';
 
 // Storage Interface
@@ -130,6 +133,13 @@ export interface IStorage {
   getSystemConfig(key: string): Promise<SystemConfig | undefined>;
   getAllSystemConfig(): Promise<SystemConfig[]>;
   setSystemConfig(key: string, value: any, description?: string, updatedBy?: string): Promise<SystemConfig>;
+  
+  // Currency Operations
+  getCurrencies(activeOnly?: boolean): Promise<Currency[]>;
+  getCurrency(code: string): Promise<Currency | undefined>;
+  createCurrency(currency: InsertCurrency): Promise<Currency>;
+  updateCurrency(code: string, updates: Partial<Currency>): Promise<Currency | undefined>;
+  toggleCurrencyStatus(code: string, isActive: boolean): Promise<Currency | undefined>;
 }
 
 // PostgreSQL Implementation
@@ -618,6 +628,45 @@ export class PostgresStorage implements IStorage {
       }).returning();
       return result[0];
     }
+  }
+
+  // Currency Operations
+  async getCurrencies(activeOnly = false): Promise<Currency[]> {
+    const query = db.select().from(currencies);
+    
+    if (activeOnly) {
+      return query.where(eq(currencies.isActive, true)).orderBy(currencies.sortOrder, currencies.code);
+    }
+    
+    return query.orderBy(currencies.sortOrder, currencies.code);
+  }
+
+  async getCurrency(code: string): Promise<Currency | undefined> {
+    const result = await db.select().from(currencies).where(eq(currencies.code, code.toUpperCase())).limit(1);
+    return result[0];
+  }
+
+  async createCurrency(currency: InsertCurrency): Promise<Currency> {
+    const result = await db.insert(currencies).values({
+      ...currency,
+      code: currency.code.toUpperCase(),
+    }).returning();
+    return result[0];
+  }
+
+  async updateCurrency(code: string, updates: Partial<Currency>): Promise<Currency | undefined> {
+    const result = await db.update(currencies)
+      .set({
+        ...updates,
+        updatedAt: new Date(),
+      })
+      .where(eq(currencies.code, code.toUpperCase()))
+      .returning();
+    return result[0];
+  }
+
+  async toggleCurrencyStatus(code: string, isActive: boolean): Promise<Currency | undefined> {
+    return this.updateCurrency(code, { isActive });
   }
 }
 
