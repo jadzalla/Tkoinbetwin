@@ -994,6 +994,231 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ========================================
+  // Token Management API Routes (Admin Only)
+  // ========================================
+
+  // Get current token configuration
+  app.get('/api/admin/token/config', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { TokenDeployer } = await import('./solana/token-deployer');
+      const deployer = new TokenDeployer();
+      const config = await deployer.getTokenConfig();
+
+      if (!config) {
+        return res.json({ config: null });
+      }
+
+      // Add explorer URLs for convenience
+      const explorerUrl = config.mintAddress && config.mintAddress !== 'DEPLOYMENT_FAILED'
+        ? `https://explorer.solana.com/address/${config.mintAddress}?cluster=devnet`
+        : null;
+
+      const signatureUrl = config.deploymentSignature
+        ? `https://explorer.solana.com/tx/${config.deploymentSignature}?cluster=devnet`
+        : null;
+
+      res.json({
+        config: {
+          ...config,
+          explorerUrl,
+          signatureUrl,
+        },
+      });
+    } catch (error) {
+      console.error('Error fetching token config:', error);
+      res.status(500).json({
+        message: 'Failed to fetch token configuration',
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  });
+
+  // Deploy TKOIN Token-2022
+  app.post('/api/admin/token/deploy', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { TokenDeployer } = await import('./solana/token-deployer');
+      const { solanaCore } = await import('./solana/solana-core');
+
+      // Validate Solana services are configured
+      if (!solanaCore.isReady()) {
+        return res.status(503).json({
+          success: false,
+          errorCode: 'SOLANA_NOT_CONFIGURED',
+          message: 'Solana services not configured. Please configure SOLANA_RPC_URL, SOLANA_TREASURY_WALLET, and SOLANA_TREASURY_PRIVATE_KEY.',
+        });
+      }
+
+      // Validate request body
+      const deploySchema = z.object({
+        tokenName: z.string().min(1).max(32).default('Tkoin'),
+        tokenSymbol: z.string().min(1).max(10).default('TK'),
+        decimals: z.number().int().min(0).max(9).default(6),
+        maxSupply: z.string().regex(/^\d+$/).default('1000000000'),
+        burnRateBasisPoints: z.number().int().min(0).max(10000).default(100),
+        maxBurnRateBasisPoints: z.number().int().min(0).max(10000).default(200),
+        description: z.string().optional(),
+        forceRedeploy: z.boolean().optional().default(false),
+        redeployReason: z.string().optional(),
+      });
+
+      const config = deploySchema.parse(req.body);
+
+      // Check for existing deployment
+      const deployer = new TokenDeployer();
+      const existing = await deployer.getTokenConfig();
+
+      if (existing && existing.deploymentStatus === 'deployed') {
+        if (!config.forceRedeploy) {
+          // Return existing deployment (idempotent)
+          return res.json({
+            success: true,
+            mintAddress: existing.mintAddress,
+            signature: existing.deploymentSignature,
+            message: 'Token already deployed',
+            alreadyDeployed: true,
+          });
+        }
+
+        // Force redeploy requested - log it
+        if (!config.redeployReason) {
+          return res.status(400).json({
+            success: false,
+            errorCode: 'REDEPLOY_REASON_REQUIRED',
+            message: 'Redeployment reason is required when forceRedeploy is true',
+          });
+        }
+
+        await storage.createAuditLog({
+          eventType: 'token_redeploy_requested',
+          entityType: 'token_config',
+          entityId: existing.id,
+          actorId: req.user.claims.sub,
+          actorType: 'admin',
+          metadata: {
+            reason: config.redeployReason,
+            oldMintAddress: existing.mintAddress,
+            timestamp: new Date().toISOString(),
+          },
+        });
+      }
+
+      // Log deployment request
+      await storage.createAuditLog({
+        eventType: 'token_deploy_requested',
+        entityType: 'token_config',
+        entityId: 'pending',
+        actorId: req.user.claims.sub,
+        actorType: 'admin',
+        metadata: {
+          tokenName: config.tokenName,
+          tokenSymbol: config.tokenSymbol,
+          burnRateBasisPoints: config.burnRateBasisPoints,
+          timestamp: new Date().toISOString(),
+        },
+      });
+
+      // Deploy token
+      const result = await deployer.deployToken(config);
+
+      if (result.success) {
+        // Log successful deployment
+        await storage.createAuditLog({
+          eventType: 'token_deploy_succeeded',
+          entityType: 'token_config',
+          entityId: result.configId || 'unknown',
+          actorId: req.user.claims.sub,
+          actorType: 'admin',
+          metadata: {
+            mintAddress: result.mintAddress,
+            signature: result.signature,
+            burnRateBasisPoints: config.burnRateBasisPoints,
+            timestamp: new Date().toISOString(),
+          },
+        });
+
+        res.json({
+          success: true,
+          mintAddress: result.mintAddress,
+          signature: result.signature,
+          explorerUrl: `https://explorer.solana.com/tx/${result.signature}?cluster=devnet`,
+        });
+      } else {
+        // Log failed deployment
+        await storage.createAuditLog({
+          eventType: 'token_deploy_failed',
+          entityType: 'token_config',
+          entityId: 'failed',
+          actorId: req.user.claims.sub,
+          actorType: 'admin',
+          metadata: {
+            error: result.error,
+            timestamp: new Date().toISOString(),
+          },
+        });
+
+        res.status(500).json({
+          success: false,
+          errorCode: 'DEPLOYMENT_FAILED',
+          message: result.error,
+        });
+      }
+    } catch (error) {
+      console.error('Error deploying token:', error);
+
+      // Log unexpected error
+      try {
+        await storage.createAuditLog({
+          eventType: 'token_deploy_failed',
+          entityType: 'token_config',
+          entityId: 'error',
+          actorId: req.user?.claims?.sub || 'unknown',
+          actorType: 'admin',
+          metadata: {
+            error: error instanceof Error ? error.message : 'Unknown error',
+            timestamp: new Date().toISOString(),
+          },
+        });
+      } catch (auditError) {
+        console.error('Failed to log deployment error:', auditError);
+      }
+
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          success: false,
+          errorCode: 'VALIDATION_ERROR',
+          message: 'Invalid request body',
+          errors: error.errors,
+        });
+      }
+
+      res.status(500).json({
+        success: false,
+        errorCode: 'INTERNAL_ERROR',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  });
+
+  // Verify token deployment on-chain
+  app.get('/api/admin/token/verify/:mintAddress', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { mintAddress } = req.params;
+      const { TokenDeployer } = await import('./solana/token-deployer');
+
+      const deployer = new TokenDeployer();
+      const verified = await deployer.verifyDeployment(mintAddress);
+
+      res.json({ verified });
+    } catch (error) {
+      console.error('Error verifying token deployment:', error);
+      res.status(500).json({
+        verified: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  });
+
+  // ========================================
   // Pricing API Routes
   // ========================================
   
