@@ -49,48 +49,24 @@ app.use((req, res, next) => {
 (async () => {
   const server = await registerRoutes(app);
 
-  // Initialize Solana services if configured
-  const solanaRpcUrl = process.env.SOLANA_RPC_URL;
-  const solanaTreasuryWallet = process.env.SOLANA_TREASURY_WALLET;
-  const solanaTreasuryPrivateKey = process.env.SOLANA_TREASURY_PRIVATE_KEY;
-  const solanaMintAddress = process.env.SOLANA_MINT_ADDRESS;
+  // Initialize Solana Core Service
+  try {
+    const { solanaCore } = await import('./solana/solana-core');
+    solanaCore.configure();
 
-  if (solanaRpcUrl && solanaTreasuryWallet && solanaTreasuryPrivateKey && solanaMintAddress) {
-    try {
-      console.log('\n🔗 Initializing Solana services...');
-      
-      const treasuryPrivateKey = JSON.parse(solanaTreasuryPrivateKey);
-      
-      // Initialize Blockchain Monitor (deposit detection)
-      const { initializeBlockchainMonitor } = await import('./services/blockchain-monitor');
-      const blockchainMonitor = initializeBlockchainMonitor(
-        solanaRpcUrl,
-        solanaMintAddress,
-        solanaTreasuryWallet
-      );
-      await blockchainMonitor.start();
-      
-      // Initialize Burn Service (automated fee burning)
-      const { initializeBurnService } = await import('./services/burn-service');
-      const burnService = initializeBurnService(
-        solanaRpcUrl,
-        solanaMintAddress,
-        treasuryPrivateKey
-      );
-      burnService.start(60); // Run every 60 minutes
-      
-      console.log('✅ Solana services initialized successfully\n');
-    } catch (error) {
-      console.error('❌ Failed to initialize Solana services:', error);
-      console.error('   Blockchain monitoring and burn service will not be available');
+    // Test connection if configured
+    if (solanaCore.isReady()) {
+      const connectionTest = await solanaCore.testConnection();
+      if (connectionTest.success) {
+        console.log(`   ✓ Connected to Solana (slot: ${connectionTest.slot})`);
+        const balance = await solanaCore.getTreasuryBalance();
+        console.log(`   ✓ Treasury balance: ${balance.toFixed(4)} SOL\n`);
+      } else {
+        console.warn(`   ⚠️  Connection test failed: ${connectionTest.error}\n`);
+      }
     }
-  } else {
-    console.log('\nℹ️  Solana services not configured (missing environment variables)');
-    console.log('   To enable blockchain monitoring and burn service:');
-    console.log('   - SOLANA_RPC_URL');
-    console.log('   - SOLANA_TREASURY_WALLET');
-    console.log('   - SOLANA_TREASURY_PRIVATE_KEY');
-    console.log('   - SOLANA_MINT_ADDRESS\n');
+  } catch (error) {
+    console.error('❌ Failed to initialize Solana Core:', error);
   }
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
