@@ -90,10 +90,11 @@ export class TokenDeployer {
         tokenName: config.tokenName,
         tokenSymbol: config.tokenSymbol,
         decimals: config.decimals,
-        totalSupply: config.maxSupply,
+        maxSupply: config.maxSupply,
         mintAddress: '', // Will be updated after deployment
         burnRateBasisPoints: config.burnRateBasisPoints,
         maxBurnRateBasisPoints: config.maxBurnRateBasisPoints,
+        treasuryWallet: this.payer.publicKey.toString(),
         description: config.description || '',
         deploymentStatus: 'pending',
         deployedAt: new Date(),
@@ -174,7 +175,6 @@ export class TokenDeployer {
       const [dbRecord] = await db.update(tokenConfig)
         .set({
           mintAddress: mintAddress.toString(),
-          totalSupply: config.maxSupply,
           currentSupply: '0',
           circulatingSupply: '0',
           treasuryWallet: this.payer.publicKey.toString(),
