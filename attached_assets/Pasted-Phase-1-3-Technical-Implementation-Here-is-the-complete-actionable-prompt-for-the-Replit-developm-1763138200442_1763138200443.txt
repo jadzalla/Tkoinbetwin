@@ -1,0 +1,56 @@
+Phase 1-3 Technical Implementation 
+Here is the complete, actionable prompt for the Replit development environment. It is structured to be executed in sequence.
+PHASE 1: The "Protocolization" Sprint 
+Goal: Generalize the backend to support multiple sovereign platforms without breaking 1-Stake.
+bash
+# PHASE 1 TASKS
+# =============
+
+# 1. DATABASE: Create Sovereign Platforms Table
+FILE: `shared/schema.ts`
+ACTION: Append the following schema to the existing definitions:
+
+export const sovereignPlatforms = pgTable('sovereign_platforms', {
+  id: text('id').primaryKey(), // e.g., 'platform_1stake', 'platform_metaverse_x'
+  name: text('name').notNull(),
+  webhookSecret: text('webhook_secret').notNull(),
+  isActive: boolean('is_active').default(true),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+# 2. BACKEND: Refactor Webhook Routes
+FILE: `server/routes.ts`
+ACTIONS:
+  - Locate the 1-Stake specific webhook endpoints (`/api/webhooks/1stake/withdrawal`, etc.)
+  - Refactor them to be platform-agnostic using the new table:
+    - NEW PATH: `POST /api/webhooks/platform/:platformId/withdrawal`
+  - Update the webhook verification logic to:
+    a) Validate the `platformId` exists and `isActive` is true.
+    b) Fetch the platform-specific `webhookSecret` to validate the HMAC signature.
+  - Ensure all webhook payloads include a `platformId` context.
+
+# 3. BACKEND: Create Platform Management API
+ACTIONS:
+  - ADD ENDPOINT: `POST /api/admin/platforms` (Admin only)
+    - Purpose: Register a new sovereign platform.
+    - Body: { `id`, `name` }
+    - Logic: Generates a cryptographically secure `webhookSecret`, saves to DB.
+  - ADD ENDPOINT: `GET /api/admin/platforms` (Admin only)
+  - ADD ENDPOINT: `PUT /api/admin/platforms/:id/toggle` (Admin only) - to activate/deactivate.
+
+# 4. FRONTEND: Update Admin Panel
+FILE: `client/src/pages/admin/`
+ACTIONS:
+  - Create a new section "Sovereign Platforms"
+  - Add a form to register a new platform (calls `/api/admin/platforms`)
+  - Display a list of existing platforms with their status and a toggle button.
+  - Show a masked version of the `webhookSecret` with a "Reveal" button for admins.
+
+# 5. DOCUMENTATION: Create "Integration Guide"
+FILE: `docs/INTEGRATION_GUIDE.md`
+CONTENT: Create a comprehensive guide for third-party platforms to integrate. Include:
+  - How to register as a platform.
+  - Webhook specifications (endpoints, payloads, signing).
+  - API reference for the T-Connect liquidity API.
+  - Best practices and examples.
