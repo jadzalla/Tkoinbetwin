@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
 import { Coins, TrendingUp, Users, Shield, ArrowRight, Flame, DollarSign, Trophy, Medal, Award, Wallet, Target, BarChart3 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { motion, useSpring, useTransform } from "framer-motion";
 
 interface TokenomicsStats {
   maxSupply: string;
@@ -22,6 +23,38 @@ interface TokenomicsStats {
     gold: number;
   };
   supportedCurrencies: number;
+}
+
+// Animated counter component for smooth number transitions
+function AnimatedCounter({ value, suffix = "" }: { value: number; suffix?: string }) {
+  const spring = useSpring(value, { 
+    damping: 20, 
+    stiffness: 50,
+    mass: 0.8
+  });
+  
+  const display = useTransform(spring, (current) => {
+    const formatted = Math.floor(current).toLocaleString();
+    return suffix ? `${formatted}${suffix}` : formatted;
+  });
+
+  return (
+    <motion.div 
+      className="mb-1"
+      style={{
+        fontSize: 'clamp(1.875rem, 2.25rem, 2.25rem)',
+        fontFamily: 'JetBrains Mono, Menlo, Monaco, Consolas, monospace',
+        fontWeight: 700,
+        color: '#ffffff',
+        textAlign: 'center',
+      }}
+      initial={{ opacity: 0, scale: 0.5 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.5 }}
+    >
+      {display}
+    </motion.div>
+  );
 }
 
 export default function Home() {
@@ -62,111 +95,138 @@ export default function Home() {
 
       <main>
         {/* Hero Section */}
-        <section className="relative py-24 md:py-32 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-accent/10" />
-          <div className="container relative px-4 md:px-6">
-            <div className="mx-auto max-w-4xl text-center space-y-6">
-              <Badge variant="outline" className="text-primary border-primary/50" data-testid="badge-status">
-                Token-2022 Powered
+        <section className="relative min-h-[90vh] flex items-center overflow-hidden">
+          {/* Full-bleed gradient nebula background */}
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-900 via-indigo-800 to-purple-950" />
+          
+          {/* Dark wash overlay for text readability */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/40" />
+          
+          {/* Subtle particle animation effect */}
+          <div className="absolute inset-0 opacity-30">
+            <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/30 rounded-full blur-3xl animate-pulse" />
+            <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-indigo-500/30 rounded-full blur-3xl animate-pulse delay-1000" />
+          </div>
+          
+          <div className="container relative px-4 md:px-6 py-24">
+            <div className="mx-auto max-w-5xl text-center space-y-8">
+              <Badge variant="outline" className="bg-white/10 backdrop-blur-md border-white/30 text-white" data-testid="badge-status">
+                Solana Token-2022 Powered
               </Badge>
-              <h1 className="text-5xl md:text-7xl font-bold tracking-tight" data-testid="heading-hero">
-                Tkoin Liquidity Network
+              
+              <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-white" data-testid="heading-hero">
+                P2P Gaming Payment Gateway
               </h1>
-              <p className="text-2xl md:text-3xl font-semibold text-primary" data-testid="text-hero-tagline">
-                Earn as an Agent, Play with Ease
+              
+              <p className="text-2xl md:text-4xl font-semibold text-purple-200" data-testid="text-hero-tagline">
+                Gamers Play. Agents Profit. Everyone Wins.
               </p>
-              <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto" data-testid="text-hero-description">
-                A trusted agent marketplace connecting players with local liquidity providers. 
-                Agents earn commissions by buying and selling Tkoin. Players get instant access to gaming credits. 
-                1% burn mechanism (configurable), 100M max supply.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              
+              <div className="max-w-3xl mx-auto space-y-4">
+                <p className="text-lg md:text-xl text-white/90" data-testid="text-hero-description">
+                  The first decentralized liquidity network connecting gaming platforms with local payment agents. 
+                  <span className="font-semibold text-purple-200"> Agents earn commissions</span> by providing instant buy/sell liquidity for Tkoin. 
+                  <span className="font-semibold text-purple-200"> Players get seamless</span> access to gaming credits across 6 currencies.
+                </p>
+                
+                <div className="flex flex-wrap gap-3 justify-center items-center text-sm text-white/80">
+                  <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full">
+                    <Coins className="h-4 w-4 text-purple-300" />
+                    <span>100M Max Supply</span>
+                  </div>
+                  <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full">
+                    <Flame className="h-4 w-4 text-orange-300" />
+                    <span>1% Burn Rate</span>
+                  </div>
+                  <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full">
+                    <Shield className="h-4 w-4 text-green-300" />
+                    <span>Deflationary Tokenomics</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
                 <Link href="#agents">
-                  <Button size="lg" data-testid="button-find-agent">
+                  <Button size="lg" className="bg-white hover:bg-white/90 text-purple-900 font-semibold" data-testid="button-find-agent">
                     Find an Agent <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
                 <Link href="/apply">
-                  <Button size="lg" variant="outline" data-testid="button-become-liquidity-provider">
-                    Become a Liquidity Provider
+                  <Button size="lg" variant="outline" className="bg-white/10 backdrop-blur-md border-white/30 text-white hover:bg-white/20" data-testid="button-become-liquidity-provider">
+                    Start Earning as an Agent
                   </Button>
                 </Link>
               </div>
             </div>
 
-            {/* Live Marketplace Metrics */}
-            <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-5xl mx-auto">
-              <Card className="hover-elevate" data-testid="card-stat-liquidity">
-                <CardHeader className="pb-2">
-                  <CardDescription>Total Agent Liquidity</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-mono font-bold" data-testid="text-total-liquidity">
-                    {(() => {
+            {/* Live Marketplace Metrics Ticker */}
+            <motion.div 
+              className="mt-20 rounded-2xl p-8 border"
+              style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                backdropFilter: 'blur(12px)',
+                WebkitBackdropFilter: 'blur(12px)',
+                borderColor: 'rgba(255, 255, 255, 0.2)',
+              }}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              data-testid="stats-ticker"
+            >
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+                <div className="text-center" data-testid="stat-liquidity">
+                  <AnimatedCounter 
+                    value={(() => {
                       const value = stats?.totalLiquidity ? Number(stats.totalLiquidity) : 0;
-                      return isNaN(value) ? '0' : value.toLocaleString();
+                      return isNaN(value) ? 0 : value;
                     })()}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">TKOIN</p>
-                </CardContent>
-              </Card>
-              <Card className="hover-elevate" data-testid="card-stat-agents-by-tier">
-                <CardHeader className="pb-2">
-                  <CardDescription>Active Agents</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-mono font-bold mb-2" data-testid="text-active-agents">
-                    {stats?.activeAgents ?? 0}
-                  </div>
-                  <div className="flex gap-2">
-                    <Badge variant="outline" className="text-xs flex items-center gap-1" data-testid="badge-bronze">
-                      <Medal className="h-3 w-3 text-orange-500" />
+                  />
+                  <p className="text-sm text-white/70">TKOIN Liquidity</p>
+                </div>
+
+                <div className="text-center" data-testid="stat-agents">
+                  <AnimatedCounter value={stats?.activeAgents ?? 0} />
+                  <p className="text-sm text-white/70 mb-2">Active Agents</p>
+                  <div className="flex gap-2 justify-center">
+                    <Badge variant="outline" className="bg-white/10 border-white/30 text-white text-xs flex items-center gap-1" data-testid="badge-bronze">
+                      <Medal className="h-3 w-3 text-orange-400" />
                       <span>{stats?.agentsByTier?.bronze ?? 0}</span>
                     </Badge>
-                    <Badge variant="outline" className="text-xs flex items-center gap-1" data-testid="badge-silver">
-                      <Award className="h-3 w-3 text-gray-400" />
+                    <Badge variant="outline" className="bg-white/10 border-white/30 text-white text-xs flex items-center gap-1" data-testid="badge-silver">
+                      <Award className="h-3 w-3 text-gray-300" />
                       <span>{stats?.agentsByTier?.silver ?? 0}</span>
                     </Badge>
-                    <Badge variant="outline" className="text-xs flex items-center gap-1" data-testid="badge-gold">
-                      <Trophy className="h-3 w-3 text-yellow-500" />
+                    <Badge variant="outline" className="bg-white/10 border-white/30 text-white text-xs flex items-center gap-1" data-testid="badge-gold">
+                      <Trophy className="h-3 w-3 text-yellow-300" />
                       <span>{stats?.agentsByTier?.gold ?? 0}</span>
                     </Badge>
                   </div>
-                </CardContent>
-              </Card>
-              <Card className="hover-elevate" data-testid="card-stat-volume">
-                <CardHeader className="pb-2">
-                  <CardDescription>24h Volume</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-mono font-bold" data-testid="text-24h-volume">
-                    {(() => {
+                </div>
+
+                <div className="text-center" data-testid="stat-volume">
+                  <AnimatedCounter 
+                    value={(() => {
                       const value = stats?.volume24h ? Number(stats.volume24h) : 0;
-                      return isNaN(value) ? '0' : value.toLocaleString();
+                      return isNaN(value) ? 0 : value;
                     })()}
+                  />
+                  <p className="text-sm text-white/70">24h Volume (TKOIN)</p>
+                </div>
+
+                <div className="text-center" data-testid="stat-currencies">
+                  <AnimatedCounter value={stats?.supportedCurrencies ?? 6} />
+                  <p className="text-sm text-white/70 mb-2">Currencies</p>
+                  <div className="flex flex-wrap gap-1 justify-center">
+                    <Badge variant="outline" className="bg-white/10 border-white/30 text-white text-xs">PHP</Badge>
+                    <Badge variant="outline" className="bg-white/10 border-white/30 text-white text-xs">EUR</Badge>
+                    <Badge variant="outline" className="bg-white/10 border-white/30 text-white text-xs">USD</Badge>
+                    <Badge variant="outline" className="bg-white/10 border-white/30 text-white text-xs">JPY</Badge>
+                    <Badge variant="outline" className="bg-white/10 border-white/30 text-white text-xs">GBP</Badge>
+                    <Badge variant="outline" className="bg-white/10 border-white/30 text-white text-xs">AUD</Badge>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">TKOIN</p>
-                </CardContent>
-              </Card>
-              <Card className="hover-elevate" data-testid="card-stat-currencies">
-                <CardHeader className="pb-2">
-                  <CardDescription>Supported Currencies</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-mono font-bold mb-2" data-testid="text-currency-count">
-                    {stats?.supportedCurrencies ?? 6}
-                  </div>
-                  <div className="flex flex-wrap gap-1">
-                    <Badge variant="outline" className="text-xs">PHP</Badge>
-                    <Badge variant="outline" className="text-xs">EUR</Badge>
-                    <Badge variant="outline" className="text-xs">USD</Badge>
-                    <Badge variant="outline" className="text-xs">JPY</Badge>
-                    <Badge variant="outline" className="text-xs">GBP</Badge>
-                    <Badge variant="outline" className="text-xs">AUD</Badge>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+                </div>
+              </div>
+            </motion.div>
           </div>
         </section>
 
