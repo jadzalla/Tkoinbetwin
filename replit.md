@@ -36,6 +36,8 @@ The frontend utilizes React, TypeScript, Vite, Tailwind CSS, and shadcn/ui. The 
 
 - **Analytics Page** (`/dashboard/analytics`): Advanced analytics dashboard with transaction volume trends (dual-axis LineChart showing daily TKOIN volume and transaction count with chronological YYYY-MM-DD sorting), currency distribution (PieChart using actual fiatCurrency from payment requests via backend join), customer retention metrics (new vs returning customers with repeat rate calculation), and commission analysis by transaction type (BarChart showing volume vs commission). Backend extended with `/api/agents/me/analytics` endpoint that left-joins transactions with paymentRequests to provide enriched data including fiatCurrency and fiatAmount. Time-range filtering (7d/30d/90d/all) implemented on frontend.
 
+- **Inventory & Funding Page** (`/dashboard/inventory`): Complete payment flow UI with agent balance/limits dashboard, payment request creation form (fiat amount + multi-currency selection), QR code generation using qrcode.react library (QRCodeSVG component), payment request history with status badges (pending/completed/expired/cancelled), collapsible raw JSON data viewer for debugging. Backend endpoints: GET `/api/payment-requests/me` for agent's payment requests, POST `/api/payment-requests` with Zod validation, PricingService integration for automatic Tkoin amount calculation, user-friendly 400 errors for missing pricing configurations, proper decimal handling (.toString() for storage), 5-minute expiry, and comprehensive NaN prevention (frontend isNaN() validation, backend z.number().positive()).
+
 ### System Design Choices
 - **Frontend**: React + TypeScript + Vite + Tailwind CSS + shadcn/ui
 - **Backend**: Node.js + Express + PostgreSQL + Drizzle ORM
