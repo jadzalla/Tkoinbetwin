@@ -643,12 +643,12 @@ export const tokenConfig = pgTable("token_config", {
   tokenSymbol: text("token_symbol").notNull().default("TK"),
   decimals: integer("decimals").notNull().default(9), // Solana standard: 9 decimals
   
-  // Supply Management (ALL VALUES STORED IN BASE UNITS / LAMPORTS)
+  // Supply Management (ALL VALUES STORED IN BASE UNITS / LAMPORTS as STRINGS)
   // Example: 1 TKOIN (9 decimals) = 1,000,000,000 base units
-  // Example: 1B TKOIN = 1,000,000,000,000,000,000 base units
-  maxSupply: decimal("max_supply", { precision: 30, scale: 0 }).notNull(), // Base units
-  currentSupply: decimal("current_supply", { precision: 30, scale: 0 }).notNull().default("0"), // Base units
-  circulatingSupply: decimal("circulating_supply", { precision: 30, scale: 0 }).notNull().default("0"), // Base units
+  // Example: 1B TKOIN = "1000000000000000000" (stored as string for BigInt compatibility)
+  maxSupply: varchar("max_supply", { length: 30 }).notNull(), // Base units as string
+  currentSupply: varchar("current_supply", { length: 30 }).notNull().default("0"), // Base units as string
+  circulatingSupply: varchar("circulating_supply", { length: 30 }).notNull().default("0"), // Base units as string
   
   // Burn Configuration
   burnRateBasisPoints: integer("burn_rate_basis_points").notNull().default(100), // 1% (100 basis points)

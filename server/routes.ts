@@ -6,6 +6,7 @@ import { NotFoundError } from "./errors";
 import { setupAuth, isAuthenticated, isApprovedAgent, isAdmin } from "./replitAuth";
 import { fxRateService } from "./services/fx-rate-service";
 import { PricingService } from "./services/pricing-service";
+import { TOKEN_DECIMALS, TOKEN_MAX_SUPPLY_TOKENS } from "@shared/token-constants";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
@@ -1052,8 +1053,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const deploySchema = z.object({
         tokenName: z.string().min(1).max(32).default('Tkoin'),
         tokenSymbol: z.string().min(1).max(10).default('TK'),
-        decimals: z.number().int().min(0).max(9).default(6),
-        maxSupply: z.string().regex(/^\d+$/).default('1000000000'),
+        decimals: z.number().int().min(0).max(9).default(TOKEN_DECIMALS),
+        maxSupply: z.string().regex(/^\d+$/).default(TOKEN_MAX_SUPPLY_TOKENS),
         burnRateBasisPoints: z.number().int().min(0).max(10000).default(100),
         maxBurnRateBasisPoints: z.number().int().min(0).max(10000).default(200),
         description: z.string().optional(),
