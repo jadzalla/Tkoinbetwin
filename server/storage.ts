@@ -80,6 +80,9 @@ export interface IStorage {
   updateTransaction(id: string, updates: Partial<Transaction>): Promise<Transaction | undefined>;
   recordTransactionWebhookAttempt(id: string, delivered: boolean): Promise<void>;
   
+  // Get agent analytics (joins transactions with payment requests for currency data)
+  getAgentAnalyticsData(agentId: string): Promise<Array<Transaction & { fiatCurrency?: string | null; fiatAmount?: string | null }>>;
+  
   // Deposit Operations
   getDeposit(id: string): Promise<Deposit | undefined>;
   getDepositBySignature(signature: string): Promise<Deposit | undefined>;
@@ -280,6 +283,47 @@ export class PostgresStorage implements IStorage {
     return db.select().from(transactions)
       .where(eq(transactions.agentId, agentId))
       .orderBy(desc(transactions.createdAt));
+  }
+
+  async getAgentAnalyticsData(agentId: string): Promise<Array<Transaction & { fiatCurrency?: string | null; fiatAmount?: string | null }>> {
+    // Join transactions with payment requests to get currency data
+    const results = await db
+      .select({
+        // Explicitly enumerate all transaction fields
+        id: transactions.id,
+        type: transactions.type,
+        agentId: transactions.agentId,
+        userId: transactions.userId,
+        userWallet: transactions.userWallet,
+        tkoinAmount: transactions.tkoinAmount,
+        creditsAmount: transactions.creditsAmount,
+        feeAmount: transactions.feeAmount,
+        commissionAmount: transactions.commissionAmount,
+        burnAmount: transactions.burnAmount,
+        conversionRate: transactions.conversionRate,
+        status: transactions.status,
+        solanaSignature: transactions.solanaSignature,
+        webhookDelivered: transactions.webhookDelivered,
+        webhookAttempts: transactions.webhookAttempts,
+        paymentRequestId: transactions.paymentRequestId,
+        memo: transactions.memo,
+        metadata: transactions.metadata,
+        errorMessage: transactions.errorMessage,
+        createdAt: transactions.createdAt,
+        completedAt: transactions.completedAt,
+        // Additional fields from payment requests
+        fiatCurrency: paymentRequests.fiatCurrency,
+        fiatAmount: paymentRequests.fiatAmount,
+      })
+      .from(transactions)
+      .leftJoin(
+        paymentRequests,
+        eq(transactions.paymentRequestId, paymentRequests.id)
+      )
+      .where(eq(transactions.agentId, agentId))
+      .orderBy(desc(transactions.createdAt));
+
+    return results as Array<Transaction & { fiatCurrency?: string | null; fiatAmount?: string | null }>;
   }
 
   async getTransactionsByUser(userId: string): Promise<Transaction[]> {

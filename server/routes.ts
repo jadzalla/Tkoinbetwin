@@ -152,6 +152,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to fetch transactions" });
     }
   });
+
+  // Get agent analytics data (transactions with currency info from payment requests)
+  app.get('/api/agents/me/analytics', isAuthenticated, isApprovedAgent, async (req: any, res) => {
+    try {
+      const agent = req.agent;
+      const analyticsData = await storage.getAgentAnalyticsData(agent.id);
+      res.json(analyticsData);
+    } catch (error) {
+      console.error("Error fetching analytics data:", error);
+      res.status(500).json({ message: "Failed to fetch analytics data" });
+    }
+  });
   
   // ========================================
   // Admin Routes - Agent Management
