@@ -75,8 +75,6 @@ export default function AdminPlatforms() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingPlatform, setEditingPlatform] = useState<SovereignPlatform | null>(null);
-  const [revealedSecrets, setRevealedSecrets] = useState<Record<string, boolean>>({});
-  const [copiedSecret, setCopiedSecret] = useState<string | null>(null);
 
   const { data: platforms, isLoading: platformsLoading } = useQuery<SovereignPlatform[]>({
     queryKey: ["/api/admin/platforms"],
@@ -220,30 +218,8 @@ export default function AdminPlatforms() {
     setIsEditOpen(true);
   };
 
-  const toggleSecretVisibility = (platformId: string) => {
-    setRevealedSecrets(prev => ({
-      ...prev,
-      [platformId]: !prev[platformId]
-    }));
-  };
-
-  const copyToClipboard = async (text: string | undefined, platformId: string) => {
-    if (!text) {
-      toast({
-        title: "Copy Failed",
-        description: "Secret is not available",
-        variant: "destructive",
-      });
-      return;
-    }
-    await navigator.clipboard.writeText(text);
-    setCopiedSecret(platformId);
-    setTimeout(() => setCopiedSecret(null), 2000);
-    toast({
-      title: "Copied",
-      description: "Webhook secret copied to clipboard",
-    });
-  };
+  // Removed: toggleSecretVisibility and copyToClipboard
+  // Security: Secrets are always masked and never exposed in the UI
 
   const maskSecret = (secret: string | undefined) => {
     if (!secret) return "••••••••";
@@ -564,24 +540,36 @@ export default function AdminPlatforms() {
                       <TableCell data-testid={`text-secret-${platform.id}`}>
                         <div className="flex items-center gap-2">
                           <code className="text-xs font-mono">
-                            {revealedSecrets[platform.id] ? platform.webhookSecret : maskSecret(platform.webhookSecret)}
+                            {maskSecret(platform.webhookSecret)}
                           </code>
                           <div className="flex gap-1">
                             <Button
                               size="sm"
                               variant="ghost"
-                              onClick={() => toggleSecretVisibility(platform.id)}
+                              onClick={() => {
+                                toast({
+                                  title: "Security Notice",
+                                  description: "Webhook secrets are always masked for security. Raw secrets are never exposed in the UI.",
+                                  variant: "default",
+                                });
+                              }}
                               data-testid={`button-toggle-secret-${platform.id}`}
                             >
-                              {revealedSecrets[platform.id] ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                              <Eye className="h-3 w-3" />
                             </Button>
                             <Button
                               size="sm"
                               variant="ghost"
-                              onClick={() => copyToClipboard(platform.webhookSecret, platform.id)}
+                              onClick={() => {
+                                toast({
+                                  title: "Cannot Copy Masked Secret",
+                                  description: "For security, masked secrets cannot be copied. If you need the full secret, regenerate it and capture it during setup.",
+                                  variant: "destructive",
+                                });
+                              }}
                               data-testid={`button-copy-secret-${platform.id}`}
                             >
-                              {copiedSecret === platform.id ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+                              <Copy className="h-3 w-3" />
                             </Button>
                           </div>
                         </div>

@@ -701,12 +701,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin Routes - Sovereign Platform Management
   // ========================================
 
+  // Helper function to mask webhook secrets
+  const maskWebhookSecret = (secret: string | null): string => {
+    if (!secret || secret.length < 8) return "••••••••";
+    return secret.substring(0, 4) + "•".repeat(secret.length - 8) + secret.substring(secret.length - 4);
+  };
+
   // List all sovereign platforms (admin only)
   app.get('/api/admin/platforms', isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const activeOnly = req.query.activeOnly === 'true';
       const platforms = await storage.getAllSovereignPlatforms(activeOnly);
-      res.json(platforms);
+      
+      // Mask webhook secrets before sending to frontend (security: never expose raw secrets)
+      const maskedPlatforms = platforms.map(platform => ({
+        ...platform,
+        webhookSecret: maskWebhookSecret(platform.webhookSecret),
+      }));
+      
+      res.json(maskedPlatforms);
     } catch (error) {
       console.error("Error fetching platforms:", error);
       res.status(500).json({ message: "Failed to fetch platforms" });
@@ -775,7 +788,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         },
       });
 
-      res.status(201).json(platform);
+      // Mask webhook secret before sending to frontend (security: never expose raw secrets)
+      const response = {
+        ...platform,
+        webhookSecret: maskWebhookSecret(platform.webhookSecret),
+      };
+      
+      res.status(201).json(response);
     } catch (error) {
       // Handle duplicate platform ID (unique constraint violation)
       if (error instanceof Error && 'code' in error && error.code === '23505') {
@@ -848,7 +867,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         },
       });
 
-      res.json(updated);
+      // Mask webhook secret before sending to frontend (security: never expose raw secrets)
+      const response = {
+        ...updated,
+        webhookSecret: maskWebhookSecret(updated.webhookSecret),
+      };
+
+      res.json(response);
     } catch (error) {
       if (error instanceof NotFoundError) {
         return res.status(404).json({ message: error.message });
@@ -899,7 +924,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         },
       });
 
-      res.json(updated);
+      // Mask webhook secret before sending to frontend (security: never expose raw secrets)
+      const response = {
+        ...updated,
+        webhookSecret: maskWebhookSecret(updated.webhookSecret),
+      };
+
+      res.json(response);
     } catch (error) {
       if (error instanceof NotFoundError) {
         return res.status(404).json({ message: error.message });
