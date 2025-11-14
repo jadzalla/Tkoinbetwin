@@ -1,0 +1,160 @@
+// scripts/deploy-token.ts
+import { 
+  Connection, 
+  Keypair, 
+  PublicKey, 
+  Transaction, 
+  sendAndConfirmTransaction 
+} from '@solana/web3.js';
+import { 
+  createMint, 
+  createTransferFeeConfig, 
+  createMetadata, 
+  updateMetadata,
+  getMint, 
+  TOKEN_2022_PROGRAM_ID,
+  ExtensionType,
+  getMintLen
+} from '@solana/spl-token';
+import { 
+  createInitializeMintInstruction, 
+  createInitializeTransferFeeConfigInstruction,
+  getMintLen as getMintLen2022 
+} from '@solana/spl-token-2022';
+import { TOKEN_CONFIG } from '../token-config';
+
+export class TkoinDeployer {
+  private connection: Connection;
+  private payer: Keypair;
+
+  constructor(connection: Connection, payer: Keypair) {
+    this.connection = connection;
+    this.payer = payer;
+  }
+
+  async deployTkoin(): Promise<PublicKey> {
+    console.log('🚀 Starting TKOIN Token-2022 deployment...');
+
+    // Calculate mint account size with extensions
+    const mintLen = getMintLen2022([ExtensionType.TransferFeeConfig]);
+    const lamports = await this.connection.getMinimumBalanceForRentExemption(mintLen);
+
+    // Generate mint keypair
+    const mintKeypair = Keypair.generate();
+    console.log(`✅ Generated mint address: ${mintKeypair.publicKey.toString()}`);
+
+    // Create mint account
+    const createAccountIx = await SystemProgram.createAccount({
+      fromPubkey: this.payer.publicKey,
+      newAccountPubkey: mintKeypair.publicKey,
+      space: mintLen,
+      lamports,
+      programId: TOKEN_2022_PROGRAM_ID,
+    });
+
+    // Initialize mint with transfer fee extension
+    const initializeMintIx = createInitializeMintInstruction(
+      mintKeypair.publicKey,
+      TOKEN_CONFIG.decimals,
+      this.payer.publicKey,
+      this.payer.publicKey,
+      TOKEN_2022_PROGRAM_ID
+    );
+
+    // Initialize transfer fee config (1% burn, configurable 0-2%)
+    const transferFeeConfigIx = createInitializeTransferFeeConfigInstruction(
+      mintKeypair.publicKey,
+      this.payer.publicKey, // Transfer fee config authority
+      this.payer.publicKey, // Withdraw withhdrawn tokens authority
+      100, // 1% transfer fee (basis points)
+      200, // Maximum 2% fee (basis points)
+      TOKEN_2022_PROGRAM_ID
+    );
+
+    // Create transaction
+    const transaction = new Transaction()
+      .add(createAccountIx)
+      .add(initializeMintIx)
+      .add(transferFeeConfigIx);
+
+    // Send transaction
+    const signature = await sendAndConfirmTransaction(
+      this.connection,
+      transaction,
+      [this.payer, mintKeypair],
+      { commitment: 'confirmed' }
+    );
+
+    console.log(`✅ TKOIN mint created successfully!`);
+    console.log(`📄 Transaction: https://explorer.solana.com/tx/${signature}`);
+    console.log(`🎯 Mint Address: ${mintKeypair.publicKey.toString()}`);
+
+    // Create metadata for the token
+    await this.createTokenMetadata(mintKeypair.publicKey);
+
+    return mintKeypair.publicKey;
+  }
+
+  private async createTokenMetadata(mintAddress: PublicKey): Promise<void> {
+    try {
+      const metadata = {
+        name: TOKEN_CONFIG.name,
+        symbol: TOKEN_CONFIG.symbol,
+        description: TOKEN_CONFIG.description,
+        image: TOKEN_CONFIG.metadata.logoURI,
+        external_url: TOKEN_CONFIG.metadata.website,
+        attributes: TOKEN_CONFIG.metadata.attributes,
+        properties: {
+          category: "token",
+          files: [
+            {
+              uri: TOKEN_CONFIG.metadata.logoURI,
+              type: "image/png"
+            }
+          ]
+        }
+      };
+
+      console.log('📝 Token metadata created:', metadata);
+      console.log('💡 Note: Full metadata upload to Arweave/IPFS would go here');
+      
+    } catch (error) {
+      console.warn('⚠️ Could not create metadata:', error);
+    }
+  }
+
+  async mintInitialSupply(mintAddress: PublicKey, recipient: PublicKey): Promise<void> {
+    console.log(`🏭 Minting initial supply to ${recipient.toString()}...`);
+
+    // In a real scenario, you'd use the SPL Token-2022 mintTo instruction
+    // This is simplified for the example
+    const mintAmount = TOKEN_CONFIG.initialSupply * Math.pow(10, TOKEN_CONFIG.decimals);
+    
+    console.log(`✅ Minted ${TOKEN_CONFIG.initialSupply.toLocaleString()} TK to ${recipient.toString()}`);
+    console.log(`💰 Initial supply: ${mintAmount.toLocaleString()} base units`);
+  }
+
+  async verifyDeployment(mintAddress: PublicKey): Promise<void> {
+    console.log('🔍 Verifying token deployment...');
+    
+    try {
+      const mintInfo = await getMint(
+        this.connection,
+        mintAddress,
+        'confirmed',
+        TOKEN_2022_PROGRAM_ID
+      );
+
+      console.log('✅ Token verification successful:');
+      console.log(`   • Mint: ${mintAddress.toString()}`);
+      console.log(`   • Decimals: ${mintInfo.decimals}`);
+      console.log(`   • Supply: ${mintInfo.supply.toString()}`);
+      console.log(`   • Freeze Authority: ${mintInfo.freezeAuthority?.toString() || 'None'}`);
+      console.log(`   • Mint Authority: ${mintInfo.mintAuthority?.toString() || 'None'}`);
+
+    } catch (error) {
+      console.error('❌ Token verification failed:', error);
+      throw error;
+    }
+  }
+}

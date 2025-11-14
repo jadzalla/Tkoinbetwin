@@ -20,6 +20,16 @@ import {
   TrendingDown,
   DollarSign,
 } from "lucide-react";
+import { 
+  TOKEN_NAME, 
+  TOKEN_SYMBOL, 
+  TOKEN_DECIMALS, 
+  TOKEN_MAX_SUPPLY_TOKENS,
+  TOKEN_BURN_RATE_BP,
+  TOKEN_MAX_BURN_RATE_BP,
+  TOKEN_DESCRIPTION
+} from "@shared/token-constants";
+import { formatBaseUnits } from "@shared/token-utils";
 
 interface TokenConfig {
   id: string;
@@ -70,13 +80,13 @@ export default function AdminToken() {
       setIsDeploying(true);
       try {
         const response = await apiRequest("POST", "/api/admin/token/deploy", {
-          tokenName: "Tkoin",
-          tokenSymbol: "TK",
-          decimals: 6,
-          maxSupply: "1000000000",
-          burnRateBasisPoints: 100, // 1%
-          maxBurnRateBasisPoints: 200, // 2%
-          description: "Tkoin Protocol - Sovereignty Stack liquidity token",
+          tokenName: TOKEN_NAME,
+          tokenSymbol: TOKEN_SYMBOL,
+          decimals: TOKEN_DECIMALS,
+          maxSupply: TOKEN_MAX_SUPPLY_TOKENS,
+          burnRateBasisPoints: TOKEN_BURN_RATE_BP,
+          maxBurnRateBasisPoints: TOKEN_MAX_BURN_RATE_BP,
+          description: TOKEN_DESCRIPTION,
         });
         const result = await response.json();
         return result as DeploymentResult;
@@ -150,12 +160,6 @@ export default function AdminToken() {
     }
   };
 
-  const formatSupply = (supply: string, decimals: number) => {
-    if (!supply || supply === '0') return '0';
-    const num = parseFloat(supply) / Math.pow(10, decimals);
-    return num.toLocaleString(undefined, { maximumFractionDigits: 2 });
-  };
-
   return (
     <div className="container mx-auto p-6 max-w-7xl">
       {/* Header */}
@@ -192,23 +196,23 @@ export default function AdminToken() {
               <div className="grid grid-cols-2 gap-4 p-4 bg-muted rounded-lg">
                 <div>
                   <div className="text-sm text-muted-foreground">Token Name</div>
-                  <div className="font-semibold">Tkoin</div>
+                  <div className="font-semibold">{TOKEN_NAME}</div>
                 </div>
                 <div>
                   <div className="text-sm text-muted-foreground">Symbol</div>
-                  <div className="font-semibold">TK</div>
+                  <div className="font-semibold">{TOKEN_SYMBOL}</div>
                 </div>
                 <div>
                   <div className="text-sm text-muted-foreground">Decimals</div>
-                  <div className="font-semibold">6</div>
+                  <div className="font-semibold">{TOKEN_DECIMALS}</div>
                 </div>
                 <div>
                   <div className="text-sm text-muted-foreground">Max Supply</div>
-                  <div className="font-semibold">1,000,000,000 TK</div>
+                  <div className="font-semibold">{parseFloat(TOKEN_MAX_SUPPLY_TOKENS).toLocaleString()} {TOKEN_SYMBOL}</div>
                 </div>
                 <div>
                   <div className="text-sm text-muted-foreground">Burn Rate</div>
-                  <div className="font-semibold">1% (0-2% adjustable)</div>
+                  <div className="font-semibold">{TOKEN_BURN_RATE_BP / 100}% (0-{TOKEN_MAX_BURN_RATE_BP / 100}% adjustable)</div>
                 </div>
                 <div>
                   <div className="text-sm text-muted-foreground">Network</div>
@@ -303,7 +307,7 @@ export default function AdminToken() {
                       </CardHeader>
                       <CardContent>
                         <div className="text-2xl font-bold" data-testid="text-max-supply">
-                          {formatSupply(config.maxSupply, config.decimals)}
+                          {formatBaseUnits(config.maxSupply, config.decimals)}
                         </div>
                         <div className="text-xs text-muted-foreground">TK</div>
                       </CardContent>
@@ -318,7 +322,7 @@ export default function AdminToken() {
                       </CardHeader>
                       <CardContent>
                         <div className="text-2xl font-bold" data-testid="text-current-supply">
-                          {formatSupply(config.currentSupply, config.decimals)}
+                          {formatBaseUnits(config.currentSupply, config.decimals)}
                         </div>
                         <div className="text-xs text-muted-foreground">TK minted</div>
                       </CardContent>

@@ -18,6 +18,7 @@ import { solanaCore } from './solana-core';
 import { db } from '../db';
 import { tokenConfig } from '@shared/schema';
 import { eq } from 'drizzle-orm';
+import { tokensToBaseUnits } from '@shared/token-utils';
 
 export interface TokenDeploymentConfig {
   tokenName: string;
@@ -82,6 +83,12 @@ export class TokenDeployer {
         };
       }
 
+      // Convert human-readable tokens to base units for storage
+      // Example: "1000000000" tokens with 9 decimals = "1000000000000000000" base units
+      const maxSupplyBaseUnits = tokensToBaseUnits(config.maxSupply, config.decimals);
+      console.log(`   Max Supply (tokens): ${config.maxSupply}`);
+      console.log(`   Max Supply (base units): ${maxSupplyBaseUnits}`);
+
       // PHASE 1: Create placeholder row with 'pending' status (atomic lock)
       // Delete any existing rows and insert new pending row
       await db.delete(tokenConfig).execute();
@@ -90,7 +97,7 @@ export class TokenDeployer {
         tokenName: config.tokenName,
         tokenSymbol: config.tokenSymbol,
         decimals: config.decimals,
-        maxSupply: config.maxSupply,
+        maxSupply: maxSupplyBaseUnits, // Store in base units
         mintAddress: '', // Will be updated after deployment
         burnRateBasisPoints: config.burnRateBasisPoints,
         maxBurnRateBasisPoints: config.maxBurnRateBasisPoints,
@@ -98,7 +105,7 @@ export class TokenDeployer {
         description: config.description || '',
         deploymentStatus: 'pending',
         deployedAt: new Date(),
-        transactionSignature: '',
+        deploymentSignature: '',
       });
 
       console.log('✅ Created pending deployment record');
@@ -138,7 +145,7 @@ export class TokenDeployer {
           this.payer.publicKey, // Transfer fee config authority
           this.payer.publicKey, // Withdraw withheld authority
           config.burnRateBasisPoints, // Fee basis points (100 = 1%)
-          BigInt(config.maxSupply), // Maximum fee (use max supply as cap)
+          BigInt(maxSupplyBaseUnits), // Maximum fee in base units (use max supply as cap)
           TOKEN_2022_PROGRAM_ID
         )
       );
@@ -183,7 +190,7 @@ export class TokenDeployer {
           transferFeeConfigAuthority: this.payer.publicKey.toString(),
           deploymentStatus: 'deployed',
           deployedAt: new Date(),
-          transactionSignature: signature,
+          deploymentSignature: signature,
         })
         .where(eq(tokenConfig.deploymentStatus, 'pending'))
         .returning();

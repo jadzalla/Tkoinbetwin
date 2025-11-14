@@ -1,0 +1,19 @@
+{
+  "name": "tkoin-token-deploy",
+  "version": "1.0.0",
+  "description": "TKOIN Token-2022 deployment scripts",
+  "type": "module",
+  "scripts": {
+    "deploy:devnet": "ts-node scripts/deploy.ts",
+    "deploy:mainnet": "ts-node scripts/deploy.ts --mainnet"
+  },
+  "dependencies": {
+    "@solana/web3.js": "^1.87.6",
+    "@solana/spl-token": "^0.3.9",
+    "@solana/spl-token-2022": "^0.2.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3",
+    "ts-node": "^10.9.1"
+  }
+}
