@@ -29,6 +29,8 @@ import type {
   InsertAgentCurrencySettings,
   Currency,
   InsertCurrency,
+  SovereignPlatform,
+  InsertSovereignPlatform,
 } from '@shared/schema';
 import {
   users,
@@ -45,6 +47,7 @@ import {
   systemConfig,
   agentCurrencySettings,
   currencies,
+  sovereignPlatforms,
 } from '@shared/schema';
 
 // Storage Interface
@@ -139,6 +142,13 @@ export interface IStorage {
   getCurrency(code: string): Promise<Currency | undefined>;
   createCurrency(currency: InsertCurrency): Promise<Currency>;
   updateCurrency(code: string, updates: Partial<Currency>): Promise<Currency | undefined>;
+  
+  // Sovereign Platform Operations
+  getSovereignPlatform(id: string): Promise<SovereignPlatform | undefined>;
+  getAllSovereignPlatforms(activeOnly?: boolean): Promise<SovereignPlatform[]>;
+  createSovereignPlatform(platform: InsertSovereignPlatform): Promise<SovereignPlatform>;
+  updateSovereignPlatform(id: string, updates: Partial<SovereignPlatform>): Promise<SovereignPlatform>;
+  toggleSovereignPlatformStatus(id: string, isActive: boolean): Promise<SovereignPlatform>;
 }
 
 // PostgreSQL Implementation
@@ -664,6 +674,72 @@ export class PostgresStorage implements IStorage {
       })
       .where(eq(currencies.code, code.toUpperCase()))
       .returning();
+    return result[0];
+  }
+
+  // Sovereign Platform Operations
+  async getSovereignPlatform(id: string): Promise<SovereignPlatform | undefined> {
+    const result = await db.select()
+      .from(sovereignPlatforms)
+      .where(eq(sovereignPlatforms.id, id))
+      .limit(1);
+    return result[0];
+  }
+
+  async getAllSovereignPlatforms(activeOnly = false): Promise<SovereignPlatform[]> {
+    if (activeOnly) {
+      return db.select()
+        .from(sovereignPlatforms)
+        .where(eq(sovereignPlatforms.isActive, true))
+        .orderBy(desc(sovereignPlatforms.createdAt));
+    }
+    
+    return db.select()
+      .from(sovereignPlatforms)
+      .orderBy(desc(sovereignPlatforms.createdAt));
+  }
+
+  async createSovereignPlatform(platform: InsertSovereignPlatform): Promise<SovereignPlatform> {
+    const result = await db.insert(sovereignPlatforms)
+      .values(platform)
+      .returning();
+    
+    if (!result[0]) {
+      throw new Error(`Failed to create platform '${platform.id}'`);
+    }
+    
+    return result[0];
+  }
+
+  async updateSovereignPlatform(id: string, updates: Partial<SovereignPlatform>): Promise<SovereignPlatform> {
+    const result = await db.update(sovereignPlatforms)
+      .set({
+        ...updates,
+        updatedAt: new Date(),
+      })
+      .where(eq(sovereignPlatforms.id, id))
+      .returning();
+    
+    if (!result[0]) {
+      throw new Error(`Platform '${id}' not found`);
+    }
+    
+    return result[0];
+  }
+
+  async toggleSovereignPlatformStatus(id: string, isActive: boolean): Promise<SovereignPlatform> {
+    const result = await db.update(sovereignPlatforms)
+      .set({
+        isActive,
+        updatedAt: new Date(),
+      })
+      .where(eq(sovereignPlatforms.id, id))
+      .returning();
+    
+    if (!result[0]) {
+      throw new Error(`Platform '${id}' not found`);
+    }
+    
     return result[0];
   }
 }

@@ -698,6 +698,229 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ========================================
+  // Admin Routes - Sovereign Platform Management
+  // ========================================
+
+  // List all sovereign platforms (admin only)
+  app.get('/api/admin/platforms', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const activeOnly = req.query.activeOnly === 'true';
+      const platforms = await storage.getAllSovereignPlatforms(activeOnly);
+      res.json(platforms);
+    } catch (error) {
+      console.error("Error fetching platforms:", error);
+      res.status(500).json({ message: "Failed to fetch platforms" });
+    }
+  });
+
+  // Register a new sovereign platform (admin only)
+  app.post('/api/admin/platforms', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      // Validate request body with Zod
+      const platformSchema = z.object({
+        id: z.string().regex(/^[a-z0-9_-]+$/, "Platform ID must be lowercase alphanumeric with underscores/hyphens only"),
+        name: z.string().min(1, "Platform name is required"),
+        displayName: z.string().optional().nullable(),
+        description: z.string().optional().nullable(),
+        webhookUrl: z.string().url().optional().nullable().or(z.literal("")),
+        contactEmail: z.string().email().optional().nullable().or(z.literal("")),
+        supportUrl: z.string().url().optional().nullable().or(z.literal("")),
+        isPublic: z.boolean().default(false),
+        metadata: z.any().optional().nullable(),
+      });
+
+      const validationResult = platformSchema.safeParse(req.body);
+      
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid request data", 
+          errors: validationResult.error.errors 
+        });
+      }
+
+      const { id, name, displayName, description, webhookUrl, contactEmail, supportUrl, isPublic, metadata } = validationResult.data;
+
+      // Check if platform ID already exists
+      const existing = await storage.getSovereignPlatform(id);
+      if (existing) {
+        return res.status(409).json({ message: "Platform with this ID already exists" });
+      }
+
+      // Generate secure webhook secret (32 bytes = 64 hex chars)
+      const crypto = await import('crypto');
+      const webhookSecret = crypto.randomBytes(32).toString('hex');
+
+      const platform = await storage.createSovereignPlatform({
+        id,
+        name,
+        displayName: displayName || null,
+        description: description || null,
+        webhookUrl: webhookUrl || null,
+        webhookSecret,
+        isActive: true,
+        isPublic: isPublic ?? false,
+        contactEmail: contactEmail || null,
+        supportUrl: supportUrl || null,
+        apiKey: null, // Can be added later if needed
+        rateLimit: 1000,
+        metadata: metadata || null,
+      });
+
+      // Log platform registration
+      await storage.createAuditLog({
+        eventType: 'platform_registered',
+        entityType: 'sovereign_platform',
+        entityId: platform.id,
+        actorId: req.user.claims.sub,
+        actorType: 'admin',
+        metadata: {
+          platformName: platform.name,
+          webhookUrl: platform.webhookUrl,
+        },
+      });
+
+      res.status(201).json(platform);
+    } catch (error) {
+      console.error("Error registering platform:", error);
+      res.status(500).json({ message: "Failed to register platform" });
+    }
+  });
+
+  // Update platform details (admin only)
+  app.patch('/api/admin/platforms/:platformId', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { platformId } = req.params;
+      const { name, displayName, description, webhookUrl, contactEmail, supportUrl, isPublic, metadata, rateLimit } = req.body;
+
+      const existing = await storage.getSovereignPlatform(platformId);
+      if (!existing) {
+        return res.status(404).json({ message: "Platform not found" });
+      }
+
+      const updates: any = {};
+      if (name !== undefined) updates.name = name;
+      if (displayName !== undefined) updates.displayName = displayName;
+      if (description !== undefined) updates.description = description;
+      if (webhookUrl !== undefined) updates.webhookUrl = webhookUrl;
+      if (contactEmail !== undefined) updates.contactEmail = contactEmail;
+      if (supportUrl !== undefined) updates.supportUrl = supportUrl;
+      if (isPublic !== undefined) updates.isPublic = isPublic;
+      if (metadata !== undefined) updates.metadata = metadata;
+      if (rateLimit !== undefined) updates.rateLimit = rateLimit;
+
+      const updated = await storage.updateSovereignPlatform(platformId, updates);
+
+      // Log platform update
+      await storage.createAuditLog({
+        eventType: 'platform_updated',
+        entityType: 'sovereign_platform',
+        entityId: platformId,
+        actorId: req.user.claims.sub,
+        actorType: 'admin',
+        metadata: {
+          updates: Object.keys(updates),
+        },
+      });
+
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating platform:", error);
+      res.status(500).json({ message: "Failed to update platform" });
+    }
+  });
+
+  // Toggle platform active status (admin only)
+  app.put('/api/admin/platforms/:platformId/toggle', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { platformId } = req.params;
+      
+      // Validate request body
+      const toggleSchema = z.object({
+        isActive: z.boolean(),
+      });
+
+      const validationResult = toggleSchema.safeParse(req.body);
+      
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid request data", 
+          errors: validationResult.error.errors 
+        });
+      }
+
+      const { isActive } = validationResult.data;
+
+      // Get existing platform
+      const existing = await storage.getSovereignPlatform(platformId);
+      if (!existing) {
+        return res.status(404).json({ message: "Platform not found" });
+      }
+
+      // Toggle status
+      const updated = await storage.toggleSovereignPlatformStatus(platformId, isActive);
+
+      // Log platform status change (FIXED: was missing)
+      await storage.createAuditLog({
+        eventType: 'platform_toggled',
+        entityType: 'sovereign_platform',
+        entityId: platformId,
+        actorId: req.user.claims.sub,
+        actorType: 'admin',
+        metadata: {
+          platformName: existing.name,
+          previousStatus: existing.isActive,
+          newStatus: isActive,
+        },
+      });
+
+      res.json(updated);
+    } catch (error) {
+      console.error("Error toggling platform status:", error);
+      const message = error instanceof Error ? error.message : "Failed to toggle platform status";
+      const statusCode = message.includes("not found") ? 404 : 500;
+      res.status(statusCode).json({ message });
+    }
+  });
+
+  // Regenerate webhook secret for a platform (admin only - security sensitive)
+  app.post('/api/admin/platforms/:platformId/regenerate-secret', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { platformId } = req.params;
+
+      const existing = await storage.getSovereignPlatform(platformId);
+      if (!existing) {
+        return res.status(404).json({ message: "Platform not found" });
+      }
+
+      // Generate new webhook secret
+      const crypto = await import('crypto');
+      const newWebhookSecret = crypto.randomBytes(32).toString('hex');
+
+      const updated = await storage.updateSovereignPlatform(platformId, {
+        webhookSecret: newWebhookSecret,
+      });
+
+      // Log secret regeneration (security event)
+      await storage.createAuditLog({
+        eventType: 'platform_secret_regenerated',
+        entityType: 'sovereign_platform',
+        entityId: platformId,
+        actorId: req.user.claims.sub,
+        actorType: 'admin',
+        metadata: {
+          platformName: existing.name,
+          reason: 'Manual regeneration by admin',
+        },
+      });
+
+      res.json(updated);
+    } catch (error) {
+      console.error("Error regenerating webhook secret:", error);
+      res.status(500).json({ message: "Failed to regenerate webhook secret" });
+    }
+  });
+
+  // ========================================
   // Pricing API Routes
   // ========================================
   
@@ -1047,12 +1270,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ========================================
-  // Webhook Routes (1Stake Integration)
+  // Webhook Routes (Platform-Agnostic)
   // ========================================
 
-  // Send credit notification to 1Stake (for testing/manual triggering - admin only)
-  app.post('/api/webhooks/send/credit', isAuthenticated, isAdmin, async (req: any, res) => {
+  // Send credit notification to sovereign platform (for testing/manual triggering - admin only)
+  app.post('/api/webhooks/platform/:platformId/credit', isAuthenticated, isAdmin, async (req: any, res) => {
     try {
+      const { platformId } = req.params;
       const { userId, depositId, tkoinAmount, creditsAmount, burnAmount, solanaSignature, memo } = req.body;
 
       if (!userId || !depositId || !tkoinAmount || !creditsAmount) {
@@ -1061,25 +1285,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Get webhook configuration
-      const webhookUrlConfig = await storage.getSystemConfig('1stake_webhook_url');
-      const webhookSecret = process.env.TKOIN_WEBHOOK_SECRET;
+      // Get platform configuration
+      const platform = await storage.getSovereignPlatform(platformId);
 
-      if (!webhookUrlConfig?.value || !webhookSecret) {
-        return res.status(500).json({ 
-          message: "Webhook not configured. Set 1stake_webhook_url in system config and TKOIN_WEBHOOK_SECRET env var" 
+      if (!platform) {
+        return res.status(404).json({ 
+          message: `Platform '${platformId}' not found` 
         });
       }
 
-      const webhookUrl = String(webhookUrlConfig.value);
+      if (!platform.isActive) {
+        return res.status(403).json({ 
+          message: `Platform '${platformId}' is inactive` 
+        });
+      }
+
+      if (!platform.webhookUrl) {
+        return res.status(500).json({ 
+          message: `Platform '${platformId}' has no webhook URL configured` 
+        });
+      }
 
       // Import webhook service
       const { WebhookService } = await import('./services/webhook-service');
 
       // Send webhook
       const result = await WebhookService.sendCreditNotification(
-        webhookUrl,
-        webhookSecret,
+        platform.webhookUrl,
+        platform.webhookSecret,
         {
           userId,
           depositId,
@@ -1095,7 +1328,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.updateDepositWebhookStatus(
         depositId,
         result.success,
-        webhookUrl,
+        platform.webhookUrl,
         {
           attempts: result.attempts,
           statusCode: result.statusCode,
@@ -1113,7 +1346,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         actorId: req.user.claims.sub,
         actorType: 'admin',
         metadata: {
-          webhookUrl,
+          platformId,
+          webhookUrl: platform.webhookUrl,
           success: result.success,
           attempts: result.attempts,
           statusCode: result.statusCode,
@@ -1135,16 +1369,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Receive withdrawal request from 1Stake platform
-  app.post('/api/webhooks/1stake/withdrawal', async (req, res) => {
+  // Receive withdrawal request from sovereign platform
+  app.post('/api/webhooks/platform/:platformId/withdrawal', async (req, res) => {
     try {
+      const { platformId } = req.params;
       const signature = req.headers['x-tkoin-signature'];
       const timestamp = req.headers['x-tkoin-timestamp'];
-      const webhookSecret = process.env.TKOIN_WEBHOOK_SECRET;
 
-      if (!webhookSecret) {
-        console.error("[Webhook] TKOIN_WEBHOOK_SECRET not configured");
-        return res.status(500).json({ message: "Webhook secret not configured" });
+      // Get platform configuration
+      const platform = await storage.getSovereignPlatform(platformId);
+
+      if (!platform) {
+        console.error(`[Webhook] Platform '${platformId}' not found`);
+        return res.status(404).json({ message: "Platform not found" });
+      }
+
+      if (!platform.isActive) {
+        console.error(`[Webhook] Platform '${platformId}' is inactive`);
+        return res.status(403).json({ message: "Platform is inactive" });
       }
 
       if (!signature || typeof signature !== 'string') {
@@ -1168,7 +1410,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Request timestamp expired" });
       }
 
-      // Verify signature (includes timestamp to prevent tampering)
+      // Verify signature using platform-specific secret
       const { WebhookService } = await import('./services/webhook-service');
       const payloadString = JSON.stringify(req.body);
       
@@ -1176,11 +1418,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         payloadString,
         requestTime,
         signature,
-        webhookSecret
+        platform.webhookSecret
       );
 
       if (!isValid) {
-        console.warn("[Webhook] Invalid signature for withdrawal request");
+        console.warn(`[Webhook] Invalid signature for ${platformId} withdrawal request`);
         return res.status(401).json({ message: "Invalid signature" });
       }
 
@@ -1229,7 +1471,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           withdrawal_id,
           credits_amount,
           tkoin_amount: tkoinAmount,
-          source: '1stake',
+          platformId,
         },
       });
 
@@ -1243,6 +1485,124 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Error processing withdrawal webhook:", error);
+      res.status(500).json({ 
+        message: "Failed to process withdrawal request",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Backward compatibility: Old 1-Stake webhook endpoint
+  // This maintains compatibility with existing BetWin integration
+  app.post('/api/webhooks/1stake/withdrawal', async (req, res) => {
+    // Call platform-agnostic withdrawal handler with hardcoded platformId
+    try {
+      const platformId = 'platform_betwin';
+      const signature = req.headers['x-tkoin-signature'];
+      const timestamp = req.headers['x-tkoin-timestamp'];
+
+      const platform = await storage.getSovereignPlatform(platformId);
+
+      if (!platform) {
+        console.error(`[Webhook] Platform '${platformId}' not found`);
+        return res.status(404).json({ message: "Platform not found" });
+      }
+
+      if (!platform.isActive) {
+        console.error(`[Webhook] Platform '${platformId}' is inactive`);
+        return res.status(403).json({ message: "Platform is inactive" });
+      }
+
+      if (!signature || typeof signature !== 'string') {
+        return res.status(401).json({ message: "Missing or invalid signature" });
+      }
+
+      if (!timestamp || typeof timestamp !== 'string') {
+        return res.status(401).json({ message: "Missing or invalid timestamp" });
+      }
+
+      const requestTime = parseInt(timestamp);
+      if (isNaN(requestTime)) {
+        return res.status(401).json({ message: "Invalid timestamp format" });
+      }
+
+      const now = Date.now();
+      const fiveMinutes = 5 * 60 * 1000;
+      
+      if (Math.abs(now - requestTime) > fiveMinutes) {
+        return res.status(401).json({ message: "Request timestamp expired" });
+      }
+
+      const { WebhookService } = await import('./services/webhook-service');
+      const payloadString = JSON.stringify(req.body);
+      
+      const isValid = WebhookService.verifySignature(
+        payloadString,
+        requestTime,
+        signature,
+        platform.webhookSecret
+      );
+
+      if (!isValid) {
+        console.warn(`[Webhook] Invalid signature for ${platformId} withdrawal request`);
+        return res.status(401).json({ message: "Invalid signature" });
+      }
+
+      const { event, data } = req.body;
+
+      if (event !== 'casino.withdrawal.request') {
+        return res.status(400).json({ message: "Invalid event type" });
+      }
+
+      const { user_id, withdrawal_id, credits_amount, user_wallet } = data;
+
+      if (!user_id || !withdrawal_id || !credits_amount || !user_wallet) {
+        return res.status(400).json({ 
+          message: "Missing required fields: user_id, withdrawal_id, credits_amount, user_wallet" 
+        });
+      }
+
+      const conversionConfig = await storage.getSystemConfig('conversion_rate');
+      const conversionRate = conversionConfig?.value ? Number(conversionConfig.value) : 100;
+
+      const tkoinAmount = (parseFloat(credits_amount) / conversionRate).toFixed(8);
+
+      const withdrawal = await storage.createWithdrawal({
+        userId: user_id,
+        userWallet: user_wallet,
+        creditsAmount: credits_amount,
+        tkoinAmount,
+        feeAmount: '0',
+        status: 'pending',
+        cooldownEnd: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      });
+
+      await storage.createAuditLog({
+        eventType: 'webhook_received',
+        entityType: 'withdrawal',
+        entityId: withdrawal.id,
+        actorId: user_id,
+        actorType: 'system',
+        metadata: {
+          event,
+          withdrawal_id,
+          credits_amount,
+          tkoin_amount: tkoinAmount,
+          platformId: 'platform_betwin', // Legacy endpoint
+          legacyRoute: true,
+        },
+      });
+
+      res.json({
+        success: true,
+        withdrawal_id: withdrawal.id,
+        tkoin_amount: tkoinAmount,
+        status: 'pending',
+        cooldown_end: withdrawal.cooldownEnd,
+        message: 'Withdrawal request created. 24-hour cooldown applies.',
+      });
+    } catch (error) {
+      console.error("Error processing withdrawal webhook (legacy route):", error);
       res.status(500).json({ 
         message: "Failed to process withdrawal request",
         error: error instanceof Error ? error.message : "Unknown error"

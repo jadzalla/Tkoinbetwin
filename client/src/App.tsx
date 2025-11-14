@@ -8,6 +8,7 @@ import Dashboard from "@/pages/dashboard";
 import Apply from "@/pages/apply";
 import Admin from "@/pages/admin";
 import AdminCurrencies from "@/pages/admin/currencies";
+import AdminPlatforms from "@/pages/admin/platforms";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -18,6 +19,7 @@ function Router() {
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/dashboard/:rest+" component={Dashboard} />
       <Route path="/apply" component={Apply} />
+      <Route path="/admin/platforms" component={AdminPlatforms} />
       <Route path="/admin/currencies" component={AdminCurrencies} />
       <Route path="/admin" component={Admin} />
       <Route component={NotFound} />
