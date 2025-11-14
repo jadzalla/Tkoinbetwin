@@ -1,4 +1,5 @@
 import { db } from './db';
+import { NotFoundError } from './errors';
 import { eq, and, desc, sql, gte, lte, inArray } from 'drizzle-orm';
 import type {
   User,
@@ -721,7 +722,7 @@ export class PostgresStorage implements IStorage {
       .returning();
     
     if (!result[0]) {
-      throw new Error(`Platform '${id}' not found`);
+      throw new NotFoundError(`Platform '${id}' not found`);
     }
     
     return result[0];
@@ -737,7 +738,7 @@ export class PostgresStorage implements IStorage {
       .returning();
     
     if (!result[0]) {
-      throw new Error(`Platform '${id}' not found`);
+      throw new NotFoundError(`Platform '${id}' not found`);
     }
     
     return result[0];

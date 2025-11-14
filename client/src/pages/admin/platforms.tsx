@@ -227,13 +227,26 @@ export default function AdminPlatforms() {
     }));
   };
 
-  const copyToClipboard = async (text: string, platformId: string) => {
+  const copyToClipboard = async (text: string | undefined, platformId: string) => {
+    if (!text) {
+      toast({
+        title: "Copy Failed",
+        description: "Secret is not available",
+        variant: "destructive",
+      });
+      return;
+    }
     await navigator.clipboard.writeText(text);
     setCopiedSecret(platformId);
     setTimeout(() => setCopiedSecret(null), 2000);
+    toast({
+      title: "Copied",
+      description: "Webhook secret copied to clipboard",
+    });
   };
 
-  const maskSecret = (secret: string) => {
+  const maskSecret = (secret: string | undefined) => {
+    if (!secret) return "••••••••";
     if (secret.length <= 8) return "•".repeat(secret.length);
     return secret.substring(0, 4) + "•".repeat(secret.length - 8) + secret.substring(secret.length - 4);
   };
