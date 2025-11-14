@@ -20,10 +20,10 @@ import {
   getAssociatedTokenAddressSync,
   createAssociatedTokenAccountInstruction,
   createMintToInstruction,
+  getMetadataPointerState,
 } from '@solana/spl-token';
 import {
   createInitializeInstruction,
-  createUpdateFieldInstruction,
   pack,
   TokenMetadata,
 } from '@solana/spl-token-metadata';
@@ -136,15 +136,13 @@ export class TokenDeployer {
       console.log(`✓ Generated mint address: ${mintAddress.toString()}`);
 
       // Prepare metadata for on-chain storage
+      // On-chain: name, symbol, URI (points to off-chain JSON with description, logo, etc.)
       const metadata: TokenMetadata = {
         mint: mintAddress,
         name: config.tokenName,
         symbol: config.tokenSymbol,
         uri: config.metadataUri || '',
-        additionalMetadata: [
-          ['description', config.description || ''],
-          ['logoURI', config.logoUri || '']
-        ]
+        additionalMetadata: [] // Store additional fields in off-chain JSON at URI
       };
 
       // Calculate mint account size with BOTH extensions
@@ -180,24 +178,32 @@ export class TokenDeployer {
         })
       );
 
-      // 2. Initialize MetadataPointer extension (MUST be before mint initialization)
-      transaction.add(
-        createInitializeMetadataPointerInstruction(
-          mintAddress,
-          this.payer.publicKey, // Update authority for metadata
-          mintAddress, // Metadata account (self-referencing - stored on mint)
-          TOKEN_2022_PROGRAM_ID
-        )
-      );
-
-      // 3. Initialize transfer fee config (MUST be before mint initialization)
+      // 2. Initialize transfer fee config (MUST be before mint initialization)
+      // Calculate max fee as percentage of max supply (e.g., 2% of 1B tokens)
+      // This ensures the fee cap respects the burn rate configuration
+      const maxSupplyBigInt = BigInt(maxSupplyBaseUnits);
+      const maxFeePerTransfer = (maxSupplyBigInt * BigInt(config.maxBurnRateBasisPoints)) / BigInt(10_000);
+      
+      console.log(`   Max fee per transfer: ${maxFeePerTransfer.toString()} base units`);
+      console.log(`   Max fee per transfer: ${(Number(maxFeePerTransfer) / (10 ** config.decimals)).toLocaleString()} tokens`);
+      
       transaction.add(
         createInitializeTransferFeeConfigInstruction(
           mintAddress,
           this.payer.publicKey, // Transfer fee config authority
           this.payer.publicKey, // Withdraw withheld authority
           config.burnRateBasisPoints, // Fee basis points (100 = 1%)
-          BigInt(maxSupplyBaseUnits), // Maximum fee in base units (use max supply as cap)
+          maxFeePerTransfer, // Maximum fee cap (percentage of max supply)
+          TOKEN_2022_PROGRAM_ID
+        )
+      );
+
+      // 3. Initialize MetadataPointer extension (MUST be before mint initialization)
+      transaction.add(
+        createInitializeMetadataPointerInstruction(
+          mintAddress,
+          this.payer.publicKey, // Update authority for metadata
+          mintAddress, // Metadata account (self-referencing - stored on mint)
           TOKEN_2022_PROGRAM_ID
         )
       );
@@ -214,6 +220,7 @@ export class TokenDeployer {
       );
 
       // 5. Initialize on-chain metadata (name, symbol, URI)
+      // Note: Additional fields (description, logoURI) stored in off-chain JSON at URI
       transaction.add(
         createInitializeInstruction({
           programId: TOKEN_2022_PROGRAM_ID,
@@ -226,23 +233,6 @@ export class TokenDeployer {
           uri: metadata.uri,
         })
       );
-
-      // 6. Add custom metadata fields (description, logoURI)
-      if (metadata.additionalMetadata && metadata.additionalMetadata.length > 0) {
-        for (const [field, value] of metadata.additionalMetadata) {
-          if (value && value.trim().length > 0) {
-            transaction.add(
-              createUpdateFieldInstruction({
-                programId: TOKEN_2022_PROGRAM_ID,
-                metadata: mintAddress,
-                updateAuthority: this.payer.publicKey,
-                field: field,
-                value: value,
-              })
-            );
-          }
-        }
-      }
 
       // Send and confirm transaction
       console.log('📡 Sending transaction...');
@@ -502,30 +492,56 @@ export class TokenDeployer {
       if (mintInfo.tlvData && mintInfo.tlvData.length > 0) {
         extensions.push('TransferFeeConfig');
         console.log('✅ Transfer Fee extension detected');
-        
-        // Could add more detailed transfer fee config verification here
-        // using getTransferFeeConfig if needed
       }
 
-      // Check for Metadata extension (if MetadataPointer is present)
-      // The metadata is embedded in the mint account's TLV data
-      if (extensions.length > 0) {
-        console.log(`✅ Total extensions: ${extensions.length}`);
-        console.log(`   Active: ${extensions.join(', ')}`);
-      }
-
-      // 5. Verify metadata (if available)
+      // 5. Verify MetadataPointer extension (strict validation)
       try {
-        // Note: Reading metadata from Token-2022 requires special deserialization
-        // This is a basic check that the account has the expected size for metadata
-        const expectedMinSize = 300; // Approximate minimum for mint + extensions + metadata
-        if (accountInfo.data.length >= expectedMinSize) {
-          console.log('✅ Account size suggests metadata is present');
-        } else {
-          console.warn('⚠️  Account size smaller than expected (metadata may be minimal)');
+        const metadataPointer = getMetadataPointerState(mintInfo);
+        
+        if (!metadataPointer || !metadataPointer.metadataAddress) {
+          console.error('❌ MetadataPointer extension not found or not initialized');
+          console.error('   This mint is missing the required metadata extension');
+          return false;
         }
+
+        // Validate metadata address is set to mint (self-referential)
+        if (!metadataPointer.metadataAddress.equals(mint)) {
+          console.error('❌ Metadata address mismatch!');
+          console.error(`   Expected: ${mint.toString()}`);
+          console.error(`   Actual: ${metadataPointer.metadataAddress.toString()}`);
+          return false;
+        }
+
+        // Validate update authority matches expected (treasury wallet)
+        if (!metadataPointer.authority) {
+          console.error('❌ Metadata update authority is missing!');
+          console.error(`   Expected: ${this.payer.publicKey.toString()}`);
+          console.error(`   Actual: None`);
+          return false;
+        }
+
+        if (!metadataPointer.authority.equals(this.payer.publicKey)) {
+          console.error('❌ Metadata update authority mismatch!');
+          console.error(`   Expected: ${this.payer.publicKey.toString()}`);
+          console.error(`   Actual: ${metadataPointer.authority.toString()}`);
+          return false;
+        }
+
+        extensions.push('MetadataPointer');
+        console.log('✅ MetadataPointer extension verified');
+        console.log(`   Metadata Address: ${metadataPointer.metadataAddress.toString()} (self-referential)`);
+        console.log(`   Update Authority: ${metadataPointer.authority?.toString() || 'None'}`);
       } catch (metadataError) {
-        console.warn('⚠️  Could not verify metadata details:', metadataError);
+        console.error('❌ Failed to verify MetadataPointer:', metadataError);
+        return false;
+      }
+
+      // Display total extensions
+      if (extensions.length > 0) {
+        console.log(`✅ Total extensions verified: ${extensions.length}`);
+        console.log(`   Active: ${extensions.join(', ')}`);
+      } else {
+        console.warn('⚠️  No extensions detected!');
       }
 
       // 6. Summary
