@@ -11,6 +11,7 @@ import Pricing from "@/pages/dashboard/pricing";
 import Transactions from "@/pages/dashboard/transactions";
 import Commissions from "@/pages/dashboard/commissions";
 import Analytics from "@/pages/dashboard/analytics";
+import Inventory from "@/pages/dashboard/inventory";
 import type { Agent } from "@shared/schema";
 
 export default function Dashboard() {
@@ -123,12 +124,7 @@ export default function Dashboard() {
               <Route path="/dashboard/transactions" component={() => <Transactions agent={agent!} />} />
               <Route path="/dashboard/commissions" component={() => <Commissions agent={agent!} />} />
               <Route path="/dashboard/analytics" component={() => <Analytics agent={agent!} />} />
-              <Route path="/dashboard/inventory" component={() => (
-                <div className="text-center py-12">
-                  <h2 className="text-2xl font-bold mb-2">Inventory & Funding</h2>
-                  <p className="text-muted-foreground">Coming soon</p>
-                </div>
-              )} />
+              <Route path="/dashboard/inventory" component={() => <Inventory agent={agent!} />} />
               <Route path="/dashboard/settings" component={() => (
                 <div className="text-center py-12">
                   <h2 className="text-2xl font-bold mb-2">Settings</h2>

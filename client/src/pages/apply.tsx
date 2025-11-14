@@ -53,11 +53,7 @@ export default function Apply() {
 
   const applyMutation = useMutation({
     mutationFn: async (data: AgentApplication) => {
-      return await apiRequest("/api/agents/apply", {
-        method: "POST",
-        body: JSON.stringify(data),
-        headers: { "Content-Type": "application/json" },
-      });
+      return await apiRequest("POST", "/api/agents/apply", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });

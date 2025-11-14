@@ -1,5 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import { z } from "zod";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated, isApprovedAgent, isAdmin } from "./replitAuth";
 import { fxRateService } from "./services/fx-rate-service";
@@ -761,6 +762,107 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error configuring pricing:", error);
       res.status(500).json({ 
         message: "Failed to configure pricing",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // ========================================
+  // Payment Request Routes
+  // ========================================
+
+  // Get agent's payment requests
+  app.get('/api/payment-requests/me', isAuthenticated, isApprovedAgent, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const agent = await storage.getAgentByReplitUserId(userId);
+      
+      if (!agent) {
+        return res.status(404).json({ message: "Agent not found" });
+      }
+
+      const requests = await storage.getPaymentRequestsByAgent(agent.id);
+      res.json(requests);
+    } catch (error) {
+      console.error("Error fetching payment requests:", error);
+      res.status(500).json({ 
+        message: "Failed to fetch payment requests",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Create payment request
+  app.post('/api/payment-requests', isAuthenticated, isApprovedAgent, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const agent = await storage.getAgentByReplitUserId(userId);
+      
+      if (!agent) {
+        return res.status(404).json({ message: "Agent not found" });
+      }
+
+      // Validate request body
+      const bodySchema = z.object({
+        fiatAmount: z.number().positive(),
+        currency: z.string().length(3).toUpperCase(), // Exactly 3-character ISO code
+      });
+
+      const validationResult = bodySchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid request body", 
+          errors: validationResult.error.errors 
+        });
+      }
+
+      const { fiatAmount, currency } = validationResult.data;
+
+      // Get pricing for this currency (with proper error handling)
+      let pricing;
+      try {
+        pricing = await pricingService.getAgentPricing(agent.id, currency.toUpperCase());
+      } catch (error) {
+        return res.status(400).json({ 
+          message: `No pricing configuration found for ${currency.toUpperCase()}. Please configure pricing for this currency first.`,
+        });
+      }
+      
+      // Calculate Tkoin amount using ask price (agent selling to user)
+      const tkoinAmount = (fiatAmount / pricing.askPricePer1kTkoin) * 1000;
+
+      // Generate QR code data (simplified - in production would be Solana wallet address + metadata)
+      const qrCodeData = JSON.stringify({
+        agent: agent.id,
+        fiatAmount,
+        currency: currency.toUpperCase(),
+        tkoinAmount,
+        rate: pricing.askPricePer1kTkoin,
+        timestamp: Date.now(),
+      });
+
+      // Set expiry (5 minutes default)
+      const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+
+      // Validate against insertPaymentRequestSchema
+      const paymentData = {
+        agentId: agent.id,
+        tkoinAmount: tkoinAmount.toString(),
+        fiatAmount: fiatAmount.toString(),
+        fiatCurrency: currency.toUpperCase(),
+        exchangeRate: pricing.askPricePer1kTkoin.toString(),
+        qrCodeData,
+        status: "pending" as const,
+        expiresAt,
+      };
+
+      const paymentRequest = await storage.createPaymentRequest(paymentData);
+
+      res.json(paymentRequest);
+    } catch (error) {
+      console.error("Error creating payment request:", error);
+      res.status(500).json({ 
+        message: "Failed to create payment request",
         error: error instanceof Error ? error.message : "Unknown error"
       });
     }
