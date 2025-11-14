@@ -43,10 +43,16 @@ interface TokenConfig {
   burnRateBasisPoints: number;
   maxBurnRateBasisPoints: number;
   treasuryWallet: string;
+  mintAuthority?: string;
+  freezeAuthority?: string;
+  transferFeeConfigAuthority?: string;
   deploymentStatus: 'pending' | 'deployed' | 'failed';
   deployedAt?: Date;
   deploymentSignature?: string;
   deploymentError?: string;
+  metadataUri?: string;
+  logoUrl?: string;
+  description?: string;
   explorerUrl?: string;
   signatureUrl?: string;
 }
@@ -380,6 +386,109 @@ export default function AdminToken() {
                       </CardContent>
                     </Card>
                   </div>
+
+                  {/* Token-2022 Extensions & Metadata */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Token-2022 Extensions & Metadata</CardTitle>
+                      <CardDescription>Solana Token-2022 advanced features</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Extensions */}
+                        <div className="space-y-2">
+                          <div className="text-sm font-semibold">Active Extensions</div>
+                          <div className="flex flex-wrap gap-2">
+                            <Badge variant="outline" data-testid="badge-extension-transfer-fee">
+                              Transfer Fee
+                            </Badge>
+                            <Badge variant="outline" data-testid="badge-extension-metadata">
+                              Metadata Pointer
+                            </Badge>
+                          </div>
+                        </div>
+
+                        {/* Authorities */}
+                        <div className="space-y-2">
+                          <div className="text-sm font-semibold">Authorities</div>
+                          <div className="space-y-1 text-xs">
+                            {config.mintAuthority && (
+                              <div>
+                                <span className="text-muted-foreground">Mint: </span>
+                                <span className="font-mono" data-testid="text-mint-authority">
+                                  {config.mintAuthority.slice(0, 8)}...{config.mintAuthority.slice(-8)}
+                                </span>
+                              </div>
+                            )}
+                            {config.freezeAuthority && (
+                              <div>
+                                <span className="text-muted-foreground">Freeze: </span>
+                                <span className="font-mono" data-testid="text-freeze-authority">
+                                  {config.freezeAuthority.slice(0, 8)}...{config.freezeAuthority.slice(-8)}
+                                </span>
+                              </div>
+                            )}
+                            {config.transferFeeConfigAuthority && (
+                              <div>
+                                <span className="text-muted-foreground">Transfer Fee: </span>
+                                <span className="font-mono" data-testid="text-transfer-fee-authority">
+                                  {config.transferFeeConfigAuthority.slice(0, 8)}...{config.transferFeeConfigAuthority.slice(-8)}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Metadata */}
+                      {(config.metadataUri || config.description || config.logoUrl) && (
+                        <div className="border-t pt-4 space-y-3">
+                          <div className="text-sm font-semibold">On-Chain Metadata</div>
+                          
+                          {config.description && (
+                            <div>
+                              <div className="text-xs text-muted-foreground mb-1">Description</div>
+                              <div className="text-sm" data-testid="text-description">
+                                {config.description}
+                              </div>
+                            </div>
+                          )}
+
+                          {config.metadataUri && (
+                            <div>
+                              <div className="text-xs text-muted-foreground mb-1">Metadata URI</div>
+                              <a
+                                href={config.metadataUri}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs font-mono text-primary hover:underline flex items-center gap-1"
+                                data-testid="link-metadata-uri"
+                              >
+                                {config.metadataUri.slice(0, 40)}...
+                                <ExternalLink className="w-3 h-3" />
+                              </a>
+                            </div>
+                          )}
+
+                          {config.logoUrl && (
+                            <div>
+                              <div className="text-xs text-muted-foreground mb-1">Logo URL</div>
+                              <a
+                                href={config.logoUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs font-mono text-primary hover:underline flex items-center gap-1"
+                                data-testid="link-logo-url"
+                              >
+                                {config.logoUrl.slice(0, 40)}...
+                                <ExternalLink className="w-3 h-3" />
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
 
                   {/* Actions */}
                   <div className="flex gap-2">
