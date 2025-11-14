@@ -29,6 +29,13 @@ The frontend utilizes React, TypeScript, Vite, Tailwind CSS, and shadcn/ui. The 
 - **Homepage**: Displays live marketplace metrics (total liquidity, 24h volume, agents by tier, supported currencies).
 - **Admin Panel**: Provides controls for system configuration, including burn rate adjustment.
 
+#### Agent Portal Features (Implemented - November 2025)
+- **Transactions Page** (`/dashboard/transactions`): Comprehensive transaction history with pagination (10/page), date-range filters (today/7d/30d/90d), transaction type/status filters, search by ID/wallet, detailed transaction cards showing customer info, amounts, rates, commissions earned, and safe decimal formatting for all monetary values.
+
+- **Commissions Page** (`/dashboard/commissions`): Complete commission tracking with breakdown by transaction type, tier progression tracker with visual progress bar and monthly volume calculation, interactive monthly earnings chart (last 6 months) using recharts LineChart with YYYY-MM format for reliable sorting, sortable commission history table, and CSV export with proper escaping for commas/quotes/newlines.
+
+- **Analytics Page** (`/dashboard/analytics`): Advanced analytics dashboard with transaction volume trends (dual-axis LineChart showing daily TKOIN volume and transaction count with chronological YYYY-MM-DD sorting), currency distribution (PieChart using actual fiatCurrency from payment requests via backend join), customer retention metrics (new vs returning customers with repeat rate calculation), and commission analysis by transaction type (BarChart showing volume vs commission). Backend extended with `/api/agents/me/analytics` endpoint that left-joins transactions with paymentRequests to provide enriched data including fiatCurrency and fiatAmount. Time-range filtering (7d/30d/90d/all) implemented on frontend.
+
 ### System Design Choices
 - **Frontend**: React + TypeScript + Vite + Tailwind CSS + shadcn/ui
 - **Backend**: Node.js + Express + PostgreSQL + Drizzle ORM

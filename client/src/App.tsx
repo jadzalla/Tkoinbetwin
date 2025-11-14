@@ -13,7 +13,9 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      {/* Match /dashboard and all nested routes */}
       <Route path="/dashboard" component={Dashboard} />
+      <Route path="/dashboard/:rest+" component={Dashboard} />
       <Route path="/apply" component={Apply} />
       <Route path="/admin" component={Admin} />
       <Route component={NotFound} />
