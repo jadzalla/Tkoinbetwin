@@ -221,16 +221,17 @@ export const isAdmin: RequestHandler = async (req, res, next) => {
   }
   
   try {
-    const agent = await storage.getAgentByReplitUserId(user.claims.sub);
+    // Check user role from database
+    const dbUser = await storage.getUser(user.claims.sub);
     
-    // Check if agent has admin privileges (you can add an isAdmin field to agent schema)
-    if (!agent || agent.status !== 'active') {
+    if (!dbUser) {
+      return res.status(403).json({ message: "User not found" });
+    }
+    
+    if (dbUser.role !== 'admin') {
       return res.status(403).json({ message: "Admin access required" });
     }
     
-    // For now, only specific agents can be admins
-    // You can add an isAdmin boolean field to the agents table
-    (req as any).agent = agent;
     next();
   } catch (error) {
     console.error("Error checking admin status:", error);
