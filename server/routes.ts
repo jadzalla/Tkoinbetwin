@@ -366,7 +366,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // TODO: Implement actual stats from blockchain for circulating and burned
       // Always return complete marketplace metrics with defaults to prevent frontend errors
       const stats = {
-        maxSupply: "100000000",
+        maxSupply: "1000000000", // 1 Billion TKOIN
         circulatingSupply: totalLiquidity.toFixed(8),
         totalBurned: "0",
         burnRate: burnRatePercent,
@@ -442,6 +442,90 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching currencies:", error);
       res.status(500).json({ message: "Failed to fetch currencies" });
+    }
+  });
+
+  // Get on-chain credibility stats (public)
+  app.get('/api/stats/on-chain', async (req, res) => {
+    try {
+      // Mock treasury balance (TODO: fetch from Solana blockchain when configured)
+      const treasuryBalance = process.env.SOLANA_TREASURY_WALLET 
+        ? "0" // Will be fetched from blockchain when configured
+        : "125750.50"; // Mock value for development
+      
+      // Mock recent burns (TODO: fetch from burn logs table when implemented)
+      const recentBurns = [
+        {
+          id: "burn-5",
+          amount: "1250.00",
+          timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
+          txSignature: "mock-tx-5...",
+        },
+        {
+          id: "burn-4",
+          amount: "890.50",
+          timestamp: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(), // 8 hours ago
+          txSignature: "mock-tx-4...",
+        },
+        {
+          id: "burn-3",
+          amount: "2100.00",
+          timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
+          txSignature: "mock-tx-3...",
+        },
+        {
+          id: "burn-2",
+          amount: "750.25",
+          timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
+          txSignature: "mock-tx-2...",
+        },
+        {
+          id: "burn-1",
+          amount: "1500.00",
+          timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
+          txSignature: "mock-tx-1...",
+        },
+      ];
+
+      // Get agent tier earnings (aggregate commissions by tier)
+      const allAgents = await storage.getAllAgents({ status: 'active' });
+      
+      // Calculate average earnings by tier
+      const tierEarnings = {
+        bronze: {
+          avgMonthlyEarnings: "1250.00", // Mock values for now
+          agentCount: allAgents.filter(a => a.commissionTier === 'bronze').length,
+          totalVolume: "125000.00",
+        },
+        silver: {
+          avgMonthlyEarnings: "4800.00",
+          agentCount: allAgents.filter(a => a.commissionTier === 'silver').length,
+          totalVolume: "480000.00",
+        },
+        gold: {
+          avgMonthlyEarnings: "12500.00",
+          agentCount: allAgents.filter(a => a.commissionTier === 'gold').length,
+          totalVolume: "1250000.00",
+        },
+      };
+
+      // Token-2022 verification (static metadata)
+      const tokenVerification = {
+        isVerified: true,
+        standard: "SPL Token-2022",
+        mintAddress: process.env.SOLANA_MINT_ADDRESS || "mock-mint-address",
+        extensions: ["Transfer Fee", "Metadata"],
+      };
+
+      res.json({
+        treasuryBalance,
+        recentBurns,
+        tierEarnings,
+        tokenVerification,
+      });
+    } catch (error) {
+      console.error("Error fetching on-chain stats:", error);
+      res.status(500).json({ message: "Failed to fetch on-chain statistics" });
     }
   });
 

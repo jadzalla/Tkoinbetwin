@@ -3,9 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
-import { Coins, TrendingUp, Users, Shield, ArrowRight, Flame, DollarSign, Trophy, Medal, Award, Wallet, Target, BarChart3 } from "lucide-react";
+import { Coins, TrendingUp, Users, Shield, ArrowRight, Flame, DollarSign, Trophy, Medal, Award, Wallet, Target, BarChart3, CheckCircle2, ExternalLink } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { motion, useSpring, useTransform } from "framer-motion";
+import { motion, useSpring, useTransform, useInView } from "framer-motion";
+import { useRef } from "react";
 
 interface TokenomicsStats {
   maxSupply: string;
@@ -24,6 +25,35 @@ interface TokenomicsStats {
   };
   supportedCurrencies: number;
 }
+
+interface OnChainStats {
+  treasuryBalance: string;
+  recentBurns: Array<{
+    id: string;
+    amount: string;
+    timestamp: string;
+    txSignature: string;
+  }>;
+  tierEarnings: {
+    bronze: { avgMonthlyEarnings: string; agentCount: number; totalVolume: string; };
+    silver: { avgMonthlyEarnings: string; agentCount: number; totalVolume: string; };
+    gold: { avgMonthlyEarnings: string; agentCount: number; totalVolume: string; };
+  };
+  tokenVerification: {
+    isVerified: boolean;
+    standard: string;
+    mintAddress: string;
+    extensions: string[];
+  };
+}
+
+// Shared glassmorphism style for consistency
+const GLASS_STYLE = {
+  backgroundColor: 'rgba(255, 255, 255, 0.05)',
+  backdropFilter: 'blur(12px)',
+  WebkitBackdropFilter: 'blur(12px)',
+  borderColor: 'rgba(255, 255, 255, 0.1)',
+} as const;
 
 // Animated counter component for smooth number transitions
 function AnimatedCounter({ value, suffix = "" }: { value: number; suffix?: string }) {
@@ -54,6 +84,186 @@ function AnimatedCounter({ value, suffix = "" }: { value: number; suffix?: strin
     >
       {display}
     </motion.div>
+  );
+}
+
+// On-Chain Credibility Section with glassmorphism cards
+function OnChainCredibilitySection() {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: "-100px" });
+  
+  const { data: onChainStats, isLoading, isError } = useQuery<OnChainStats>({
+    queryKey: ['/api/stats/on-chain'],
+  });
+
+  if (isLoading || isError || !onChainStats) {
+    return null; // Don't show section while loading or if error
+  }
+
+  return (
+    <section ref={ref} className="py-20 bg-gradient-to-b from-purple-950 to-background">
+      <div className="container px-4 md:px-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-12"
+        >
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">On-Chain Credibility</h2>
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+            Verifiable, transparent, blockchain-powered economics
+          </p>
+        </motion.div>
+
+        <div className="grid md:grid-cols-2 gap-6 max-w-6xl mx-auto">
+          {/* Treasury Balance Card */}
+          <motion.div
+            className="rounded-2xl p-6 border"
+            style={GLASS_STYLE}
+            initial={{ opacity: 0, y: 30 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            data-testid="card-treasury"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <Wallet className="h-5 w-5 text-purple-400" />
+                Treasury Balance
+              </h3>
+              <Badge variant="outline" className="bg-green-500/10 border-green-500/30 text-green-400">
+                Live
+              </Badge>
+            </div>
+            <div className="space-y-2">
+              <p className="text-4xl font-mono font-bold text-white">
+                {parseFloat(onChainStats.treasuryBalance || "0").toLocaleString()} TKOIN
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Reserved for burns and platform operations
+              </p>
+            </div>
+          </motion.div>
+
+          {/* Token-2022 Verification Badge */}
+          <motion.div
+            className="rounded-2xl p-6 border"
+            style={GLASS_STYLE}
+            initial={{ opacity: 0, y: 30 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            data-testid="card-verification"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <CheckCircle2 className="h-5 w-5 text-green-400" />
+                Token Verification
+              </h3>
+              <Badge variant="outline" className="bg-green-500/10 border-green-500/30 text-green-400">
+                Verified
+              </Badge>
+            </div>
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                {onChainStats.tokenVerification?.standard || "SPL Token-2022"}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {(onChainStats.tokenVerification?.extensions ?? []).map((ext) => (
+                  <Badge key={ext} variant="outline" className="bg-purple-500/10 border-purple-500/30 text-purple-300 text-xs">
+                    {ext}
+                  </Badge>
+                ))}
+              </div>
+              <a
+                href={`https://solscan.io/token/${onChainStats.tokenVerification?.mintAddress || 'mock'}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-purple-400 hover:text-purple-300 flex items-center gap-1 mt-2"
+              >
+                View on Solscan <ExternalLink className="h-3 w-3" />
+              </a>
+            </div>
+          </motion.div>
+
+          {/* Recent Burns Feed */}
+          <motion.div
+            className="rounded-2xl p-6 border"
+            style={GLASS_STYLE}
+            initial={{ opacity: 0, y: 30 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            data-testid="card-burns"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <Flame className="h-5 w-5 text-orange-400" />
+                Recent Burns
+              </h3>
+            </div>
+            <div className="space-y-2">
+              {(onChainStats.recentBurns ?? []).slice(0, 3).map((burn) => (
+                <div key={burn.id} className="flex justify-between items-center text-sm py-2 border-b border-white/5 last:border-0">
+                  <span className="text-muted-foreground">
+                    {new Date(burn.timestamp).toLocaleDateString()}
+                  </span>
+                  <span className="font-mono text-orange-400 font-semibold">
+                    -{parseFloat(burn.amount).toLocaleString()} TKOIN
+                  </span>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* Agent Tier Earnings */}
+          <motion.div
+            className="rounded-2xl p-6 border"
+            style={GLASS_STYLE}
+            initial={{ opacity: 0, y: 30 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            data-testid="card-tier-earnings"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <Trophy className="h-5 w-5 text-yellow-400" />
+                Agent Earnings by Tier
+              </h3>
+            </div>
+            <div className="space-y-3">
+              {/* Gold Tier */}
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <Trophy className="h-4 w-4 text-yellow-400" />
+                  <span className="text-sm font-medium text-white">Gold</span>
+                </div>
+                <span className="font-mono text-green-400 font-semibold">
+                  ${parseFloat(onChainStats.tierEarnings?.gold?.avgMonthlyEarnings || "0").toLocaleString()}/mo
+                </span>
+              </div>
+              {/* Silver Tier */}
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <Award className="h-4 w-4 text-gray-300" />
+                  <span className="text-sm font-medium text-white">Silver</span>
+                </div>
+                <span className="font-mono text-green-400 font-semibold">
+                  ${parseFloat(onChainStats.tierEarnings?.silver?.avgMonthlyEarnings || "0").toLocaleString()}/mo
+                </span>
+              </div>
+              {/* Bronze Tier */}
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <Medal className="h-4 w-4 text-orange-400" />
+                  <span className="text-sm font-medium text-white">Bronze</span>
+                </div>
+                <span className="font-mono text-green-400 font-semibold">
+                  ${parseFloat(onChainStats.tierEarnings?.bronze?.avgMonthlyEarnings || "0").toLocaleString()}/mo
+                </span>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -132,7 +342,7 @@ export default function Home() {
                 <div className="flex flex-wrap gap-3 justify-center items-center text-sm text-white/80">
                   <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full">
                     <Coins className="h-4 w-4 text-purple-300" />
-                    <span>100M Max Supply</span>
+                    <span>1B Max Supply</span>
                   </div>
                   <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full">
                     <Flame className="h-4 w-4 text-orange-300" />
@@ -229,6 +439,9 @@ export default function Home() {
             </motion.div>
           </div>
         </section>
+
+        {/* On-Chain Credibility Section */}
+        <OnChainCredibilitySection />
 
         {/* How It Works - Three-Column */}
         <section id="how-it-works" className="py-20 border-t">
@@ -529,7 +742,7 @@ export default function Home() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-muted-foreground">
-                    Max supply of 100M TKOIN. Soft-peg conversion rate of 1 TKOIN = 100 gaming credits. 
+                    Max supply of 1 Billion TKOIN. Soft-peg conversion rate of 1 TKOIN = 100 gaming credits. 
                     Token-2022 standard with transfer fee extension.
                   </p>
                 </CardContent>

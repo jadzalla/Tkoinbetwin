@@ -42,9 +42,7 @@ export default function Apply() {
     resolver: zodResolver(agentApplicationSchema),
     defaultValues: {
       solanaWallet: "",
-      displayName: user?.firstName && user?.lastName 
-        ? `${user.firstName} ${user.lastName}` 
-        : "",
+      displayName: "",
       country: "",
       city: "",
       bio: "",
