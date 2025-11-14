@@ -30,7 +30,42 @@ The frontend utilizes React, TypeScript, Vite, Tailwind CSS, and shadcn/ui. The 
 - **Webhook Infrastructure**: A robust, platform-agnostic webhook delivery system for secure communication with sovereign platforms, featuring per-platform webhook secrets, HMAC-SHA256 signatures, timestamp binding, DoS protection, and exponential backoff retry logic.
 - **Sovereign Platform Management**: Admin interface to register new platforms, manage webhook credentials, and monitor platform-specific transaction volumes. **Security Update (Nov 2025)**: Webhook secrets are permanently masked in all API responses (backend maskWebhookSecret) and UI (no reveal/copy functionality) to prevent secret exposure. Secrets must be securely captured during creation/regeneration.
 - **Authentication & Authorization**: Replit Auth (OpenID Connect) with session management and role-based access control. **Updated (Nov 2025)**: Users table now includes `role` enum ('user', 'agent', 'admin'). Admin privileges determined by `user.role === 'admin'` instead of agent status, providing proper separation of concerns. Test admin: admin@tkoin.protocol (role='admin').
-- **Token Deployment System** (**Implemented Nov 2025**): Complete Token-2022 deployment infrastructure with two-phase commit pattern (pending → deployed/failed), idempotent deployment endpoints, real-time status polling, blockchain verification, and comprehensive audit logging. Admin UI at `/admin/token` provides deployment button, status badges, mint address display, and Solana Explorer integration. Treasury wallet: 953CKYH169xXxaNKVwLT9z9s38TEg1d2pQsY7d1Lv6dD (19.94 SOL on devnet).
+- **Token Deployment System** (**Implemented Nov 2025**): Complete Solana Token-2022 deployment infrastructure with advanced extension support:
+  - **Token-2022 Extensions**:
+    - **Transfer Fee Extension**: Configurable 0-2% burn mechanism (currently 1%) with maximum fee calculation proportional to max supply and burn rate
+    - **Metadata Extension**: On-chain metadata storage using MetadataPointer pointing to mint address (self-referential, optimal). Stores name, symbol, description, and metadata URI directly on-chain
+  - **Technical Specifications**:
+    - Max Supply: 1,000,000,000 TKOIN (1 billion tokens)
+    - Decimals: 9 (Solana standard for SPL tokens)
+    - Burn Rate: 100 basis points (1%, adjustable 0-200 BP)
+    - Maximum Fee: Calculated as `(maxSupply * burnRateBasisPoints) / 10,000` to ensure fee cap is proportional to supply
+    - Initial Supply: Minted to treasury wallet upon deployment
+  - **Authorities** (all set to treasury wallet):
+    - Mint Authority: Can mint new tokens within max supply
+    - Freeze Authority: Can freeze token accounts
+    - Transfer Fee Config Authority: Can update burn rate (0-2% range)
+    - Metadata Update Authority: Can update on-chain metadata
+  - **Deployment Process**:
+    - Two-phase commit pattern (pending → deployed/failed)
+    - Idempotent deployment endpoints (prevents duplicate deployments)
+    - Real-time status polling (5-second intervals)
+    - Comprehensive blockchain verification using `getMetadataPointerState` to validate extensions
+    - Strict authority validation (ensures all authorities match treasury wallet)
+  - **Admin UI** (`/admin/token`): 
+    - Deployment button with status badges (pending/deployed/failed)
+    - Mint address display with Solana Explorer links
+    - Token-2022 Extensions & Metadata card showing active extensions, all authorities (mint, freeze, transfer fee), and on-chain metadata
+    - Deployment timestamp and transaction signature links
+    - Real-time refresh capability
+  - **Infrastructure**:
+    - `server/solana/token-deployer.ts`: Main deployment class with Token-2022 extension initialization
+    - `server/config/token-deployment-config.ts`: Centralized configuration with metadata and validation
+    - `server/solana/deployment-utils.ts`: Helper utilities for formatting and URL generation
+    - `shared/token-constants.ts`: Centralized token constants (decimals, supply, burn rates)
+    - `shared/token-utils.ts`: Utility functions for base unit conversions
+  - **Treasury Wallet**: 953CKYH169xXxaNKVwLT9z9s38TEg1d2pQsY7d1Lv6dD (19.94 SOL on devnet)
+  - **Database Schema**: All supply values stored as VARCHAR strings in base units (e.g., 1B TKOIN = "1000000000000000000")
+  - **Verification**: Deployment verification validates mint account, Token-2022 program ownership, both extensions (TransferFee + MetadataPointer), metadata pointer configuration, authority matches, and supply consistency
 - **Burn Service**: Automated harvest, withdraw, and burn cycle for token management (pending implementation).
 
 ### Feature Specifications
