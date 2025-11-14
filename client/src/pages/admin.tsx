@@ -10,7 +10,7 @@ import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Link, useLocation } from "wouter";
-import { Coins, Settings, Users, TrendingUp, AlertCircle, ExternalLink, ShieldAlert, Globe } from "lucide-react";
+import { Coins, Settings, Users, TrendingUp, AlertCircle, ExternalLink, ShieldAlert, Globe, Rocket } from "lucide-react";
 import type { Agent } from "@shared/schema";
 
 interface SystemConfig {
@@ -226,6 +226,38 @@ export default function Admin() {
                   </p>
                   <div className="flex items-center gap-2 text-primary text-sm font-medium">
                     <span>Manage Currencies</span>
+                    <ExternalLink className="h-4 w-4" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+
+          {/* Token Management Link */}
+          <Link href="/admin/token">
+            <Card className="hover-elevate active-elevate-2 cursor-pointer h-full" data-testid="card-token-management">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Rocket className="h-5 w-5 text-primary" />
+                  Token Management
+                </CardTitle>
+                <CardDescription>
+                  Deploy and manage the TKOIN Token-2022 on Solana
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center p-3 bg-muted/50 rounded-md">
+                    <span className="text-sm font-medium">Deployment Status</span>
+                    <Badge variant="outline" data-testid="badge-token-status">
+                      Loading...
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Deploy Token-2022 with transfer fee extension and manage token operations
+                  </p>
+                  <div className="flex items-center gap-2 text-primary text-sm font-medium">
+                    <span>Manage Token</span>
                     <ExternalLink className="h-4 w-4" />
                   </div>
                 </div>

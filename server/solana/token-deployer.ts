@@ -70,14 +70,20 @@ export class TokenDeployer {
 
     try {
       // Check if token already deployed
-      const existing = await db.select().from(tokenConfig).limit(1);
-      if (existing.length > 0 && existing[0].deploymentStatus === 'deployed') {
+      const existing = await db.select().from(tokenConfig)
+        .where(eq(tokenConfig.deploymentStatus, 'deployed'))
+        .limit(1);
+      
+      if (existing.length > 0) {
         console.warn('⚠️  Token already deployed!');
         return {
           success: false,
           error: 'Token already deployed. Mint address: ' + existing[0].mintAddress,
         };
       }
+
+      // Delete any existing failed deployment records to ensure clean state
+      await db.delete(tokenConfig).execute();
 
       // Generate new mint keypair
       const mintKeypair = Keypair.generate();
@@ -209,10 +215,24 @@ export class TokenDeployer {
 
   /**
    * Get current token configuration from database
+   * Returns the most recent deployed config, or the latest record if none deployed
    */
   async getTokenConfig() {
-    const configs = await db.select().from(tokenConfig).limit(1);
-    return configs.length > 0 ? configs[0] : null;
+    // First try to get a deployed config
+    const deployed = await db.select().from(tokenConfig)
+      .where(eq(tokenConfig.deploymentStatus, 'deployed'))
+      .limit(1);
+    
+    if (deployed.length > 0) {
+      return deployed[0];
+    }
+
+    // If no deployed config, return the most recent record (failed/pending)
+    const latest = await db.select().from(tokenConfig)
+      .orderBy(tokenConfig.deployedAt)
+      .limit(1);
+    
+    return latest.length > 0 ? latest[0] : null;
   }
 
   /**

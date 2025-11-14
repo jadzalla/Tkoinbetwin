@@ -9,6 +9,7 @@ import Apply from "@/pages/apply";
 import Admin from "@/pages/admin";
 import AdminCurrencies from "@/pages/admin/currencies";
 import AdminPlatforms from "@/pages/admin/platforms";
+import AdminToken from "@/pages/admin/token";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -21,6 +22,7 @@ function Router() {
       <Route path="/apply" component={Apply} />
       <Route path="/admin/platforms" component={AdminPlatforms} />
       <Route path="/admin/currencies" component={AdminCurrencies} />
+      <Route path="/admin/token" component={AdminToken} />
       <Route path="/admin" component={Admin} />
       <Route component={NotFound} />
     </Switch>
