@@ -9,6 +9,7 @@ export interface AuthUser {
   isAgent: boolean;
   agentStatus?: string;
   agentId?: string;
+  isAdmin: boolean;
 }
 
 export function useAuth() {
@@ -23,5 +24,6 @@ export function useAuth() {
     isAuthenticated: !!user,
     isAgent: user?.isAgent || false,
     isActiveAgent: user?.isAgent && user?.agentStatus === 'active',
+    isAdmin: user?.isAdmin || false,
   };
 }

@@ -7,6 +7,7 @@ import Home from "@/pages/home";
 import Dashboard from "@/pages/dashboard";
 import Apply from "@/pages/apply";
 import Admin from "@/pages/admin";
+import AdminCurrencies from "@/pages/admin/currencies";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -17,6 +18,7 @@ function Router() {
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/dashboard/:rest+" component={Dashboard} />
       <Route path="/apply" component={Apply} />
+      <Route path="/admin/currencies" component={AdminCurrencies} />
       <Route path="/admin" component={Admin} />
       <Route component={NotFound} />
     </Switch>

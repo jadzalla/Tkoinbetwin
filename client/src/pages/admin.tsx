@@ -10,7 +10,7 @@ import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Link, useLocation } from "wouter";
-import { Coins, Settings, Users, TrendingUp, AlertCircle, ExternalLink, ShieldAlert } from "lucide-react";
+import { Coins, Settings, Users, TrendingUp, AlertCircle, ExternalLink, ShieldAlert, Globe } from "lucide-react";
 import type { Agent } from "@shared/schema";
 
 interface SystemConfig {
@@ -123,7 +123,7 @@ export default function Admin() {
   }
 
   // Check if user has admin role
-  const isAdmin = user.claims?.role === 'admin';
+  const isAdmin = user.isAdmin;
   
   if (!isAdmin) {
     return (
@@ -200,7 +200,39 @@ export default function Admin() {
           <p className="text-muted-foreground">Manage tokenomics, agents, and platform configuration</p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {/* Currency Management Link */}
+          <Link href="/admin/currencies">
+            <Card className="hover-elevate active-elevate-2 cursor-pointer h-full" data-testid="card-manage-currencies">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Globe className="h-5 w-5 text-primary" />
+                  Currency Management
+                </CardTitle>
+                <CardDescription>
+                  Configure supported currencies and exchange rates
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center p-3 bg-muted/50 rounded-md">
+                    <span className="text-sm font-medium">Active Currencies</span>
+                    <span className="font-mono font-bold" data-testid="text-active-currencies-count">
+                      Loading...
+                    </span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Add, edit, or disable currencies available for agent transactions
+                  </p>
+                  <div className="flex items-center gap-2 text-primary text-sm font-medium">
+                    <span>Manage Currencies</span>
+                    <ExternalLink className="h-4 w-4" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+
           {/* Burn Rate Configuration */}
           <Card data-testid="card-burn-rate-config">
             <CardHeader>

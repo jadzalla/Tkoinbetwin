@@ -26,6 +26,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if user is also an agent
       const agent = await storage.getAgentByReplitUserId(userId);
       
+      // Check if user is an admin (for now, all active agents are admins)
+      // TODO: Add dedicated isAdmin field to agents table for proper role management
+      const isAdmin = agent?.status === 'active';
+      
       // Return null-safe user data
       res.json({
         id: user.id,
@@ -36,6 +40,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isAgent: !!agent,
         agentStatus: agent?.status || null,
         agentId: agent?.id || null,
+        isAdmin,
       });
     } catch (error) {
       console.error("Error fetching user:", error);
