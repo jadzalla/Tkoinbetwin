@@ -790,27 +790,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch('/api/admin/platforms/:platformId', isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const { platformId } = req.params;
-      const { name, displayName, description, webhookUrl, contactEmail, supportUrl, isPublic, metadata, rateLimit } = req.body;
 
+      // Validate request body with Zod (all fields optional for PATCH)
+      const updateSchema = z.object({
+        name: z.string().min(1).optional(),
+        displayName: z.string().optional().nullable(),
+        description: z.string().optional().nullable(),
+        webhookUrl: z.string().url().optional().nullable().or(z.literal("")),
+        contactEmail: z.string().email().optional().nullable().or(z.literal("")),
+        supportUrl: z.string().url().optional().nullable().or(z.literal("")),
+        isPublic: z.boolean().optional(),
+        metadata: z.any().optional().nullable(),
+        rateLimit: z.number().int().positive().optional(),
+      });
+
+      const validationResult = updateSchema.safeParse(req.body);
+      
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid request data", 
+          errors: validationResult.error.errors 
+        });
+      }
+
+      // Get existing platform
       const existing = await storage.getSovereignPlatform(platformId);
       if (!existing) {
         return res.status(404).json({ message: "Platform not found" });
       }
 
+      const { name, displayName, description, webhookUrl, contactEmail, supportUrl, isPublic, metadata, rateLimit } = validationResult.data;
+
+      // Build updates object (only include provided fields)
       const updates: any = {};
       if (name !== undefined) updates.name = name;
-      if (displayName !== undefined) updates.displayName = displayName;
-      if (description !== undefined) updates.description = description;
-      if (webhookUrl !== undefined) updates.webhookUrl = webhookUrl;
-      if (contactEmail !== undefined) updates.contactEmail = contactEmail;
-      if (supportUrl !== undefined) updates.supportUrl = supportUrl;
+      if (displayName !== undefined) updates.displayName = displayName || null;
+      if (description !== undefined) updates.description = description || null;
+      if (webhookUrl !== undefined) updates.webhookUrl = webhookUrl || null;
+      if (contactEmail !== undefined) updates.contactEmail = contactEmail || null;
+      if (supportUrl !== undefined) updates.supportUrl = supportUrl || null;
       if (isPublic !== undefined) updates.isPublic = isPublic;
       if (metadata !== undefined) updates.metadata = metadata;
       if (rateLimit !== undefined) updates.rateLimit = rateLimit;
 
       const updated = await storage.updateSovereignPlatform(platformId, updates);
 
-      // Log platform update
+      // Log platform update with before/after state
       await storage.createAuditLog({
         eventType: 'platform_updated',
         entityType: 'sovereign_platform',
@@ -818,14 +843,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         actorId: req.user.claims.sub,
         actorType: 'admin',
         metadata: {
-          updates: Object.keys(updates),
+          platformName: existing.name,
+          updatedFields: Object.keys(updates),
+          changes: updates,
         },
       });
 
       res.json(updated);
     } catch (error) {
       console.error("Error updating platform:", error);
-      res.status(500).json({ message: "Failed to update platform" });
+      const message = error instanceof Error ? error.message : "Failed to update platform";
+      const statusCode = message.includes("not found") ? 404 : 500;
+      res.status(statusCode).json({ message });
     }
   });
 
@@ -887,12 +916,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { platformId } = req.params;
 
+      // Get existing platform
       const existing = await storage.getSovereignPlatform(platformId);
       if (!existing) {
         return res.status(404).json({ message: "Platform not found" });
       }
 
-      // Generate new webhook secret
+      // Store old secret hash for audit trail (first 8 chars)
+      const oldSecretPrefix = existing.webhookSecret.substring(0, 8);
+
+      // Generate new webhook secret (32 bytes = 64 hex chars)
       const crypto = await import('crypto');
       const newWebhookSecret = crypto.randomBytes(32).toString('hex');
 
@@ -900,7 +933,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         webhookSecret: newWebhookSecret,
       });
 
-      // Log secret regeneration (security event)
+      // Log secret regeneration (security event) with before/after context
       await storage.createAuditLog({
         eventType: 'platform_secret_regenerated',
         entityType: 'sovereign_platform',
@@ -909,14 +942,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         actorType: 'admin',
         metadata: {
           platformName: existing.name,
+          oldSecretPrefix, // First 8 chars for tracking
+          newSecretPrefix: newWebhookSecret.substring(0, 8),
           reason: 'Manual regeneration by admin',
+          timestamp: new Date().toISOString(),
         },
       });
 
       res.json(updated);
     } catch (error) {
       console.error("Error regenerating webhook secret:", error);
-      res.status(500).json({ message: "Failed to regenerate webhook secret" });
+      const message = error instanceof Error ? error.message : "Failed to regenerate webhook secret";
+      const statusCode = message.includes("not found") ? 404 : 500;
+      res.status(statusCode).json({ message });
     }
   });
 
