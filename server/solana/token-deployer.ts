@@ -82,8 +82,25 @@ export class TokenDeployer {
         };
       }
 
-      // Delete any existing failed deployment records to ensure clean state
+      // PHASE 1: Create placeholder row with 'pending' status (atomic lock)
+      // Delete any existing rows and insert new pending row
       await db.delete(tokenConfig).execute();
+      
+      await db.insert(tokenConfig).values({
+        tokenName: config.tokenName,
+        tokenSymbol: config.tokenSymbol,
+        decimals: config.decimals,
+        totalSupply: config.maxSupply,
+        mintAddress: '', // Will be updated after deployment
+        burnRateBasisPoints: config.burnRateBasisPoints,
+        maxBurnRateBasisPoints: config.maxBurnRateBasisPoints,
+        description: config.description || '',
+        deploymentStatus: 'pending',
+        deployedAt: new Date(),
+        transactionSignature: '',
+      });
+
+      console.log('✅ Created pending deployment record');
 
       // Generate new mint keypair
       const mintKeypair = Keypair.generate();
@@ -153,28 +170,30 @@ export class TokenDeployer {
       console.log(`   Signature: ${signature}`);
       console.log(`   Explorer: https://explorer.solana.com/tx/${signature}?cluster=devnet`);
 
-      // Save to database
-      const [dbRecord] = await db.insert(tokenConfig).values({
-        mintAddress: mintAddress.toString(),
-        tokenName: config.tokenName,
-        tokenSymbol: config.tokenSymbol,
-        decimals: config.decimals,
-        maxSupply: config.maxSupply,
-        currentSupply: '0',
-        circulatingSupply: '0',
-        burnRateBasisPoints: config.burnRateBasisPoints,
-        maxBurnRateBasisPoints: config.maxBurnRateBasisPoints,
-        treasuryWallet: this.payer.publicKey.toString(),
-        mintAuthority: this.payer.publicKey.toString(),
-        freezeAuthority: this.payer.publicKey.toString(),
-        transferFeeConfigAuthority: this.payer.publicKey.toString(),
-        deploymentStatus: 'deployed',
-        deployedAt: new Date(),
-        deploymentSignature: signature,
-        description: config.description,
-      }).returning();
+      // PHASE 2: Update pending row to deployed status
+      const [dbRecord] = await db.update(tokenConfig)
+        .set({
+          mintAddress: mintAddress.toString(),
+          totalSupply: config.maxSupply,
+          currentSupply: '0',
+          circulatingSupply: '0',
+          treasuryWallet: this.payer.publicKey.toString(),
+          mintAuthority: this.payer.publicKey.toString(),
+          freezeAuthority: this.payer.publicKey.toString(),
+          transferFeeConfigAuthority: this.payer.publicKey.toString(),
+          deploymentStatus: 'deployed',
+          deployedAt: new Date(),
+          transactionSignature: signature,
+        })
+        .where(eq(tokenConfig.deploymentStatus, 'pending'))
+        .returning();
 
-      console.log('💾 Token configuration saved to database');
+      if (!dbRecord) {
+        console.error('❌ Failed to update pending deployment record');
+        throw new Error('Database update failed after successful on-chain deployment');
+      }
+
+      console.log('💾 Token configuration updated in database');
 
       return {
         success: true,
@@ -188,22 +207,20 @@ export class TokenDeployer {
       
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
-      // Try to save failed deployment to database
+      // PHASE 2 (FAILURE): Update pending row to failed status
       try {
-        await db.insert(tokenConfig).values({
-          mintAddress: 'DEPLOYMENT_FAILED',
-          tokenName: config.tokenName,
-          tokenSymbol: config.tokenSymbol,
-          decimals: config.decimals,
-          maxSupply: config.maxSupply,
-          burnRateBasisPoints: config.burnRateBasisPoints,
-          maxBurnRateBasisPoints: config.maxBurnRateBasisPoints,
-          treasuryWallet: this.payer.publicKey.toString(),
-          deploymentStatus: 'failed',
-          deploymentError: errorMessage,
-        });
+        await db.update(tokenConfig)
+          .set({
+            mintAddress: 'DEPLOYMENT_FAILED',
+            deploymentStatus: 'failed',
+            deploymentError: errorMessage,
+            deployedAt: new Date(),
+          })
+          .where(eq(tokenConfig.deploymentStatus, 'pending'));
+        
+        console.log('💾 Failed deployment status saved to database');
       } catch (dbError) {
-        console.error('Failed to save deployment error to database:', dbError);
+        console.error('Failed to update deployment error in database:', dbError);
       }
 
       return {
