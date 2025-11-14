@@ -633,6 +633,53 @@ export const sovereignPlatforms = pgTable("sovereign_platforms", {
   publicIdx: index("sovereign_platforms_public_idx").on(table.isPublic),
 }));
 
+// Token Configuration (Solana Token-2022 - TKOIN)
+export const tokenConfig = pgTable("token_config", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  
+  // Token Identity
+  mintAddress: text("mint_address").notNull().unique(),
+  tokenName: text("token_name").notNull().default("Tkoin"),
+  tokenSymbol: text("token_symbol").notNull().default("TK"),
+  decimals: integer("decimals").notNull().default(6),
+  
+  // Supply Management
+  maxSupply: decimal("max_supply", { precision: 20, scale: 0 }).notNull(), // 1,000,000,000
+  currentSupply: decimal("current_supply", { precision: 20, scale: 8 }).notNull().default("0"),
+  circulatingSupply: decimal("circulating_supply", { precision: 20, scale: 8 }).notNull().default("0"),
+  
+  // Burn Configuration
+  burnRateBasisPoints: integer("burn_rate_basis_points").notNull().default(100), // 1% (100 basis points)
+  maxBurnRateBasisPoints: integer("max_burn_rate_basis_points").notNull().default(200), // 2% max
+  treasuryWallet: text("treasury_wallet").notNull(),
+  
+  // Authorities (Solana Public Keys)
+  mintAuthority: text("mint_authority"), // Can mint new tokens
+  freezeAuthority: text("freeze_authority"), // Can freeze accounts
+  transferFeeConfigAuthority: text("transfer_fee_config_authority"), // Can update transfer fees
+  
+  // Deployment Status
+  deploymentStatus: text("deployment_status").notNull().default("pending"), // pending, deployed, failed
+  deployedAt: timestamp("deployed_at"),
+  deploymentSignature: text("deployment_signature"), // Solana transaction signature
+  deploymentError: text("deployment_error"), // Error message if deployment failed
+  
+  // Metadata
+  metadataUri: text("metadata_uri"), // IPFS/Arweave URI for token metadata
+  description: text("description"),
+  logoUrl: text("logo_url"),
+  
+  // Configuration Versioning
+  configVersion: integer("config_version").notNull().default(1),
+  notes: jsonb("notes"), // Additional configuration notes
+  
+  // Timestamps
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => ({
+  mintAddressIdx: uniqueIndex("token_config_mint_address_idx").on(table.mintAddress),
+}));
+
 // Zod Schemas for Validation
 
 // System Config
@@ -801,3 +848,17 @@ export const insertSovereignPlatformSchema = createInsertSchema(sovereignPlatfor
 });
 export type InsertSovereignPlatform = z.infer<typeof insertSovereignPlatformSchema>;
 export type SovereignPlatform = typeof sovereignPlatforms.$inferSelect;
+
+// Token Configuration
+export const insertTokenConfigSchema = createInsertSchema(tokenConfig).omit({ 
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  currentSupply: true,
+  circulatingSupply: true,
+  deployedAt: true,
+  deploymentSignature: true,
+  deploymentError: true,
+});
+export type InsertTokenConfig = z.infer<typeof insertTokenConfigSchema>;
+export type TokenConfig = typeof tokenConfig.$inferSelect;
