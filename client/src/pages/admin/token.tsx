@@ -52,7 +52,7 @@ import {
   TOKEN_MAX_BURN_RATE_BP,
   TOKEN_DESCRIPTION
 } from "@shared/token-constants";
-import { baseUnitsToTokens } from "@shared/token-utils";
+import { baseUnitsToTokens, formatBaseUnits } from "@shared/token-utils";
 
 interface TokenConfig {
   id: string;

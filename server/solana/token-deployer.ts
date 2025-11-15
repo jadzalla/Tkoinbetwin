@@ -152,10 +152,11 @@ export class TokenDeployer {
       ];
       const mintLen = getMintLen(extensions);
       
-      // Calculate metadata space (variable length)
+      // Calculate metadata space (variable length) - added AFTER mint initialization
       const metadataLen = TYPE_SIZE + LENGTH_SIZE + pack(metadata).length;
       
-      // Total space and rent
+      // IMPORTANT: Total space = mint + extensions + metadata
+      // Metadata is stored IN the mint account when using self-referential MetadataPointer
       const totalSpace = mintLen + metadataLen;
       const lamports = await this.connection.getMinimumBalanceForRentExemption(totalSpace);
 
@@ -163,6 +164,7 @@ export class TokenDeployer {
       console.log(`   Metadata size: ${metadataLen} bytes`);
       console.log(`   Total space: ${totalSpace} bytes`);
       console.log(`   Rent: ${(lamports / LAMPORTS_PER_SOL).toFixed(6)} SOL`);
+      console.log(`   Metadata pointer: self-referential (${mintAddress.toString()})`);
 
       // Create transaction
       const transaction = new Transaction();
