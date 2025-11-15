@@ -51,6 +51,8 @@ The frontend utilizes React, TypeScript, Vite, Tailwind CSS, and shadcn/ui. The 
     - Real-time status polling (5-second intervals)
     - Comprehensive blockchain verification using `getMetadataPointerState` to validate extensions
     - Strict authority validation (ensures all authorities match treasury wallet)
+    - **Account Space Allocation** (Critical Fix - Nov 2025): Mint account created with `space: mintLen` (extensions only) while paying rent for full size including metadata. Metadata initialization uses `realloc()` to expand account, following Solana Token-2022 official pattern for self-referential MetadataPointer. This prevents "InvalidAccountData" errors during InitializeMint instruction.
+    - **Editable Deployment Configuration** (Nov 2025): Admin UI with react-hook-form + Zod validation for all token parameters (maxSupply, initialMint, burnRate, decimals, metadata URIs), unified Review & Deploy dialog with read-only summary, mandatory redeploy reason enforcement, proper base units ↔ tokens conversion using `baseUnitsToTokens()` and `tokensToBaseUnits()` utilities
   - **Admin UI** (`/admin/token`): 
     - Deployment button with status badges (pending/deployed/failed)
     - Mint address display with Solana Explorer links
