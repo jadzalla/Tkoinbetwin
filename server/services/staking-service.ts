@@ -78,13 +78,30 @@ export class StakingService {
 
     // Convert to base units
     const amountBaseUnits = tokensToBaseUnits(amountTokens.toString(), TOKEN_DECIMALS);
+    const amountBigInt = BigInt(amountBaseUnits);
 
     // Get or create stake record
     const stake = await this.getOrCreateStake(agentId, solanaWallet);
+    const currentStaked = BigInt(stake.stakedAmount || '0');
+
+    // CRITICAL: Verify on-chain balance covers ALL stakes (prevents double-counting)
+    // Since we don't transfer tokens yet, we must ensure wallet has enough to cover
+    // both existing stakes AND the new stake amount
+    const walletPubkey = new PublicKey(solanaWallet);
+    const availableBalance = await getAvailableBalance(this.connection, walletPubkey);
+    const totalRequiredBalance = currentStaked + amountBigInt;
+    
+    if (availableBalance < totalRequiredBalance) {
+      const availableTokens = baseUnitsToTokens(availableBalance.toString(), TOKEN_DECIMALS);
+      const requiredTokens = baseUnitsToTokens(totalRequiredBalance.toString(), TOKEN_DECIMALS);
+      const currentStakedTokens = baseUnitsToTokens(currentStaked.toString(), TOKEN_DECIMALS);
+      throw new Error(
+        `Insufficient balance to cover all stakes. You have ${availableTokens} TKOIN, already staked ${currentStakedTokens} TKOIN, and need ${requiredTokens} TKOIN total to stake ${amountTokens} more.`
+      );
+    }
 
     // Calculate new staked amount
-    const currentStaked = BigInt(stake.stakedAmount || '0');
-    const newStaked = currentStaked + BigInt(amountBaseUnits);
+    const newStaked = currentStaked + amountBigInt;
     const newStakedTokens = parseFloat(baseUnitsToTokens(newStaked.toString(), TOKEN_DECIMALS));
 
     // Calculate new tier
@@ -95,36 +112,48 @@ export class StakingService {
     const lockedUntil = new Date();
     lockedUntil.setDate(lockedUntil.getDate() + STAKING_PARAMS.lockupPeriodDays);
 
-    // Update stake record
-    const [updatedStake] = await db
-      .update(agentStakes)
-      .set({
-        stakedAmount: newStaked.toString(),
-        currentTier: newTier,
-        lockedUntil,
-        updatedAt: new Date(),
-      })
-      .where(eq(agentStakes.id, stake.id))
-      .returning();
+    // Use database transaction for atomicity
+    return await db.transaction(async (tx) => {
+      // Update stake record
+      const [updatedStake] = await tx
+        .update(agentStakes)
+        .set({
+          stakedAmount: newStaked.toString(),
+          currentTier: newTier,
+          lockedUntil,
+          updatedAt: new Date(),
+        })
+        .where(eq(agentStakes.id, stake.id))
+        .returning();
 
-    // Record history
-    await db.insert(stakeHistory).values({
-      agentId,
-      stakeId: stake.id,
-      operationType: 'stake',
-      amount: amountBaseUnits,
-      previousBalance: currentStaked.toString(),
-      newBalance: newStaked.toString(),
-      previousTier,
-      newTier,
-      stakePda: stake.stakePda,
-      notes: `Staked ${amountTokens} TKOIN`,
+      // Record history
+      await tx.insert(stakeHistory).values({
+        agentId,
+        stakeId: stake.id,
+        operationType: 'stake',
+        amount: amountBaseUnits,
+        previousBalance: currentStaked.toString(),
+        newBalance: newStaked.toString(),
+        previousTier,
+        newTier,
+        stakePda: stake.stakePda,
+        notes: `Staked ${amountTokens} TKOIN`,
+      });
+
+      // Update agent tier and limits
+      const limits = getTierLimits(newTier);
+      await tx
+        .update(agents)
+        .set({ 
+          verificationTier: newTier,
+          dailyLimit: limits.dailyLimit.toString(),
+          monthlyLimit: limits.monthlyLimit.toString(),
+          updatedAt: new Date(),
+        })
+        .where(eq(agents.id, agentId));
+
+      return updatedStake;
     });
-
-    // Update agent tier
-    await this.updateAgentTier(agentId, newTier);
-
-    return updatedStake;
   }
 
   /**
@@ -182,42 +211,54 @@ export class StakingService {
     const newTier = calculateTier(newStakedTokens);
     const previousTier = currentStake.currentTier as AgentTier;
 
-    // Update stake record
-    const [updatedStake] = await db
-      .update(agentStakes)
-      .set({
-        stakedAmount: newStaked.toString(),
-        currentTier: newTier,
-        status: newStaked === BigInt(0) ? 'unstaking' : 'active',
-        updatedAt: new Date(),
-      })
-      .where(eq(agentStakes.id, currentStake.id))
-      .returning();
+    // Use database transaction for atomicity
+    return await db.transaction(async (tx) => {
+      // Update stake record
+      const [updatedStake] = await tx
+        .update(agentStakes)
+        .set({
+          stakedAmount: newStaked.toString(),
+          currentTier: newTier,
+          status: newStaked === BigInt(0) ? 'unstaking' : 'active',
+          updatedAt: new Date(),
+        })
+        .where(eq(agentStakes.id, currentStake.id))
+        .returning();
 
-    // Record history
-    await db.insert(stakeHistory).values({
-      agentId,
-      stakeId: currentStake.id,
-      operationType: 'unstake',
-      amount: amountBaseUnits.toString(),
-      previousBalance: currentStaked.toString(),
-      newBalance: newStaked.toString(),
-      previousTier,
-      newTier,
-      stakePda: currentStake.stakePda,
-      notes: force 
-        ? `Forced unstake of ${amountTokens} TKOIN with ${STAKING_PARAMS.earlyWithdrawalPenalty}% penalty (${baseUnitsToTokens(penalty.toString(), TOKEN_DECIMALS)} TKOIN)`
-        : `Unstaked ${amountTokens} TKOIN`,
+      // Record history
+      await tx.insert(stakeHistory).values({
+        agentId,
+        stakeId: currentStake.id,
+        operationType: 'unstake',
+        amount: amountBaseUnits.toString(),
+        previousBalance: currentStaked.toString(),
+        newBalance: newStaked.toString(),
+        previousTier,
+        newTier,
+        stakePda: currentStake.stakePda,
+        notes: force 
+          ? `Forced unstake of ${amountTokens} TKOIN with ${STAKING_PARAMS.earlyWithdrawalPenalty}% penalty (${baseUnitsToTokens(penalty.toString(), TOKEN_DECIMALS)} TKOIN)`
+          : `Unstaked ${amountTokens} TKOIN`,
+      });
+
+      // Update agent tier and limits
+      const limits = getTierLimits(newTier);
+      await tx
+        .update(agents)
+        .set({ 
+          verificationTier: newTier,
+          dailyLimit: limits.dailyLimit.toString(),
+          monthlyLimit: limits.monthlyLimit.toString(),
+          updatedAt: new Date(),
+        })
+        .where(eq(agents.id, agentId));
+
+      return {
+        stake: updatedStake,
+        penalty: penalty > 0 ? baseUnitsToTokens(penalty.toString(), TOKEN_DECIMALS) : null,
+        finalAmount: baseUnitsToTokens(finalAmount.toString(), TOKEN_DECIMALS),
+      };
     });
-
-    // Update agent tier
-    await this.updateAgentTier(agentId, newTier);
-
-    return {
-      stake: updatedStake,
-      penalty: penalty > 0 ? baseUnitsToTokens(penalty.toString(), TOKEN_DECIMALS) : null,
-      finalAmount: baseUnitsToTokens(finalAmount.toString(), TOKEN_DECIMALS),
-    };
   }
 
   /**
