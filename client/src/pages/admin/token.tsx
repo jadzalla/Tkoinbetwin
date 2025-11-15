@@ -5,6 +5,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Link } from "wouter";
@@ -19,6 +30,7 @@ import {
   Coins,
   TrendingDown,
   DollarSign,
+  AlertTriangle,
 } from "lucide-react";
 import { 
   TOKEN_NAME, 
@@ -71,6 +83,8 @@ export default function AdminToken() {
   const { user, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
   const [isDeploying, setIsDeploying] = useState(false);
+  const [redeployDialogOpen, setRedeployDialogOpen] = useState(false);
+  const [redeployReason, setRedeployReason] = useState("");
 
   // Fetch token configuration
   const { data: configResponse, isLoading: configLoading, refetch } = useQuery({
@@ -120,6 +134,48 @@ export default function AdminToken() {
     onError: (error: Error) => {
       toast({
         title: "Deployment Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Redeploy mutation (force redeploy)
+  const redeployMutation = useMutation({
+    mutationFn: async (reason: string) => {
+      setIsDeploying(true);
+      try {
+        const response = await apiRequest("POST", "/api/admin/token/deploy", {
+          tokenName: TOKEN_NAME,
+          tokenSymbol: TOKEN_SYMBOL,
+          decimals: TOKEN_DECIMALS,
+          maxSupply: TOKEN_MAX_SUPPLY_TOKENS,
+          burnRateBasisPoints: TOKEN_BURN_RATE_BP,
+          maxBurnRateBasisPoints: TOKEN_MAX_BURN_RATE_BP,
+          description: TOKEN_DESCRIPTION,
+          forceRedeploy: true,
+          redeployReason: reason,
+        });
+        const result = await response.json();
+        return result as DeploymentResult;
+      } finally {
+        setIsDeploying(false);
+        setRedeployDialogOpen(false);
+        setRedeployReason("");
+      }
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/token/config"] });
+      
+      const result = data as unknown as DeploymentResult;
+      toast({
+        title: "Token Redeployed Successfully",
+        description: `Mint address: ${result.mintAddress}`,
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Redeployment Failed",
         description: error.message,
         variant: "destructive",
       });
@@ -249,13 +305,91 @@ export default function AdminToken() {
             <div className="space-y-6">
               {/* Deployment Info */}
               {config.deploymentStatus === 'deployed' && (
-                <Alert className="border-green-600 bg-green-50 dark:bg-green-950">
-                  <CheckCircle className="h-4 w-4 text-green-600" />
-                  <AlertTitle className="text-green-600">Token Deployed Successfully</AlertTitle>
-                  <AlertDescription className="text-green-600">
-                    Your TKOIN token is live on Solana devnet. Agents can now perform buy/sell operations.
-                  </AlertDescription>
-                </Alert>
+                <>
+                  <Alert className="border-green-600 bg-green-50 dark:bg-green-950">
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                    <AlertTitle className="text-green-600">Token Deployed Successfully</AlertTitle>
+                    <AlertDescription className="text-green-600">
+                      Your TKOIN token is live on Solana devnet. Agents can now perform buy/sell operations.
+                    </AlertDescription>
+                  </Alert>
+                  
+                  <Dialog open={redeployDialogOpen} onOpenChange={setRedeployDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" size="sm" className="w-full" data-testid="button-redeploy">
+                        <AlertTriangle className="w-4 h-4 mr-2" />
+                        Redeploy Token
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Redeploy TKOIN Token</DialogTitle>
+                        <DialogDescription>
+                          This will create a new Token-2022 deployment with updated metadata and initial supply. 
+                          The old token will remain on-chain but this system will use the new mint address.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="redeploy-reason">Reason for Redeployment *</Label>
+                          <Input
+                            id="redeploy-reason"
+                            placeholder="e.g., Add metadata and initial supply"
+                            value={redeployReason}
+                            onChange={(e) => setRedeployReason(e.target.value)}
+                            data-testid="input-redeploy-reason"
+                          />
+                        </div>
+                        <Alert>
+                          <AlertTriangle className="h-4 w-4" />
+                          <AlertTitle>Warning</AlertTitle>
+                          <AlertDescription>
+                            This action will deploy a new token. Make sure you understand the implications before proceeding.
+                          </AlertDescription>
+                        </Alert>
+                      </div>
+                      <DialogFooter>
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setRedeployDialogOpen(false);
+                            setRedeployReason("");
+                          }}
+                          data-testid="button-cancel-redeploy"
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          onClick={() => {
+                            if (!redeployReason.trim()) {
+                              toast({
+                                title: "Reason Required",
+                                description: "Please provide a reason for redeployment",
+                                variant: "destructive",
+                              });
+                              return;
+                            }
+                            redeployMutation.mutate(redeployReason);
+                          }}
+                          disabled={redeployMutation.isPending || isDeploying || !redeployReason.trim()}
+                          data-testid="button-confirm-redeploy"
+                        >
+                          {(redeployMutation.isPending || isDeploying) ? (
+                            <>
+                              <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                              Redeploying...
+                            </>
+                          ) : (
+                            <>
+                              <Rocket className="w-4 h-4 mr-2" />
+                              Confirm Redeploy
+                            </>
+                          )}
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                </>
               )}
 
               {config.deploymentStatus === 'failed' && (
