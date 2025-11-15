@@ -1,4 +1,4 @@
-import { LayoutDashboard, DollarSign, Receipt, Trophy, TrendingUp, Wallet, Settings, Medal, Award as AwardIcon } from "lucide-react";
+import { LayoutDashboard, DollarSign, Receipt, Trophy, TrendingUp, Wallet, Settings, Medal, Award as AwardIcon, Lock } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import {
   Sidebar,
@@ -21,6 +21,7 @@ const menuItems = [
   { path: "/dashboard/commissions", icon: Trophy, label: "Commissions & Earnings" },
   { path: "/dashboard/analytics", icon: TrendingUp, label: "Analytics" },
   { path: "/dashboard/inventory", icon: Wallet, label: "Inventory & Funding" },
+  { path: "/dashboard/staking", icon: Lock, label: "Staking & Tiers" },
   { path: "/dashboard/settings", icon: Settings, label: "Settings" },
 ];
 

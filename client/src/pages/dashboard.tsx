@@ -12,6 +12,7 @@ import Transactions from "@/pages/dashboard/transactions";
 import Commissions from "@/pages/dashboard/commissions";
 import Analytics from "@/pages/dashboard/analytics";
 import Inventory from "@/pages/dashboard/inventory";
+import Staking from "@/pages/dashboard/staking";
 import type { Agent } from "@shared/schema";
 
 export default function Dashboard() {
@@ -125,6 +126,7 @@ export default function Dashboard() {
               <Route path="/dashboard/commissions" component={() => <Commissions agent={agent!} />} />
               <Route path="/dashboard/analytics" component={() => <Analytics agent={agent!} />} />
               <Route path="/dashboard/inventory" component={() => <Inventory agent={agent!} />} />
+              <Route path="/dashboard/staking" component={() => <Staking agent={agent!} />} />
               <Route path="/dashboard/settings" component={() => (
                 <div className="text-center py-12">
                   <h2 className="text-2xl font-bold mb-2">Settings</h2>
