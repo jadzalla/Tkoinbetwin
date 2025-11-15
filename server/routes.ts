@@ -7,6 +7,9 @@ import { setupAuth, isAuthenticated, isApprovedAgent, isAdmin } from "./replitAu
 import { fxRateService } from "./services/fx-rate-service";
 import { PricingService } from "./services/pricing-service";
 import { TOKEN_DECIMALS, TOKEN_MAX_SUPPLY_TOKENS } from "@shared/token-constants";
+import { db } from "./db";
+import { tokenConfig } from "@shared/schema";
+import { eq } from "drizzle-orm";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
@@ -1157,6 +1160,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             timestamp: new Date().toISOString(),
           },
         });
+
+        // Delete existing deployment to allow redeploy
+        console.log('🔄 Deleting existing deployment for redeploy...');
+        await db.delete(tokenConfig).where(eq(tokenConfig.id, existing.id));
+        console.log('✅ Existing deployment deleted. Proceeding with redeploy...');
       }
 
       // Log deployment request

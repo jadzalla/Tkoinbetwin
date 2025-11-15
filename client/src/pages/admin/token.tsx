@@ -52,6 +52,7 @@ import {
   TOKEN_MAX_BURN_RATE_BP,
   TOKEN_DESCRIPTION
 } from "@shared/token-constants";
+import { baseUnitsToTokens } from "@shared/token-utils";
 import { formatBaseUnits } from "@shared/token-utils";
 
 interface TokenConfig {
@@ -166,12 +167,16 @@ export default function AdminToken() {
   // Hydrate form when config loads
   useEffect(() => {
     if (config) {
+      // Convert base units back to tokens for form display
+      const maxSupplyTokens = baseUnitsToTokens(config.maxSupply, config.decimals);
+      const currentSupplyTokens = baseUnitsToTokens(config.currentSupply, config.decimals);
+      
       form.reset({
         tokenName: config.tokenName,
         tokenSymbol: config.tokenSymbol,
         decimals: config.decimals,
-        maxSupply: config.maxSupply,
-        initialMintAmount: config.currentSupply,
+        maxSupply: maxSupplyTokens,
+        initialMintAmount: currentSupplyTokens,
         burnRateBasisPoints: config.burnRateBasisPoints,
         maxBurnRateBasisPoints: config.maxBurnRateBasisPoints,
         description: config.description || TOKEN_DESCRIPTION,
