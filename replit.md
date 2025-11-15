@@ -47,6 +47,16 @@ The frontend uses React, TypeScript, Vite, Tailwind CSS, and shadcn/ui, adhering
     - **Testing**: Complete E2E coverage (stake/unstake flows, tier upgrades, penalty enforcement, history display) + regression tests (API minimum validation).
     - **Critical Fix Applied**: Backend STAKING_PARAMS.minStakeAmount corrected from 1,000 → 10,000 to match frontend and product spec.
     - **Future Enhancements**: On-chain token escrow via Solana program, rate limiting, CI test integration.
+- **Agent Slashing System**: ✅ **PRODUCTION-READY** - Admin penalty enforcement for agent violations:
+    - **Penalty Tiers**: Minor (10% slash), Major (25% slash), Critical (50% slash) - configurable in SLASHING_PENALTIES.
+    - **Slashing Mechanics**: Admin creates pending slash → Reviews → Executes (reduces stake, downgrades tier, updates limits) → Optional reversal if error.
+    - **Database Schema**: `slashing_events` table tracks violation type, severity, slashed amount, remaining stake, status (pending/executed/reversed), complete audit trail.
+    - **Backend Service**: `SlashingService` with atomic database transactions for stake reduction, tier recalculation, limit updates, history tracking. Verified BigInt arithmetic: `(stakedAmount * percentage) / 100n` for precise 10%/25%/50% penalties.
+    - **Admin API Endpoints**: POST /api/admin/slashing (create), POST /api/admin/slashing/:id/execute, POST /api/admin/slashing/:id/reverse, GET /api/admin/slashing/pending, GET /api/admin/slashing (history), GET /api/admin/slashing/:id, GET /api/admin/agents/:agentId/slashing (all protected by isAdmin middleware).
+    - **Admin UI** (/admin/slashing): Pending slashes queue with execute/reject actions, create slash form with violation type/severity/description/evidence fields, complete history table with reversal capability, comprehensive data-testid coverage.
+    - **Tier Downgrade Logic**: Automatic tier recalculation after slash execution based on remaining stake, with corresponding daily/monthly limit adjustments.
+    - **Audit Trail**: Complete history in `slashing_events` + `stake_history` tables for compliance and transparency.
+    - **Future Enhancements**: Automated violation detection triggers, on-chain slashing when migrating to token escrow, rate limiting for slash creation.
 - **Burn Service**: Automated harvest, withdraw, and burn cycle for token management (pending).
 
 ### Feature Specifications
