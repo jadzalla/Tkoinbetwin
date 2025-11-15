@@ -338,6 +338,162 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // ========================================
+  // Admin Routes - Agent Slashing
+  // ========================================
+  
+  // Create a pending slashing event (admin only)
+  app.post('/api/admin/slashing', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { agentId, violationType, severity, description, evidenceUrl } = req.body;
+      const adminId = req.user.claims.sub;
+      const { SlashingService } = await import('./services/slashing-service');
+      
+      if (!agentId || !violationType || !severity || !description) {
+        return res.status(400).json({ 
+          message: "Missing required fields: agentId, violationType, severity, description" 
+        });
+      }
+      
+      if (!['minor', 'major', 'critical'].includes(severity)) {
+        return res.status(400).json({ 
+          message: "Invalid severity. Must be: minor, major, or critical" 
+        });
+      }
+      
+      const slashingEvent = await SlashingService.createSlashingEvent({
+        agentId,
+        violationType,
+        severity,
+        description,
+        evidenceUrl,
+        createdBy: adminId,
+      });
+      
+      res.json(slashingEvent);
+    } catch (error: any) {
+      console.error("Error creating slashing event:", error);
+      res.status(400).json({ 
+        message: error.message || "Failed to create slashing event" 
+      });
+    }
+  });
+  
+  // Execute a pending slash (admin only)
+  app.post('/api/admin/slashing/:id/execute', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const adminId = req.user.claims.sub;
+      const { SlashingService } = await import('./services/slashing-service');
+      
+      const result = await SlashingService.executeSlash({
+        slashingEventId: id,
+        executedBy: adminId,
+      });
+      
+      res.json({
+        success: true,
+        slashingEvent: result.slashingEvent,
+        newTier: result.newTier,
+        message: `Slash executed successfully. Agent tier is now ${result.newTier}`,
+      });
+    } catch (error: any) {
+      console.error("Error executing slash:", error);
+      res.status(400).json({ 
+        message: error.message || "Failed to execute slash" 
+      });
+    }
+  });
+  
+  // Reverse a slashing event (admin only)
+  app.post('/api/admin/slashing/:id/reverse', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { reversalReason } = req.body;
+      const adminId = req.user.claims.sub;
+      const { SlashingService } = await import('./services/slashing-service');
+      
+      if (!reversalReason) {
+        return res.status(400).json({ 
+          message: "Reversal reason is required" 
+        });
+      }
+      
+      const slashingEvent = await SlashingService.reverseSlash({
+        slashingEventId: id,
+        reversalReason,
+        executedBy: adminId,
+      });
+      
+      res.json({
+        success: true,
+        slashingEvent,
+        message: "Slash reversed successfully",
+      });
+    } catch (error: any) {
+      console.error("Error reversing slash:", error);
+      res.status(400).json({ 
+        message: error.message || "Failed to reverse slash" 
+      });
+    }
+  });
+  
+  // Get all pending slashing events (admin only)
+  app.get('/api/admin/slashing/pending', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { SlashingService } = await import('./services/slashing-service');
+      const pendingSlashes = await SlashingService.getPendingSlashes();
+      res.json(pendingSlashes);
+    } catch (error) {
+      console.error("Error fetching pending slashes:", error);
+      res.status(500).json({ message: "Failed to fetch pending slashes" });
+    }
+  });
+  
+  // Get all slashing events with optional limit (admin only)
+  app.get('/api/admin/slashing', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 100;
+      const { SlashingService } = await import('./services/slashing-service');
+      const slashingEvents = await SlashingService.getAllSlashingEvents(limit);
+      res.json(slashingEvents);
+    } catch (error) {
+      console.error("Error fetching slashing events:", error);
+      res.status(500).json({ message: "Failed to fetch slashing events" });
+    }
+  });
+  
+  // Get slashing event by ID (admin only)
+  app.get('/api/admin/slashing/:id', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { SlashingService } = await import('./services/slashing-service');
+      const slashingEvent = await SlashingService.getSlashingEvent(id);
+      
+      if (!slashingEvent) {
+        return res.status(404).json({ message: "Slashing event not found" });
+      }
+      
+      res.json(slashingEvent);
+    } catch (error) {
+      console.error("Error fetching slashing event:", error);
+      res.status(500).json({ message: "Failed to fetch slashing event" });
+    }
+  });
+  
+  // Get slashing history for a specific agent (admin only)
+  app.get('/api/admin/agents/:agentId/slashing', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { agentId } = req.params;
+      const { SlashingService } = await import('./services/slashing-service');
+      const history = await SlashingService.getAgentSlashingHistory(agentId);
+      res.json(history);
+    } catch (error) {
+      console.error("Error fetching agent slashing history:", error);
+      res.status(500).json({ message: "Failed to fetch slashing history" });
+    }
+  });
+  
+  // ========================================
   // Admin Routes - Agent Management
   // ========================================
   
