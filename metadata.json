@@ -1,0 +1,78 @@
+{
+  "name": "Tkoin",
+  "symbol": "TK",
+  "description": "Tkoin Protocol - Sovereignty Stack liquidity token. The foundational liquidity layer for sovereign digital economies, enabling seamless fiat-to-token conversion through a decentralized network of liquidity agents.",
+  "image": "https://betwin.tkoin.finance/logo.png",
+  "external_url": "https://tkoin.finance",
+  "attributes": [
+    {
+      "trait_type": "Token Standard",
+      "value": "SPL Token-2022"
+    },
+    {
+      "trait_type": "Blockchain",
+      "value": "Solana"
+    },
+    {
+      "trait_type": "Max Supply",
+      "value": "1,000,000,000"
+    },
+    {
+      "trait_type": "Decimals",
+      "value": "9"
+    },
+    {
+      "trait_type": "Burn Mechanism",
+      "value": "Transfer Fee (1%)"
+    },
+    {
+      "trait_type": "Use Case",
+      "value": "Liquidity Layer"
+    },
+    {
+      "trait_type": "Network Type",
+      "value": "Decentralized Agent Network"
+    }
+  ],
+  "properties": {
+    "files": [
+      {
+        "uri": "https://betwin.tkoin.finance/logo.png",
+        "type": "image/png"
+      }
+    ],
+    "category": "fungible",
+    "creators": [
+      {
+        "address": "953CKYH169xXxaNKVwLT9z9s38TEg1d2pQsY7d1Lv6dD",
+        "share": 100
+      }
+    ]
+  },
+  "extensions": {
+    "transfer_fee": {
+      "enabled": true,
+      "basis_points": 100,
+      "description": "1% transfer fee that burns tokens, creating deflationary pressure"
+    },
+    "metadata_pointer": {
+      "enabled": true,
+      "type": "self-referential",
+      "description": "On-chain metadata stored directly on the mint account"
+    }
+  },
+  "links": {
+    "website": "https://tkoin.finance",
+    "twitter": "https://twitter.com/tkoinprotocol",
+    "discord": "https://discord.gg/tkoinprotocol",
+    "github": "https://github.com/tkoin-protocol"
+  },
+  "tags": [
+    "liquidity",
+    "gaming",
+    "casino",
+    "defi",
+    "token-2022",
+    "solana"
+  ]
+}
