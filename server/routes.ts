@@ -1057,6 +1057,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { TokenDeployer } = await import('./solana/token-deployer');
       const { solanaCore } = await import('./solana/solana-core');
+      type TokenDeploymentConfig = import('./solana/token-deployer').TokenDeploymentConfig;
 
       // Validate Solana services are configured
       if (!solanaCore.isReady()) {
@@ -1080,14 +1081,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
         redeployReason: z.string().optional(),
       });
 
-      const config = deploySchema.parse(req.body);
+      const requestConfig = deploySchema.parse(req.body);
+
+      // Load stored deployment configuration with metadata and initial supply
+      const { getDeploymentConfig } = await import('./config/token-deployment-config');
+      const treasuryWallet = solanaCore.getTreasuryPublicKey().toString();
+      
+      let storedConfig;
+      try {
+        storedConfig = getDeploymentConfig(treasuryWallet);
+      } catch (error) {
+        console.error('Failed to load deployment configuration:', error);
+        return res.status(500).json({
+          success: false,
+          errorCode: 'CONFIG_LOAD_ERROR',
+          message: 'Failed to load deployment configuration',
+        });
+      }
+
+      // Merge stored config with request overrides to create complete deployment config
+      // Request params can override stored config, but stored config provides defaults
+      const config: TokenDeploymentConfig = {
+        tokenName: requestConfig.tokenName || storedConfig.metadata.name,
+        tokenSymbol: requestConfig.tokenSymbol || storedConfig.metadata.symbol,
+        decimals: requestConfig.decimals ?? storedConfig.supply.decimals,
+        maxSupply: requestConfig.maxSupply || storedConfig.supply.maxSupply,
+        // Map stored config fees to burnRate parameters
+        burnRateBasisPoints: requestConfig.burnRateBasisPoints ?? storedConfig.fees.transferFeeBasisPoints,
+        maxBurnRateBasisPoints: requestConfig.maxBurnRateBasisPoints ?? storedConfig.fees.maxFeeBasisPoints,
+        // Metadata and supply from stored config with fallbacks
+        description: requestConfig.description || storedConfig.metadata?.description || '',
+        metadataUri: storedConfig.metadata.uri,
+        logoUri: storedConfig.metadata.logoURI,
+        initialMintAmount: storedConfig.supply.initialMintAmount,
+      };
+
+      // Preserve operational flags for redeploy logic
+      const forceRedeploy = requestConfig.forceRedeploy;
+      const redeployReason = requestConfig.redeployReason;
 
       // Check for existing deployment
       const deployer = new TokenDeployer();
       const existing = await deployer.getTokenConfig();
 
       if (existing && existing.deploymentStatus === 'deployed') {
-        if (!config.forceRedeploy) {
+        if (!forceRedeploy) {
           // Return existing deployment (idempotent)
           return res.json({
             success: true,
@@ -1099,7 +1137,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         // Force redeploy requested - log it
-        if (!config.redeployReason) {
+        if (!redeployReason) {
           return res.status(400).json({
             success: false,
             errorCode: 'REDEPLOY_REASON_REQUIRED',
@@ -1114,7 +1152,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           actorId: req.user.claims.sub,
           actorType: 'admin',
           metadata: {
-            reason: config.redeployReason,
+            reason: redeployReason,
             oldMintAddress: existing.mintAddress,
             timestamp: new Date().toISOString(),
           },
