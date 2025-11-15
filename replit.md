@@ -68,6 +68,30 @@ The frontend utilizes React, TypeScript, Vite, Tailwind CSS, and shadcn/ui. The 
   - **Treasury Wallet**: 953CKYH169xXxaNKVwLT9z9s38TEg1d2pQsY7d1Lv6dD (19.94 SOL on devnet)
   - **Database Schema**: All supply values stored as VARCHAR strings in base units (e.g., 1B TKOIN = "1000000000000000000")
   - **Verification**: Deployment verification validates mint account, Token-2022 program ownership, both extensions (TransferFee + MetadataPointer), metadata pointer configuration, authority matches, and supply consistency
+- **Agent Staking System** (**Implemented Nov 2025**): Tier-based access control requiring TKOIN staking for agent privileges:
+  - **Tier Structure**: Basic (0-9,999 TK), Verified (10K-49,999 TK), Premium (50K+ TK) with increasing daily/monthly limits and commission rates
+  - **Staking Mechanics**: 30-day lock-up period, 10K TKOIN minimum stake, 10% early withdrawal penalty
+  - **Hybrid Architecture**: Database tracking with PDA infrastructure for future on-chain migration
+  - **Database Schema**:
+    - `agent_stakes`: Tracks staked amounts, tiers, lock-up periods, PDA addresses
+    - `stake_history`: Complete audit trail of all stake/unstake operations
+    - `slashing_events`: Violation tracking and penalty enforcement
+  - **Backend Services**:
+    - `StakingService` (server/services/staking-service.ts): Core business logic with atomic database transactions
+    - PDA utilities (server/solana/staking-pda.ts): Derive stake accounts, check balances, prepare for on-chain integration
+    - Staking constants (shared/staking-constants.ts): Centralized configuration for thresholds, penalties, limits
+  - **API Endpoints**:
+    - `POST /api/agents/stake`: Stake TKOIN with balance verification
+    - `POST /api/agents/unstake`: Unstake with lock-up enforcement and penalty calculation
+    - `GET /api/agents/me/staking`: Get stake status, tier, and progression
+    - `GET /api/agents/me/stake-history`: Historical stake operations
+    - `POST /api/agents/me/sync-stake`: Manual on-chain balance synchronization
+  - **Validation & Safety**:
+    - Pre-stake balance checks prevent double-counting (requires wallet balance >= total staked + new amount)
+    - Atomic transactions ensure stake/tier/limit updates are consistent
+    - Tier limits automatically update with stake changes
+  - **Known Limitations**: Current implementation uses database tracking without actual on-chain token transfers. Future enhancement requires Solana staking program deployment for true token escrow and on-chain enforcement.
+  - **Frontend (Pending)**: Wallet adapter integration, staking dashboard UI, tier progression tracker
 - **Burn Service**: Automated harvest, withdraw, and burn cycle for token management (pending implementation).
 
 ### Feature Specifications
