@@ -864,3 +864,134 @@ export const insertTokenConfigSchema = createInsertSchema(tokenConfig).omit({
 });
 export type InsertTokenConfig = z.infer<typeof insertTokenConfigSchema>;
 export type TokenConfig = typeof tokenConfig.$inferSelect;
+
+// Agent Stakes - On-chain staking tracking
+export const agentStakes = pgTable("agent_stakes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  
+  // Agent & Wallet
+  agentId: varchar("agent_id").notNull().references(() => agents.id),
+  solanaWallet: text("solana_wallet").notNull(),
+  
+  // Stake Amount (in base units - lamports with 9 decimals)
+  stakedAmount: varchar("staked_amount", { length: 30 }).notNull().default("0"),
+  
+  // Tier Based on Stake
+  currentTier: text("current_tier").notNull().default("basic"), // basic (0), verified (10K), premium (50K)
+  
+  // Lock-up Period
+  lockupPeriodDays: integer("lockup_period_days").notNull().default(30),
+  lockedUntil: timestamp("locked_until"),
+  
+  // On-chain State
+  stakePda: text("stake_pda"), // Solana PDA address for stake account
+  lastSyncedAt: timestamp("last_synced_at"),
+  onChainBalance: varchar("on_chain_balance", { length: 30 }).default("0"),
+  
+  // Status
+  status: text("status").notNull().default("active"), // active, unstaking, slashed
+  
+  // Metadata
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => ({
+  agentIdIdx: index("agent_stakes_agent_id_idx").on(table.agentId),
+  walletIdx: index("agent_stakes_wallet_idx").on(table.solanaWallet),
+  tierIdx: index("agent_stakes_tier_idx").on(table.currentTier),
+}));
+
+// Stake History - Audit trail for all stake operations
+export const stakeHistory = pgTable("stake_history", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  
+  // Agent & Stake Reference
+  agentId: varchar("agent_id").notNull().references(() => agents.id),
+  stakeId: varchar("stake_id").references(() => agentStakes.id),
+  
+  // Operation Details
+  operationType: text("operation_type").notNull(), // stake, unstake, slash, sync
+  amount: varchar("amount", { length: 30 }).notNull(),
+  previousBalance: varchar("previous_balance", { length: 30 }),
+  newBalance: varchar("new_balance", { length: 30 }),
+  
+  // Tier Changes
+  previousTier: text("previous_tier"),
+  newTier: text("new_tier"),
+  
+  // Transaction Details
+  solanaSignature: text("solana_signature"),
+  stakePda: text("stake_pda"),
+  
+  // Metadata
+  notes: text("notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => ({
+  agentIdIdx: index("stake_history_agent_id_idx").on(table.agentId),
+  operationTypeIdx: index("stake_history_operation_type_idx").on(table.operationType),
+  createdAtIdx: index("stake_history_created_at_idx").on(table.createdAt),
+}));
+
+// Slashing Events - Penalties for violations
+export const slashingEvents = pgTable("slashing_events", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  
+  // Agent & Stake
+  agentId: varchar("agent_id").notNull().references(() => agents.id),
+  stakeId: varchar("stake_id").notNull().references(() => agentStakes.id),
+  
+  // Violation Details
+  violationType: text("violation_type").notNull(), // fraud, failed_delivery, kyc_breach, policy_violation
+  severity: text("severity").notNull(), // minor, major, critical
+  description: text("description").notNull(),
+  evidenceUrl: text("evidence_url"),
+  
+  // Slashing Details
+  slashPercentage: decimal("slash_percentage", { precision: 5, scale: 2 }).notNull(), // e.g., 10.00 = 10%
+  slashedAmount: varchar("slashed_amount", { length: 30 }).notNull(),
+  remainingStake: varchar("remaining_stake", { length: 30 }).notNull(),
+  
+  // Disposition
+  slashedTokensDestination: text("slashed_tokens_destination").notNull().default("treasury"), // treasury, burn
+  
+  // Transaction
+  solanaSignature: text("solana_signature"),
+  
+  // Status & Review
+  status: text("status").notNull().default("pending"), // pending, executed, reversed
+  executedAt: timestamp("executed_at"),
+  executedBy: text("executed_by"),
+  reversalReason: text("reversal_reason"),
+  
+  // Metadata
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  createdBy: text("created_by").notNull(),
+}, (table) => ({
+  agentIdIdx: index("slashing_events_agent_id_idx").on(table.agentId),
+  statusIdx: index("slashing_events_status_idx").on(table.status),
+  violationTypeIdx: index("slashing_events_violation_type_idx").on(table.violationType),
+}));
+
+// Agent Stakes Types
+export const insertAgentStakeSchema = createInsertSchema(agentStakes).omit({ 
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertAgentStake = z.infer<typeof insertAgentStakeSchema>;
+export type AgentStake = typeof agentStakes.$inferSelect;
+
+// Stake History Types
+export const insertStakeHistorySchema = createInsertSchema(stakeHistory).omit({ 
+  id: true,
+  createdAt: true,
+});
+export type InsertStakeHistory = z.infer<typeof insertStakeHistorySchema>;
+export type StakeHistory = typeof stakeHistory.$inferSelect;
+
+// Slashing Events Types
+export const insertSlashingEventSchema = createInsertSchema(slashingEvents).omit({ 
+  id: true,
+  createdAt: true,
+});
+export type InsertSlashingEvent = z.infer<typeof insertSlashingEventSchema>;
+export type SlashingEvent = typeof slashingEvents.$inferSelect;
