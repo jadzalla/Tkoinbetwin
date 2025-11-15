@@ -53,7 +53,6 @@ import {
   TOKEN_DESCRIPTION
 } from "@shared/token-constants";
 import { baseUnitsToTokens } from "@shared/token-utils";
-import { formatBaseUnits } from "@shared/token-utils";
 
 interface TokenConfig {
   id: string;
@@ -168,8 +167,19 @@ export default function AdminToken() {
   useEffect(() => {
     if (config) {
       // Convert base units back to tokens for form display
+      console.log('DEBUG: Config loaded:', {
+        maxSupply: config.maxSupply,
+        currentSupply: config.currentSupply,
+        decimals: config.decimals
+      });
+      
       const maxSupplyTokens = baseUnitsToTokens(config.maxSupply, config.decimals);
       const currentSupplyTokens = baseUnitsToTokens(config.currentSupply, config.decimals);
+      
+      console.log('DEBUG: Converted values:', {
+        maxSupplyTokens,
+        currentSupplyTokens
+      });
       
       form.reset({
         tokenName: config.tokenName,
