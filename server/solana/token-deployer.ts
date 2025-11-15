@@ -169,13 +169,15 @@ export class TokenDeployer {
       // Create transaction
       const transaction = new Transaction();
 
-      // 1. Create mint account (with space for both extensions + metadata)
+      // 1. Create mint account
+      // CRITICAL: space = extensions only (metadata uses realloc to expand)
+      // but lamports = full size (to pay rent for final size with metadata)
       transaction.add(
         SystemProgram.createAccount({
           fromPubkey: this.payer.publicKey,
           newAccountPubkey: mintAddress,
-          space: totalSpace,
-          lamports,
+          space: mintLen, // Extensions only - metadata will realloc
+          lamports, // Rent for full size (mintLen + metadataLen)
           programId: TOKEN_2022_PROGRAM_ID,
         })
       );
