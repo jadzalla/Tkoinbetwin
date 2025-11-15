@@ -36,13 +36,17 @@ The frontend uses React, TypeScript, Vite, Tailwind CSS, and shadcn/ui, adhering
     - **Technical Specifications**: Max Supply: 1 billion TKOIN, 9 decimals, burn rate 100 basis points.
     - **Authorities**: Mint, Freeze, Transfer Fee Config, and Metadata Update authorities all set to the treasury wallet.
     - **Deployment Process**: Two-phase commit, idempotent endpoints, real-time status polling, and comprehensive blockchain verification. Account space allocation handles metadata initialization correctly to prevent errors. Editable deployment configurations are available in the Admin UI.
-- **Agent Staking System**: Tier-based access control requiring TKOIN staking:
+- **Agent Staking System**: ✅ **PRODUCTION-READY (Database-Tracking Phase)** - Tier-based access control requiring TKOIN staking:
     - **Tier Structure**: Basic (0-9,999 TK), Verified (10K-49,999 TK), Premium (50K+ TK) with increasing limits and rates.
-    - **Staking Mechanics**: 30-day lock-up, 10K TKOIN minimum, 10% early withdrawal penalty.
+    - **Staking Mechanics**: 30-day lock-up, 10,000 TKOIN minimum (enforced backend + frontend), 10% early withdrawal penalty.
     - **Architecture**: Hybrid database tracking with PDA infrastructure for future on-chain migration.
-    - **Database Schema**: `agent_stakes` and `stake_history` for tracking, `slashing_events` for violations.
-    - **API Endpoints**: For staking, unstaking, checking stake status, and history.
-    - **Frontend**: Dashboard for staked balance, tier progression, stake/unstake forms with validation, and stake history.
+    - **Database Schema**: `agent_stakes` (current stakes), `stake_history` (audit trail), `slashing_events` (violation framework).
+    - **Backend Service**: `StakingService` with atomic transactions, database balance validation (tokensToBaseUnits() decimal parsing), tier calculations, lock-up enforcement, penalty logic.
+    - **API Endpoints**: POST /api/agents/stake, POST /api/agents/unstake, GET /api/agents/me/staking, GET /api/agents/me/stake-history (all require agent.status='active').
+    - **Frontend Dashboard** (/dashboard/staking): react-hook-form + zodResolver validation, comprehensive data-testid coverage, Shadcn components, tier progression UI, stake history table.
+    - **Testing**: Complete E2E coverage (stake/unstake flows, tier upgrades, penalty enforcement, history display) + regression tests (API minimum validation).
+    - **Critical Fix Applied**: Backend STAKING_PARAMS.minStakeAmount corrected from 1,000 → 10,000 to match frontend and product spec.
+    - **Future Enhancements**: On-chain token escrow via Solana program, rate limiting, CI test integration.
 - **Burn Service**: Automated harvest, withdraw, and burn cycle for token management (pending).
 
 ### Feature Specifications
