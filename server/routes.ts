@@ -6,6 +6,7 @@ import { NotFoundError } from "./errors";
 import { setupAuth, isAuthenticated, isApprovedAgent, isAdmin } from "./replitAuth";
 import { fxRateService } from "./services/fx-rate-service";
 import { PricingService } from "./services/pricing-service";
+import { StakingService } from "./services/staking-service";
 import { TOKEN_DECIMALS, TOKEN_MAX_SUPPLY_TOKENS } from "@shared/token-constants";
 import { db } from "./db";
 import { tokenConfig } from "@shared/schema";
@@ -190,6 +191,149 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching analytics data:", error);
       res.status(500).json({ message: "Failed to fetch analytics data" });
+    }
+  });
+  
+  // ========================================
+  // Agent Staking Routes
+  // ========================================
+  
+  // Get staking status for current agent
+  app.get('/api/agents/me/staking', isAuthenticated, isApprovedAgent, async (req: any, res) => {
+    try {
+      const agent = req.agent;
+      const { solanaCore } = await import('./solana/solana-core');
+      
+      if (!solanaCore.isReady()) {
+        return res.status(503).json({ message: "Solana connection not ready" });
+      }
+      
+      const stakingService = new StakingService(solanaCore.getConnection());
+      const stakeInfo = await stakingService.getStakeInfo(agent.id);
+      
+      res.json(stakeInfo || {
+        stakedTokens: 0,
+        tier: 'basic',
+        isLocked: false,
+        daysRemaining: 0,
+        nextTier: 'verified',
+        tokensNeeded: 10000,
+      });
+    } catch (error) {
+      console.error("Error fetching staking status:", error);
+      res.status(500).json({ message: "Failed to fetch staking status" });
+    }
+  });
+  
+  // Stake TKOIN tokens
+  app.post('/api/agents/stake', isAuthenticated, isApprovedAgent, async (req: any, res) => {
+    try {
+      const agent = req.agent;
+      const { amount } = req.body;
+      
+      if (!amount || isNaN(amount) || amount <= 0) {
+        return res.status(400).json({ message: "Invalid stake amount" });
+      }
+      
+      const { solanaCore } = await import('./solana/solana-core');
+      
+      if (!solanaCore.isReady()) {
+        return res.status(503).json({ message: "Solana connection not ready" });
+      }
+      
+      const stakingService = new StakingService(solanaCore.getConnection());
+      const result = await stakingService.stake(agent.id, agent.solanaWallet, parseFloat(amount));
+      
+      res.json({
+        success: true,
+        stake: result,
+        message: `Successfully staked ${amount} TKOIN`,
+      });
+    } catch (error: any) {
+      console.error("Error staking tokens:", error);
+      res.status(400).json({ 
+        message: error.message || "Failed to stake tokens",
+      });
+    }
+  });
+  
+  // Unstake TKOIN tokens
+  app.post('/api/agents/unstake', isAuthenticated, isApprovedAgent, async (req: any, res) => {
+    try {
+      const agent = req.agent;
+      const { amount, force } = req.body;
+      
+      if (!amount || isNaN(amount) || amount <= 0) {
+        return res.status(400).json({ message: "Invalid unstake amount" });
+      }
+      
+      const { solanaCore } = await import('./solana/solana-core');
+      
+      if (!solanaCore.isReady()) {
+        return res.status(503).json({ message: "Solana connection not ready" });
+      }
+      
+      const stakingService = new StakingService(solanaCore.getConnection());
+      const result = await stakingService.unstake(agent.id, parseFloat(amount), force || false);
+      
+      res.json({
+        success: true,
+        ...result,
+        message: result.penalty 
+          ? `Unstaked ${amount} TKOIN with ${result.penalty} TKOIN penalty`
+          : `Successfully unstaked ${amount} TKOIN`,
+      });
+    } catch (error: any) {
+      console.error("Error unstaking tokens:", error);
+      res.status(400).json({ 
+        message: error.message || "Failed to unstake tokens",
+      });
+    }
+  });
+  
+  // Get stake history for current agent
+  app.get('/api/agents/me/stake-history', isAuthenticated, isApprovedAgent, async (req: any, res) => {
+    try {
+      const agent = req.agent;
+      const { solanaCore } = await import('./solana/solana-core');
+      
+      if (!solanaCore.isReady()) {
+        return res.status(503).json({ message: "Solana connection not ready" });
+      }
+      
+      const stakingService = new StakingService(solanaCore.getConnection());
+      const history = await stakingService.getStakeHistory(agent.id);
+      
+      res.json(history);
+    } catch (error) {
+      console.error("Error fetching stake history:", error);
+      res.status(500).json({ message: "Failed to fetch stake history" });
+    }
+  });
+  
+  // Sync on-chain stake balance (manual trigger)
+  app.post('/api/agents/me/sync-stake', isAuthenticated, isApprovedAgent, async (req: any, res) => {
+    try {
+      const agent = req.agent;
+      const { solanaCore } = await import('./solana/solana-core');
+      
+      if (!solanaCore.isReady()) {
+        return res.status(503).json({ message: "Solana connection not ready" });
+      }
+      
+      const stakingService = new StakingService(solanaCore.getConnection());
+      const syncResult = await stakingService.syncOnChainBalance(agent.id, agent.solanaWallet);
+      
+      res.json({
+        success: true,
+        ...syncResult,
+        message: syncResult.inSync 
+          ? "Stake balance is synchronized"
+          : "Stake balance synchronized, discrepancy detected",
+      });
+    } catch (error) {
+      console.error("Error syncing stake balance:", error);
+      res.status(500).json({ message: "Failed to sync stake balance" });
     }
   });
   
