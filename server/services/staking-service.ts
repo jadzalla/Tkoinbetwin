@@ -84,15 +84,28 @@ export class StakingService {
     const stake = await this.getOrCreateStake(agentId, solanaWallet);
     const currentStaked = BigInt(stake.stakedAmount || '0');
 
-    // CRITICAL: Verify on-chain balance covers ALL stakes (prevents double-counting)
-    // Since we don't transfer tokens yet, we must ensure wallet has enough to cover
-    // both existing stakes AND the new stake amount
-    const walletPubkey = new PublicKey(solanaWallet);
-    const availableBalance = await getAvailableBalance(this.connection, walletPubkey);
+    // CRITICAL: Verify database balance covers ALL stakes (prevents double-counting)
+    // Since we're using database tracking (not on-chain transfers yet), we check the agent's
+    // database balance to ensure they have enough to cover existing stakes + new stake
+    const [agent] = await db
+      .select()
+      .from(agents)
+      .where(eq(agents.id, agentId))
+      .limit(1);
+    
+    if (!agent) {
+      throw new Error('Agent not found');
+    }
+
+    // Parse agent's database balance (stored as decimal string, e.g. "100000.00000000")
+    // Convert to base units using tokensToBaseUnits to handle decimal format
+    const dbBalanceStr = agent.tkoinBalance || '0';
+    const dbBalanceBaseUnits = tokensToBaseUnits(dbBalanceStr, TOKEN_DECIMALS);
+    const dbBalance = BigInt(dbBalanceBaseUnits);
     const totalRequiredBalance = currentStaked + amountBigInt;
     
-    if (availableBalance < totalRequiredBalance) {
-      const availableTokens = baseUnitsToTokens(availableBalance.toString(), TOKEN_DECIMALS);
+    if (dbBalance < totalRequiredBalance) {
+      const availableTokens = baseUnitsToTokens(dbBalance.toString(), TOKEN_DECIMALS);
       const requiredTokens = baseUnitsToTokens(totalRequiredBalance.toString(), TOKEN_DECIMALS);
       const currentStakedTokens = baseUnitsToTokens(currentStaked.toString(), TOKEN_DECIMALS);
       throw new Error(

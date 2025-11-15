@@ -41,7 +41,7 @@ export const TIER_LIMITS = {
 export const STAKING_PARAMS = {
   lockupPeriodDays: 30,           // 30-day minimum stake period
   unstakingCooldownDays: 7,       // 7-day withdrawal delay
-  minStakeAmount: 1_000,          // Minimum 1,000 TKOIN to stake
+  minStakeAmount: 10_000,         // Minimum 10,000 TKOIN to stake
   earlyWithdrawalPenalty: 10,     // 10% penalty for early withdrawal
 } as const;
 
