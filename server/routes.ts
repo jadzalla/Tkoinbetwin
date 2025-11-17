@@ -88,6 +88,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
   
+  // Permissionless agent registration (requires wallet signature + on-chain TKOIN balance)
+  app.post('/api/agents/register-permissionless', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const email = req.user.claims.email;
+      const username = req.user.claims.preferred_username || req.user.claims.email.split('@')[0];
+      
+      const { walletAddress, signature, message } = req.body;
+      
+      // Validate required fields
+      if (!walletAddress || !signature || !message) {
+        return res.status(400).json({
+          success: false,
+          error: "Missing required fields: walletAddress, signature, message"
+        });
+      }
+      
+      // Import and use permissionless registration service
+      const { permissionlessRegistrationService } = await import('./services/permissionless-registration-service');
+      
+      const result = await permissionlessRegistrationService.registerAgent({
+        walletAddress,
+        signature,
+        message,
+        replitUserId: userId,
+        email,
+        username,
+      });
+      
+      if (!result.success) {
+        return res.status(400).json(result);
+      }
+      
+      return res.status(201).json(result);
+    } catch (error) {
+      console.error("Permissionless registration error:", error);
+      return res.status(500).json({
+        success: false,
+        error: "Registration failed. Please try again.",
+        blockchainAvailable: true
+      });
+    }
+  });
+  
+  // Check eligibility for permissionless agent registration
+  app.post('/api/agents/check-eligibility', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { walletAddress } = req.body;
+      
+      if (!walletAddress) {
+        return res.status(400).json({
+          eligible: false,
+          reason: "Wallet address required",
+          stakeBalance: 0,
+          minimumRequired: 10000,
+          blockchainAvailable: false
+        });
+      }
+      
+      // Import and use permissionless registration service
+      const { permissionlessRegistrationService } = await import('./services/permissionless-registration-service');
+      
+      const result = await permissionlessRegistrationService.checkEligibility(
+        walletAddress,
+        userId
+      );
+      
+      return res.json(result);
+    } catch (error) {
+      console.error("Eligibility check error:", error);
+      return res.status(500).json({
+        eligible: false,
+        reason: "Failed to check eligibility",
+        stakeBalance: 0,
+        minimumRequired: 10000,
+        blockchainAvailable: false
+      });
+    }
+  });
+  
   // Get current agent profile
   app.get('/api/agents/me', isAuthenticated, async (req: any, res) => {
     try {

@@ -22,45 +22,98 @@ interface PermissionlessRegistrationData {
 export class PermissionlessRegistrationService {
   /**
    * Register a new agent via permissionless path
+   * Returns status object for graceful error handling
+   * 
    * Requirements:
    * - Valid wallet signature
    * - Minimum 10,000 TKOIN staked on-chain
    * - No existing agent with same wallet or Replit user
    */
-  async registerAgent(data: PermissionlessRegistrationData) {
-    // 1. Verify wallet signature
-    const isValid = await this.verifyWalletSignature(
-      data.walletAddress,
-      data.message,
-      data.signature
-    );
-    
-    if (!isValid) {
-      throw new Error("Invalid wallet signature. Please sign the message with your wallet.");
-    }
-
-    // 2. Check for existing agent
-    await this.checkDuplicates(data.walletAddress, data.replitUserId);
-
-    // 3. Verify on-chain TKOIN balance (real-time blockchain verification)
-    const stakeBalance = await this.getOnChainTokenBalance(data.walletAddress);
-    
-    if (stakeBalance < MINIMUM_STAKE_REQUIREMENT) {
-      throw new Error(
-        `Insufficient stake balance. You need at least ${MINIMUM_STAKE_REQUIREMENT.toLocaleString()} TKOIN staked. Current balance: ${stakeBalance.toLocaleString()} TKOIN`
+  async registerAgent(data: PermissionlessRegistrationData): Promise<{
+    success: boolean;
+    agent?: any;
+    message?: string;
+    error?: string;
+    blockchainAvailable?: boolean;
+  }> {
+    try {
+      // 1. Verify wallet signature
+      const isValid = await this.verifyWalletSignature(
+        data.walletAddress,
+        data.message,
+        data.signature
       );
+      
+      if (!isValid) {
+        return {
+          success: false,
+          error: "Invalid wallet signature. Please sign the message with your wallet.",
+          blockchainAvailable: true // Signature check doesn't require blockchain
+        };
+      }
+
+      // 2. Check for existing agent
+      const duplicateError = await this.checkDuplicatesStatus(data.walletAddress, data.replitUserId);
+      if (duplicateError) {
+        return {
+          success: false,
+          error: duplicateError,
+          blockchainAvailable: true // Duplicate check doesn't require blockchain
+        };
+      }
+
+      // 3. Verify on-chain TKOIN balance (real-time blockchain verification)
+      const balanceResult = await this.getOnChainTokenBalance(data.walletAddress);
+      
+      if (!balanceResult.success) {
+        return {
+          success: false,
+          error: balanceResult.reason || "Failed to verify on-chain balance",
+          blockchainAvailable: false
+        };
+      }
+      
+      if (balanceResult.balance < MINIMUM_STAKE_REQUIREMENT) {
+        return {
+          success: false,
+          error: `Insufficient stake balance. You need at least ${MINIMUM_STAKE_REQUIREMENT.toLocaleString()} TKOIN in your wallet. Current balance: ${balanceResult.balance.toLocaleString()} TKOIN`,
+          blockchainAvailable: true
+        };
+      }
+
+      // 4. Create agent account
+      try {
+        const agent = await this.createAgentAccount({
+          ...data,
+          stakeBalance: balanceResult.balance,
+        });
+
+        return {
+          success: true,
+          agent,
+          message: "Agent account created successfully via permissionless registration",
+          blockchainAvailable: true
+        };
+      } catch (createError) {
+        // Handle agent creation errors gracefully
+        const errorMessage = createError instanceof Error 
+          ? createError.message 
+          : "Failed to create agent account";
+        
+        return {
+          success: false,
+          error: errorMessage,
+          blockchainAvailable: true // Blockchain was available, creation failed for other reason
+        };
+      }
+    } catch (error) {
+      console.error("Permissionless registration error:", error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Registration failed. Please try again.",
+        blockchainAvailable: true // Default to true for unexpected errors
+      };
     }
-
-    // 4. Create agent account
-    const agent = await this.createAgentAccount({
-      ...data,
-      stakeBalance,
-    });
-
-    return {
-      agent,
-      message: "Agent account created successfully via permissionless registration",
-    };
   }
 
   /**
@@ -96,9 +149,10 @@ export class PermissionlessRegistrationService {
   }
 
   /**
-   * Check for duplicate wallet or Replit user registrations
+   * Check for duplicate wallet or Replit user registrations (status version)
+   * Returns error message if duplicate found, null otherwise
    */
-  private async checkDuplicates(walletAddress: string, replitUserId: string) {
+  private async checkDuplicatesStatus(walletAddress: string, replitUserId: string): Promise<string | null> {
     const existingAgents = await db
       .select()
       .from(agents)
@@ -114,40 +168,47 @@ export class PermissionlessRegistrationService {
       const byReplit = existingAgents.find((a: any) => a.replitUserId === replitUserId);
       
       if (byWallet) {
-        throw new Error("This wallet address is already registered as an agent.");
+        return "This wallet address is already registered as an agent.";
       }
       if (byReplit) {
-        throw new Error("You already have an agent account.");
+        return "You already have an agent account.";
       }
     }
+    
+    return null;
   }
 
   /**
    * Get TKOIN token balance from Solana blockchain (real-time on-chain verification)
-   * This queries the wallet's associated token account directly from the chain
+   * Returns status object to handle unconfigured/unavailable blockchain gracefully
    * 
    * @param walletAddress - Solana wallet public key
-   * @returns Token balance in TKOIN (not base units)
-   * @throws Error if token not deployed or RPC query fails
+   * @returns Status object with balance and availability info
    */
-  private async getOnChainTokenBalance(walletAddress: string): Promise<number> {
+  private async getOnChainTokenBalance(walletAddress: string): Promise<{
+    success: boolean;
+    balance: number;
+    reason?: string;
+  }> {
     try {
       // 0. Check if Solana services are configured
       if (!solanaCore.isReady()) {
-        throw new Error(
-          "Solana blockchain services are not configured. " +
-          "Permissionless registration requires on-chain verification. " +
-          "Please contact the administrator to enable blockchain connectivity."
-        );
+        return {
+          success: false,
+          balance: 0,
+          reason: "Blockchain services not configured. Permissionless registration requires on-chain verification. Please use the permissioned application path or contact the administrator."
+        };
       }
 
       // 1. Get TKOIN mint address from database
       const [config] = await db.select().from(tokenConfig).limit(1);
       
       if (!config || !config.mintAddress) {
-        throw new Error(
-          "TKOIN token not deployed yet. Please wait for token deployment before registering as an agent."
-        );
+        return {
+          success: false,
+          balance: 0,
+          reason: "TKOIN token not deployed yet. Please wait for token deployment or use the permissioned application path."
+        };
       }
 
       const mintPublicKey = new PublicKey(config.mintAddress);
@@ -167,30 +228,32 @@ export class PermissionlessRegistrationService {
         // Convert lamports to tokens
         const balanceStr = tokenAccount.amount.toString();
         const tokensStr = baseUnitsToTokens(balanceStr);
+        const balance = parseFloat(tokensStr);
         
-        return parseFloat(tokensStr);
+        return {
+          success: true,
+          balance,
+        };
       } catch (error) {
         // Token account doesn't exist = no tokens
         if (error instanceof Error && error.message.includes("could not find account")) {
-          return 0;
+          return {
+            success: true,
+            balance: 0,
+          };
         }
         throw error;
       }
     } catch (error) {
       console.error("Error querying on-chain token balance:", error);
       
-      // Re-throw with user-friendly message
-      if (error instanceof Error) {
-        if (error.message.includes("not deployed")) {
-          throw error; // Already user-friendly
-        }
-        throw new Error(
-          `Failed to verify on-chain token balance: ${error.message}. ` +
-          `Please ensure you have a valid Solana wallet with TKOIN tokens.`
-        );
-      }
-      
-      throw new Error("Failed to verify on-chain token balance. Please try again later.");
+      return {
+        success: false,
+        balance: 0,
+        reason: error instanceof Error 
+          ? `Failed to verify on-chain balance: ${error.message}`
+          : "Failed to verify on-chain token balance. Please try again later."
+      };
     }
   }
 
@@ -275,27 +338,44 @@ export class PermissionlessRegistrationService {
           eligible: false,
           reason: "Already registered as an agent",
           stakeBalance: 0,
+          minimumRequired: MINIMUM_STAKE_REQUIREMENT,
+          blockchainAvailable: true, // Duplicate check doesn't require blockchain
         };
       }
 
       // Check on-chain token balance
-      const stakeBalance = await this.getOnChainTokenBalance(walletAddress);
-      const eligible = stakeBalance >= MINIMUM_STAKE_REQUIREMENT;
+      const balanceResult = await this.getOnChainTokenBalance(walletAddress);
+      
+      // If blockchain unavailable, return clear status
+      if (!balanceResult.success) {
+        return {
+          eligible: false,
+          reason: balanceResult.reason || "Blockchain verification unavailable",
+          stakeBalance: 0,
+          minimumRequired: MINIMUM_STAKE_REQUIREMENT,
+          blockchainAvailable: false,
+        };
+      }
+      
+      const eligible = balanceResult.balance >= MINIMUM_STAKE_REQUIREMENT;
 
       return {
         eligible,
         reason: eligible 
           ? "Eligible for permissionless registration" 
-          : `Insufficient stake. Need ${MINIMUM_STAKE_REQUIREMENT.toLocaleString()} TKOIN, have ${stakeBalance.toLocaleString()} TKOIN`,
-        stakeBalance,
+          : `Insufficient stake. Need ${MINIMUM_STAKE_REQUIREMENT.toLocaleString()} TKOIN, have ${balanceResult.balance.toLocaleString()} TKOIN`,
+        stakeBalance: balanceResult.balance,
         minimumRequired: MINIMUM_STAKE_REQUIREMENT,
+        blockchainAvailable: true,
       };
     } catch (error) {
       console.error("Error checking eligibility:", error);
       return {
         eligible: false,
-        reason: "Error checking eligibility",
+        reason: error instanceof Error ? error.message : "Error checking eligibility",
         stakeBalance: 0,
+        minimumRequired: MINIMUM_STAKE_REQUIREMENT,
+        blockchainAvailable: false,
       };
     }
   }
