@@ -7,10 +7,13 @@ import { setupAuth, isAuthenticated, isApprovedAgent, isAdmin } from "./replitAu
 import { fxRateService } from "./services/fx-rate-service";
 import { PricingService } from "./services/pricing-service";
 import { StakingService } from "./services/staking-service";
+import { applicationService } from "./services/application-service";
+import { BurnProposalService } from "./services/burn-proposal-service";
 import { TOKEN_DECIMALS, TOKEN_MAX_SUPPLY_TOKENS } from "@shared/token-constants";
 import { db } from "./db";
 import { tokenConfig } from "@shared/schema";
 import { eq } from "drizzle-orm";
+import { Connection } from "@solana/web3.js";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
@@ -75,64 +78,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Agent Registration & Management Routes
   // ========================================
   
-  // Apply to become an agent
+  // Apply to become an agent (DEPRECATED)
+  // This endpoint is deprecated. Please use POST /api/applications/submit with complete business information.
   app.post('/api/agents/apply', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-      
-      // Check if already an agent
-      const existingAgent = await storage.getAgentByReplitUserId(userId);
-      if (existingAgent) {
-        return res.status(400).json({ 
-          message: "Already registered as an agent",
-          agent: existingAgent
-        });
-      }
-      
-      const { solanaWallet, country, city, displayName, bio } = req.body;
-      
-      if (!solanaWallet) {
-        return res.status(400).json({ message: "Solana wallet address required" });
-      }
-      
-      // Create agent application (status: pending)
-      const agent = await storage.createAgent({
-        replitUserId: userId,
-        email: user.email || '',
-        username: user.email?.split('@')[0] || 'user',
-        solanaWallet,
-        country,
-        city,
-        displayName: displayName || `${user.firstName} ${user.lastName}`.trim(),
-        bio,
-        verificationTier: 'basic',
-        status: 'pending',
-      });
-      
-      // Log agent application
-      await storage.createAuditLog({
-        eventType: 'agent_applied',
-        entityType: 'agent',
-        entityId: agent.id,
-        actorId: userId,
-        actorType: 'user',
-        metadata: {
-          solanaWallet,
-          country,
-          city,
-        },
-      });
-      
-      res.json({ agent, message: "Agent application submitted successfully" });
-    } catch (error) {
-      console.error("Error creating agent:", error);
-      res.status(500).json({ message: "Failed to create agent application" });
-    }
+    return res.status(410).json({ 
+      message: "This endpoint is deprecated. Please use POST /api/applications/submit with complete business information including address and phone number.",
+      newEndpoint: "/api/applications/submit",
+      requiredFields: ["businessName", "businessType", "country", "city", "address", "phoneNumber"]
+    });
   });
   
   // Get current agent profile
@@ -2413,6 +2366,334 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "Failed to process withdrawal request",
         error: error instanceof Error ? error.message : "Unknown error"
       });
+    }
+  });
+
+  // ========================================
+  // Agent Application Routes
+  // ========================================
+
+  // Submit agent application (authenticated users)
+  app.post('/api/applications/submit', isAuthenticated, async (req: any, res) => {
+    try {
+      const applicationSchema = z.object({
+        businessName: z.string().min(1, "Business name is required"),
+        businessType: z.enum(["individual", "llc", "corporation", "partnership"], {
+          errorMap: () => ({ message: "Invalid business type" })
+        }),
+        country: z.string().min(2, "Country is required"),
+        city: z.string().min(1, "City is required"),
+        address: z.string().min(5, "Valid address is required"),
+        phoneNumber: z.string().min(10, "Valid phone number is required"),
+        requestedTier: z.enum(["basic", "verified", "premium"]).default("basic"),
+        kycDocuments: z.array(z.any()).optional(),
+      });
+
+      const validationResult = applicationSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          errors: validationResult.error.errors 
+        });
+      }
+
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const application = await applicationService.createApplication(
+        validationResult.data,
+        userId,
+        user.email || ""
+      );
+
+      res.json(application);
+    } catch (error) {
+      console.error("Error creating application:", error);
+      if (error instanceof Error && error.message.includes("already have a pending")) {
+        return res.status(409).json({ message: error.message });
+      }
+      res.status(500).json({ message: "Failed to create application" });
+    }
+  });
+
+  // Get my application (authenticated users)
+  app.get('/api/applications/me', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const application = await applicationService.getApplicationByUserId(userId);
+      
+      if (!application) {
+        return res.status(404).json({ message: "No application found" });
+      }
+
+      res.json(application);
+    } catch (error) {
+      console.error("Error fetching application:", error);
+      res.status(500).json({ message: "Failed to fetch application" });
+    }
+  });
+
+  // Get all applications (admin only)
+  app.get('/api/admin/applications', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { status } = req.query;
+      const applications = await applicationService.getApplications({ status: status as string });
+      res.json(applications);
+    } catch (error) {
+      console.error("Error fetching applications:", error);
+      res.status(500).json({ message: "Failed to fetch applications" });
+    }
+  });
+
+  // Get application statistics (admin only)
+  app.get('/api/admin/applications/stats', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const stats = await applicationService.getApplicationStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching application stats:", error);
+      res.status(500).json({ message: "Failed to fetch stats" });
+    }
+  });
+
+  // Get single application (admin only)
+  app.get('/api/admin/applications/:id', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const application = await applicationService.getApplicationById(id);
+      
+      if (!application) {
+        return res.status(404).json({ message: "Application not found" });
+      }
+
+      res.json(application);
+    } catch (error) {
+      console.error("Error fetching application:", error);
+      res.status(500).json({ message: "Failed to fetch application" });
+    }
+  });
+
+  // Approve application (admin only)
+  app.post('/api/admin/applications/:id/approve', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { reviewNotes } = req.body;
+      const adminUserId = req.user.claims.sub;
+
+      const result = await applicationService.approveApplication(id, adminUserId, reviewNotes);
+      res.json(result);
+    } catch (error) {
+      console.error("Error approving application:", error);
+      res.status(500).json({ 
+        message: error instanceof Error ? error.message : "Failed to approve application" 
+      });
+    }
+  });
+
+  // Reject application (admin only)
+  app.post('/api/admin/applications/:id/reject', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { rejectionReason } = req.body;
+      const adminUserId = req.user.claims.sub;
+
+      if (!rejectionReason) {
+        return res.status(400).json({ message: "Rejection reason is required" });
+      }
+
+      const application = await applicationService.rejectApplication(id, adminUserId, rejectionReason);
+      res.json(application);
+    } catch (error) {
+      console.error("Error rejecting application:", error);
+      res.status(500).json({ 
+        message: error instanceof Error ? error.message : "Failed to reject application" 
+      });
+    }
+  });
+
+  // ========================================
+  // Burn Proposal Routes
+  // ========================================
+
+  // Initialize burn proposal service
+  const rpcUrl = process.env.SOLANA_RPC_URL || "https://api.devnet.solana.com";
+  const burnProposalService = new BurnProposalService(new Connection(rpcUrl, 'confirmed'));
+
+  // Get burn configuration (admin only)
+  app.get('/api/admin/burn/config', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const config = await burnProposalService.getConfig();
+      res.json(config);
+    } catch (error) {
+      console.error("Error fetching burn config:", error);
+      res.status(500).json({ message: "Failed to fetch burn configuration" });
+    }
+  });
+
+  // Update burn configuration (admin only)
+  app.patch('/api/admin/burn/config', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const adminUserId = req.user.claims.sub;
+      const config = await burnProposalService.updateConfig(req.body, adminUserId);
+      res.json(config);
+    } catch (error) {
+      console.error("Error updating burn config:", error);
+      res.status(500).json({ message: "Failed to update burn configuration" });
+    }
+  });
+
+  // Calculate proposed burn (admin only)
+  app.post('/api/admin/burn/calculate', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const calculateSchema = z.object({
+        treasuryWallet: z.string().regex(/^[1-9A-HJ-NP-Za-km-z]{32,44}$/, "Invalid Solana wallet address"),
+      });
+
+      const validationResult = calculateSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          errors: validationResult.error.errors 
+        });
+      }
+
+      const calculation = await burnProposalService.calculateProposedBurn(validationResult.data.treasuryWallet);
+      res.json(calculation);
+    } catch (error) {
+      console.error("Error calculating burn:", error);
+      res.status(500).json({ 
+        message: error instanceof Error ? error.message : "Failed to calculate burn proposal" 
+      });
+    }
+  });
+
+  // Create burn proposal (admin only)
+  app.post('/api/admin/burn/proposals', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const proposalSchema = z.object({
+        reason: z.string().min(10, "Reason must be at least 10 characters"),
+        treasuryWallet: z.string().regex(/^[1-9A-HJ-NP-Za-km-z]{32,44}$/, "Invalid Solana wallet address"),
+      });
+
+      const validationResult = proposalSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          errors: validationResult.error.errors 
+        });
+      }
+
+      const adminUserId = req.user.claims.sub;
+      const proposal = await burnProposalService.createProposal(
+        adminUserId, 
+        validationResult.data.reason, 
+        validationResult.data.treasuryWallet
+      );
+      res.json(proposal);
+    } catch (error) {
+      console.error("Error creating burn proposal:", error);
+      if (error instanceof Error && error.message.includes("safety limits")) {
+        return res.status(422).json({ 
+          message: error.message,
+          type: "safety_violation"
+        });
+      }
+      res.status(500).json({ 
+        message: error instanceof Error ? error.message : "Failed to create burn proposal" 
+      });
+    }
+  });
+
+  // Get all burn proposals (admin only)
+  app.get('/api/admin/burn/proposals', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { status } = req.query;
+      const proposals = await burnProposalService.getProposals(status as string);
+      res.json(proposals);
+    } catch (error) {
+      console.error("Error fetching burn proposals:", error);
+      res.status(500).json({ message: "Failed to fetch burn proposals" });
+    }
+  });
+
+  // Get single burn proposal (admin only)
+  app.get('/api/admin/burn/proposals/:id', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const proposal = await burnProposalService.getProposalById(id);
+      
+      if (!proposal) {
+        return res.status(404).json({ message: "Proposal not found" });
+      }
+
+      res.json(proposal);
+    } catch (error) {
+      console.error("Error fetching burn proposal:", error);
+      res.status(500).json({ message: "Failed to fetch burn proposal" });
+    }
+  });
+
+  // Approve burn proposal (admin only)
+  app.post('/api/admin/burn/proposals/:id/approve', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const adminUserId = req.user.claims.sub;
+
+      const proposal = await burnProposalService.approveProposal(id, adminUserId);
+      res.json(proposal);
+    } catch (error) {
+      console.error("Error approving burn proposal:", error);
+      res.status(500).json({ 
+        message: error instanceof Error ? error.message : "Failed to approve burn proposal" 
+      });
+    }
+  });
+
+  // Reject burn proposal (admin only)
+  app.post('/api/admin/burn/proposals/:id/reject', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { rejectionReason } = req.body;
+      const adminUserId = req.user.claims.sub;
+
+      if (!rejectionReason) {
+        return res.status(400).json({ message: "Rejection reason is required" });
+      }
+
+      const proposal = await burnProposalService.rejectProposal(id, adminUserId, rejectionReason);
+      res.json(proposal);
+    } catch (error) {
+      console.error("Error rejecting burn proposal:", error);
+      res.status(500).json({ 
+        message: error instanceof Error ? error.message : "Failed to reject burn proposal" 
+      });
+    }
+  });
+
+  // Get burn history (admin only)
+  app.get('/api/admin/burn/history', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 50;
+      const history = await burnProposalService.getBurnHistory(limit);
+      res.json(history);
+    } catch (error) {
+      console.error("Error fetching burn history:", error);
+      res.status(500).json({ message: "Failed to fetch burn history" });
+    }
+  });
+
+  // Get burn statistics (admin only)
+  app.get('/api/admin/burn/stats', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const stats = await burnProposalService.getBurnStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching burn stats:", error);
+      res.status(500).json({ message: "Failed to fetch burn statistics" });
     }
   });
   

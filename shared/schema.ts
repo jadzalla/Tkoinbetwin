@@ -971,6 +971,144 @@ export const slashingEvents = pgTable("slashing_events", {
   violationTypeIdx: index("slashing_events_violation_type_idx").on(table.violationType),
 }));
 
+// Agent Applications - KYC and onboarding flow
+export const agentApplications = pgTable("agent_applications", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  
+  // Applicant Identity (pre-agent)
+  replitUserId: text("replit_user_id").notNull(),
+  email: text("email").notNull(),
+  
+  // Business Information
+  businessName: text("business_name").notNull(),
+  businessType: text("business_type").notNull(), // individual, llc, corporation, partnership
+  country: text("country").notNull(),
+  city: text("city").notNull(),
+  address: text("address").notNull(),
+  phoneNumber: text("phone_number").notNull(),
+  
+  // Requested Tier
+  requestedTier: text("requested_tier").notNull().default("basic"), // basic, verified, premium
+  
+  // KYC Documents
+  kycDocuments: jsonb("kyc_documents").default([]), // [{type: "id_front", url: "...", uploadedAt: "..."}]
+  kycStatus: text("kyc_status").notNull().default("pending"), // pending, under_review, approved, rejected
+  kycNotes: text("kyc_notes"),
+  
+  // Application Status
+  status: text("status").notNull().default("pending"), // pending, approved, rejected
+  
+  // Admin Review
+  reviewedAt: timestamp("reviewed_at"),
+  reviewedBy: text("reviewed_by"),
+  reviewNotes: text("review_notes"),
+  rejectionReason: text("rejection_reason"),
+  
+  // Created Agent (if approved)
+  agentId: varchar("agent_id").references(() => agents.id),
+  
+  // Metadata
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => ({
+  replitUserIdIdx: index("agent_applications_replit_user_id_idx").on(table.replitUserId),
+  statusIdx: index("agent_applications_status_idx").on(table.status),
+  kycStatusIdx: index("agent_applications_kyc_status_idx").on(table.kycStatus),
+}));
+
+// Burn Configuration - System settings for burn service
+export const burnConfig = pgTable("burn_config", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  
+  // Service Control
+  enabled: boolean("enabled").notNull().default(false),
+  network: text("network").notNull().default("devnet"), // devnet, mainnet
+  
+  // Burn Parameters
+  burnRatePercentage: decimal("burn_rate_percentage", { precision: 5, scale: 2 }).notNull().default("1.00"), // % of treasury to burn
+  minBurnAmount: varchar("min_burn_amount", { length: 30 }).notNull().default("1000000000"), // 1 TKOIN in base units
+  maxBurnAmount: varchar("max_burn_amount", { length: 30 }).notNull().default("100000000000000"), // 100K TKOIN in base units
+  
+  // Safety Limits
+  maxTreasuryBurnPercentage: decimal("max_treasury_burn_percentage", { precision: 5, scale: 2 }).notNull().default("5.00"), // Never burn >5% of treasury
+  cooldownPeriodHours: integer("cooldown_period_hours").notNull().default(24), // Min time between burns
+  requiresApproval: boolean("requires_approval").notNull().default(true),
+  
+  // Fee Harvesting
+  feeVaultAddress: text("fee_vault_address"),
+  lastHarvestAt: timestamp("last_harvest_at"),
+  totalFeesHarvested: varchar("total_fees_harvested", { length: 30 }).default("0"),
+  
+  // Metadata
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  updatedBy: text("updated_by"),
+});
+
+// Burn Proposals - Pending burns requiring approval
+export const burnProposals = pgTable("burn_proposals", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  
+  // Proposal Details
+  proposedAmount: varchar("proposed_amount", { length: 30 }).notNull(),
+  treasuryBalanceAtProposal: varchar("treasury_balance_at_proposal", { length: 30 }).notNull(),
+  burnPercentageOfTreasury: decimal("burn_percentage_of_treasury", { precision: 5, scale: 2 }).notNull(),
+  
+  // Fee Harvesting
+  harvestedFeesAmount: varchar("harvested_fees_amount", { length: 30 }).default("0"),
+  feeVaultBalanceAtHarvest: varchar("fee_vault_balance_at_harvest", { length: 30 }),
+  
+  // Justification
+  reason: text("reason").notNull(),
+  proposedBy: text("proposed_by").notNull(),
+  
+  // Status & Approval
+  status: text("status").notNull().default("pending"), // pending, approved, rejected, executed
+  approvedAt: timestamp("approved_at"),
+  approvedBy: text("approved_by"),
+  rejectedAt: timestamp("rejected_at"),
+  rejectedBy: text("rejected_by"),
+  rejectionReason: text("rejection_reason"),
+  
+  // Execution
+  executedAt: timestamp("executed_at"),
+  executedBy: text("executed_by"),
+  solanaSignature: text("solana_signature"),
+  executionError: text("execution_error"),
+  
+  // Metadata
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => ({
+  statusIdx: index("burn_proposals_status_idx").on(table.status),
+  createdAtIdx: index("burn_proposals_created_at_idx").on(table.createdAt),
+}));
+
+// Burn History - Completed burns with verification
+export const burnHistory = pgTable("burn_history", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  
+  // Burn Details
+  burnedAmount: varchar("burned_amount", { length: 30 }).notNull(),
+  treasuryBalanceBefore: varchar("treasury_balance_before", { length: 30 }).notNull(),
+  treasuryBalanceAfter: varchar("treasury_balance_after", { length: 30 }).notNull(),
+  
+  // On-chain Verification
+  solanaSignature: text("solana_signature").notNull(),
+  blockHeight: integer("block_height"),
+  blockTime: timestamp("block_time"),
+  verified: boolean("verified").notNull().default(false),
+  
+  // Reference
+  proposalId: varchar("proposal_id").references(() => burnProposals.id),
+  
+  // Metadata
+  executedBy: text("executed_by").notNull(),
+  executedAt: timestamp("executed_at").notNull().defaultNow(),
+  notes: text("notes"),
+}, (table) => ({
+  executedAtIdx: index("burn_history_executed_at_idx").on(table.executedAt),
+  signatureIdx: index("burn_history_signature_idx").on(table.solanaSignature),
+}));
+
 // Agent Stakes Types
 export const insertAgentStakeSchema = createInsertSchema(agentStakes).omit({ 
   id: true,
@@ -995,3 +1133,42 @@ export const insertSlashingEventSchema = createInsertSchema(slashingEvents).omit
 });
 export type InsertSlashingEvent = z.infer<typeof insertSlashingEventSchema>;
 export type SlashingEvent = typeof slashingEvents.$inferSelect;
+
+// Agent Applications Types
+export const insertAgentApplicationSchema = createInsertSchema(agentApplications).omit({ 
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  reviewedAt: true,
+  agentId: true,
+});
+export type InsertAgentApplication = z.infer<typeof insertAgentApplicationSchema>;
+export type AgentApplication = typeof agentApplications.$inferSelect;
+
+// Burn Config Types
+export const insertBurnConfigSchema = createInsertSchema(burnConfig).omit({ 
+  id: true,
+  updatedAt: true,
+  lastHarvestAt: true,
+});
+export type InsertBurnConfig = z.infer<typeof insertBurnConfigSchema>;
+export type BurnConfig = typeof burnConfig.$inferSelect;
+
+// Burn Proposals Types
+export const insertBurnProposalSchema = createInsertSchema(burnProposals).omit({ 
+  id: true,
+  createdAt: true,
+  approvedAt: true,
+  rejectedAt: true,
+  executedAt: true,
+});
+export type InsertBurnProposal = z.infer<typeof insertBurnProposalSchema>;
+export type BurnProposal = typeof burnProposals.$inferSelect;
+
+// Burn History Types
+export const insertBurnHistorySchema = createInsertSchema(burnHistory).omit({ 
+  id: true,
+  executedAt: true,
+});
+export type InsertBurnHistory = z.infer<typeof insertBurnHistorySchema>;
+export type BurnHistory = typeof burnHistory.$inferSelect;

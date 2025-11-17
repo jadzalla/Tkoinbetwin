@@ -57,7 +57,26 @@ The frontend uses React, TypeScript, Vite, Tailwind CSS, and shadcn/ui, adhering
     - **Tier Downgrade Logic**: Automatic tier recalculation after slash execution based on remaining stake, with corresponding daily/monthly limit adjustments.
     - **Audit Trail**: Complete history in `slashing_events` + `stake_history` tables for compliance and transparency.
     - **Future Enhancements**: Automated violation detection triggers, on-chain slashing when migrating to token escrow, rate limiting for slash creation.
-- **Burn Service**: Automated harvest, withdraw, and burn cycle for token management (pending).
+- **Agent Onboarding System**: ✅ **BACKEND-COMPLETE** - Application and KYC workflow for new agent registration:
+    - **Database Schema**: `agent_applications` table tracks business info, KYC documents, review status, and created agent reference.
+    - **Application Flow**: User submits application → Admin reviews KYC → Approves (creates agent account) or Rejects.
+    - **Backend Service**: `ApplicationService` with atomic transactions for agent account creation, user role upgrade, application tracking.
+    - **API Endpoints**: POST /api/applications/submit, GET /api/applications/me, GET /api/admin/applications (list/stats), POST /api/admin/applications/:id/approve|reject (all with proper auth).
+    - **KYC Fields**: Business name/type, country/city/address, phone number, requested tier, KYC document storage (JSONB).
+    - **Frontend UI**: Pending - Application form (/apply), Admin review dashboard (/admin/applications).
+    - **Future Enhancements**: Document upload integration, automated KYC verification, stake setup wizard.
+- **Burn Proposal System**: ✅ **BACKEND-COMPLETE** - Manual approval workflow for token burns with maximum safety:
+    - **Database Schema**: `burn_config` (system settings), `burn_proposals` (pending burns), `burn_history` (completed burns with verification).
+    - **Safety Features**: Network detection (devnet/mainnet), configurable limits (min/max amounts, treasury percentage), cooldown periods, multi-gate approval.
+    - **Backend Service**: `BurnProposalService` with safety calculations, treasury balance verification, limit enforcement.
+    - **API Endpoints**: GET/PATCH /api/admin/burn/config, POST /api/admin/burn/calculate, POST /api/admin/burn/proposals, GET /api/admin/burn/proposals (list/history), POST /api/admin/burn/proposals/:id/approve|reject.
+    - **Approval Workflow**: Admin calculates burn → Creates proposal → Reviews → Approves → Executes (separate from automated burn service).
+    - **Frontend UI**: Pending - Burn configuration (/admin/burn/config), Proposals dashboard (/admin/burn/proposals), History & analytics.
+    - **Coexistence**: Works alongside existing automated `BurnService` - manual approval for controlled burns vs automated fee harvesting.
+    - **Future Enhancements**: On-chain burn execution, burn analytics dashboard, treasury visualization.
+- **Analytics Dashboards**: ✅ **PRODUCTION-READY** - Comprehensive admin analytics for staking and slashing:
+    - **Staking Analytics** (/admin/analytics/staking): Overview metrics, 30-day trends, tier distribution, agent health monitoring, activity feed.
+    - **Slashing Analytics** (/admin/analytics/slashing): Violation frequency, severity distribution, penalty trends, agent behavior tracking.
 
 ### Feature Specifications
 - **Pricing Configurator**: Agents can configure bid/ask spreads, FX buffers, and view pricing previews.
