@@ -11,6 +11,7 @@ import AdminCurrencies from "@/pages/admin/currencies";
 import AdminPlatforms from "@/pages/admin/platforms";
 import AdminToken from "@/pages/admin/token";
 import AdminSlashing from "@/pages/admin/slashing";
+import AdminApplications from "@/pages/admin/applications";
 import StakingAnalytics from "@/pages/admin/analytics/staking";
 import SlashingAnalytics from "@/pages/admin/analytics/slashing";
 import NotFound from "@/pages/not-found";
@@ -27,6 +28,7 @@ function Router() {
       <Route path="/admin/currencies" component={AdminCurrencies} />
       <Route path="/admin/token" component={AdminToken} />
       <Route path="/admin/slashing" component={AdminSlashing} />
+      <Route path="/admin/applications" component={AdminApplications} />
       <Route path="/admin/analytics/staking" component={StakingAnalytics} />
       <Route path="/admin/analytics/slashing" component={SlashingAnalytics} />
       <Route path="/admin" component={Admin} />
