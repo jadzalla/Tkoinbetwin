@@ -53,6 +53,8 @@ export const agents = pgTable("agents", {
   // Verification & Status
   verificationTier: text("verification_tier").notNull().default("basic"), // basic, verified, premium
   status: text("status").notNull().default("pending"), // pending, active, suspended, revoked
+  registrationType: text("registration_type").notNull().default("permissioned"), // permissionless, permissioned
+  walletSignature: text("wallet_signature"), // Signature proof for permissionless registration
   
   // Wallet & Inventory
   solanaWallet: text("solana_wallet").notNull(),
