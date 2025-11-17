@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
-import { Coins, TrendingUp, Users, Shield, ArrowRight, Flame, DollarSign, Trophy, Medal, Award, Wallet, Target, BarChart3, CheckCircle2, ExternalLink } from "lucide-react";
+import { Coins, TrendingUp, Users, Shield, ArrowRight, Flame, DollarSign, Trophy, Medal, Award, Wallet, Target, BarChart3, CheckCircle2, ExternalLink, FileCheck } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { motion, useSpring, useTransform, useInView } from "framer-motion";
 import { useRef } from "react";
@@ -361,11 +361,22 @@ export default function Home() {
                     Find an Agent <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
-                <Link href="/apply">
-                  <Button size="lg" variant="outline" className="bg-white/10 backdrop-blur-md border-white/30 text-white hover:bg-white/20" data-testid="button-become-liquidity-provider">
-                    Start Earning as an Agent
+                <Link href="/register-agent">
+                  <Button size="lg" variant="outline" className="bg-white/10 backdrop-blur-md border-white/30 text-white hover:bg-white/20" data-testid="button-register-wallet">
+                    <Wallet className="mr-2 h-4 w-4" />
+                    Register Instantly
                   </Button>
                 </Link>
+              </div>
+              
+              <div className="mt-4 text-center">
+                <p className="text-sm text-white/70">
+                  Or{" "}
+                  <Link href="/apply" className="text-purple-200 hover:text-purple-100 underline font-medium" data-testid="link-apply-kyc-hero">
+                    apply via traditional KYC
+                  </Link>{" "}
+                  for higher tier access
+                </p>
               </div>
             </div>
 
@@ -667,12 +678,51 @@ export default function Home() {
               </Card>
             </div>
 
-            <div className="mt-12 text-center">
-              <Link href="/apply">
-                <Button size="lg" data-testid="button-apply-agent">
-                  Apply to Become an Agent <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
+            <div className="mt-12 space-y-6">
+              <Card className="hover-elevate border-2 border-primary/20">
+                <CardContent className="pt-6">
+                  <div className="space-y-4">
+                    <div className="flex items-start gap-4">
+                      <Wallet className="h-6 w-6 text-primary mt-1" />
+                      <div className="flex-1">
+                        <h3 className="text-lg font-semibold mb-2">Instant Registration (Recommended)</h3>
+                        <p className="text-muted-foreground mb-4">
+                          Hold 10,000+ TKOIN in your Solana wallet? Get instant Basic tier access with no KYC required. 
+                          Connect your wallet, prove ownership, and start earning immediately.
+                        </p>
+                        <Link href="/register-agent">
+                          <Button size="lg" data-testid="button-register-instant">
+                            <Wallet className="mr-2 h-4 w-4" />
+                            Register with Wallet <ArrowRight className="ml-2 h-4 w-4" />
+                          </Button>
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="hover-elevate">
+                <CardContent className="pt-6">
+                  <div className="space-y-4">
+                    <div className="flex items-start gap-4">
+                      <FileCheck className="h-6 w-6 text-muted-foreground mt-1" />
+                      <div className="flex-1">
+                        <h3 className="text-lg font-semibold mb-2">Traditional KYC Application</h3>
+                        <p className="text-muted-foreground mb-4">
+                          Apply for Verified or Premium tier access through our KYC process. Higher transaction limits, 
+                          better commission rates, and enhanced platform features.
+                        </p>
+                        <Link href="/apply">
+                          <Button size="lg" variant="outline" data-testid="button-apply-kyc">
+                            Apply via KYC <ArrowRight className="ml-2 h-4 w-4" />
+                          </Button>
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </section>
@@ -766,8 +816,9 @@ export default function Home() {
             <div>
               <h3 className="font-semibold mb-3">Agents</h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="/api/login" className="hover:text-primary">Agent Portal</a></li>
-                <li><a href="/apply" className="hover:text-primary">Become an Agent</a></li>
+                <li><a href="/api/login" className="hover:text-primary" data-testid="link-agent-portal-footer">Agent Portal</a></li>
+                <li><a href="/register-agent" className="hover:text-primary" data-testid="link-register-wallet-footer">Register with Wallet</a></li>
+                <li><a href="/apply" className="hover:text-primary" data-testid="link-apply-kyc-footer">Apply via KYC</a></li>
               </ul>
             </div>
             <div>
