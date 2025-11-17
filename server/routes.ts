@@ -2377,6 +2377,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/applications/submit', isAuthenticated, async (req: any, res) => {
     try {
       const applicationSchema = z.object({
+        email: z.string().email("Valid email address is required"),
         businessName: z.string().min(1, "Business name is required"),
         businessType: z.enum(["individual", "llc", "corporation", "partnership"], {
           errorMap: () => ({ message: "Invalid business type" })
@@ -2398,16 +2399,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const userId = req.user.claims.sub;
+      
+      // Backend fallback: if email is empty but user session has email, use that
       const user = await storage.getUser(userId);
-
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
+      
+      const email = validationResult.data.email || user.email || "";
+      if (!email) {
+        return res.status(400).json({ 
+          message: "Email is required. Please ensure your account has a valid email address." 
+        });
+      }
+
+      // Strip email from data before passing to ApplicationService (it expects Omit<..., "email">)
+      const { email: _email, ...applicationData } = validationResult.data;
 
       const application = await applicationService.createApplication(
-        validationResult.data,
+        applicationData,
         userId,
-        user.email || ""
+        email
       );
 
       res.json(application);
