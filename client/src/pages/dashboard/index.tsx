@@ -53,7 +53,7 @@ export default function DashboardIndex({ agent }: DashboardIndexProps) {
           <CheckCircle2 className="h-4 w-4 text-green-500" />
           <AlertDescription>
             <strong>Welcome to Tkoin Protocol!</strong> You've successfully registered as a Basic tier agent via wallet verification. 
-            Your account is now active with ${Number(agent.dailyLimit).toLocaleString()} daily transaction limit. 
+            Your account is now active with {Number(agent.dailyLimit).toLocaleString()} daily transaction limit. 
             Stake additional TKOIN to unlock higher tiers and increased limits.
           </AlertDescription>
         </Alert>
