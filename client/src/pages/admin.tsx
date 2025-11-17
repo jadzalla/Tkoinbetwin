@@ -329,6 +329,38 @@ export default function Admin() {
             </Card>
           </Link>
 
+          {/* Slashing Analytics Link */}
+          <Link href="/admin/analytics/slashing">
+            <Card className="hover-elevate active-elevate-2 cursor-pointer h-full" data-testid="card-slashing-analytics">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ShieldAlert className="h-5 w-5 text-primary" />
+                  Slashing Analytics
+                </CardTitle>
+                <CardDescription>
+                  Monitor violation patterns and penalty effectiveness
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center p-3 bg-muted/50 rounded-md">
+                    <span className="text-sm font-medium">Total Slashed</span>
+                    <Badge variant="outline" data-testid="badge-total-slashed-preview">
+                      Loading...
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    View violation trends, severity breakdown, and agent compliance
+                  </p>
+                  <div className="flex items-center gap-2 text-primary text-sm font-medium">
+                    <span>View Analytics</span>
+                    <ExternalLink className="h-4 w-4" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+
           {/* Burn Rate Configuration */}
           <Card data-testid="card-burn-rate-config">
             <CardHeader>

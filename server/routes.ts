@@ -552,6 +552,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // ========================================
+  // Admin Routes - Slashing Analytics
+  // ========================================
+  
+  // Get slashing overview (admin only)
+  app.get('/api/admin/analytics/slashing/overview', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { slashingAnalyticsService } = await import('./services/slashing-analytics-service');
+      const overview = await slashingAnalyticsService.getSlashingOverview();
+      res.json(overview);
+    } catch (error) {
+      console.error("Error fetching slashing overview:", error);
+      res.status(500).json({ message: "Failed to fetch slashing overview" });
+    }
+  });
+  
+  // Get violation breakdown (admin only)
+  app.get('/api/admin/analytics/slashing/violations', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { slashingAnalyticsService } = await import('./services/slashing-analytics-service');
+      const breakdown = await slashingAnalyticsService.getViolationBreakdown();
+      res.json(breakdown);
+    } catch (error) {
+      console.error("Error fetching violation breakdown:", error);
+      res.status(500).json({ message: "Failed to fetch violation breakdown" });
+    }
+  });
+  
+  // Get severity breakdown (admin only)
+  app.get('/api/admin/analytics/slashing/severity', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { slashingAnalyticsService } = await import('./services/slashing-analytics-service');
+      const breakdown = await slashingAnalyticsService.getSeverityBreakdown();
+      res.json(breakdown);
+    } catch (error) {
+      console.error("Error fetching severity breakdown:", error);
+      res.status(500).json({ message: "Failed to fetch severity breakdown" });
+    }
+  });
+  
+  // Get slashing trends (admin only)
+  app.get('/api/admin/analytics/slashing/trends', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { days } = req.query;
+      const { slashingAnalyticsService } = await import('./services/slashing-analytics-service');
+      const trends = await slashingAnalyticsService.getSlashingTrends(
+        days ? parseInt(days as string) : 30
+      );
+      res.json(trends);
+    } catch (error) {
+      console.error("Error fetching slashing trends:", error);
+      res.status(500).json({ message: "Failed to fetch slashing trends" });
+    }
+  });
+  
+  // Get agent violation history (admin only)
+  app.get('/api/admin/analytics/slashing/agents', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { limit } = req.query;
+      const { slashingAnalyticsService } = await import('./services/slashing-analytics-service');
+      const history = await slashingAnalyticsService.getAgentViolationHistory(
+        limit ? parseInt(limit as string) : 20
+      );
+      res.json(history);
+    } catch (error) {
+      console.error("Error fetching agent violation history:", error);
+      res.status(500).json({ message: "Failed to fetch agent violation history" });
+    }
+  });
+  
+  // Get recent slashing events (admin only)
+  app.get('/api/admin/analytics/slashing/recent', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { limit } = req.query;
+      const { slashingAnalyticsService } = await import('./services/slashing-analytics-service');
+      const events = await slashingAnalyticsService.getRecentSlashingEvents(
+        limit ? parseInt(limit as string) : 10
+      );
+      res.json(events);
+    } catch (error) {
+      console.error("Error fetching recent slashing events:", error);
+      res.status(500).json({ message: "Failed to fetch recent slashing events" });
+    }
+  });
+  
+  // ========================================
   // Admin Routes - Agent Management
   // ========================================
   
