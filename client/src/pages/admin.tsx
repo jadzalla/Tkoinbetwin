@@ -10,7 +10,7 @@ import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Link, useLocation } from "wouter";
-import { Coins, Settings, Users, TrendingUp, AlertCircle, ExternalLink, ShieldAlert, Globe, Rocket } from "lucide-react";
+import { Coins, Settings, Users, TrendingUp, AlertCircle, ExternalLink, ShieldAlert, Globe, Rocket, Flame } from "lucide-react";
 import type { Agent } from "@shared/schema";
 
 interface SystemConfig {
@@ -354,6 +354,70 @@ export default function Admin() {
                   </p>
                   <div className="flex items-center gap-2 text-primary text-sm font-medium">
                     <span>View Analytics</span>
+                    <ExternalLink className="h-4 w-4" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+
+          {/* Burn Service Configuration Link */}
+          <Link href="/admin/burn/config">
+            <Card className="hover-elevate active-elevate-2 cursor-pointer h-full" data-testid="card-burn-config">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Flame className="h-5 w-5 text-primary" />
+                  Burn Configuration
+                </CardTitle>
+                <CardDescription>
+                  Configure burn service safety limits
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center p-3 bg-muted/50 rounded-md">
+                    <span className="text-sm font-medium">Status</span>
+                    <Badge variant="outline" data-testid="badge-burn-status">
+                      Loading...
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Set network, burn rate, and safety parameters for token burns
+                  </p>
+                  <div className="flex items-center gap-2 text-primary text-sm font-medium">
+                    <span>Configure Service</span>
+                    <ExternalLink className="h-4 w-4" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+
+          {/* Burn Proposals Link */}
+          <Link href="/admin/burn/proposals">
+            <Card className="hover-elevate active-elevate-2 cursor-pointer h-full" data-testid="card-burn-proposals">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Flame className="h-5 w-5 text-primary" />
+                  Burn Proposals
+                </CardTitle>
+                <CardDescription>
+                  Create and manage token burn proposals
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center p-3 bg-muted/50 rounded-md">
+                    <span className="text-sm font-medium">Pending</span>
+                    <Badge variant="outline" data-testid="badge-pending-burns">
+                      Loading...
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Calculate, propose, approve, and execute controlled token burns
+                  </p>
+                  <div className="flex items-center gap-2 text-primary text-sm font-medium">
+                    <span>Manage Proposals</span>
                     <ExternalLink className="h-4 w-4" />
                   </div>
                 </div>

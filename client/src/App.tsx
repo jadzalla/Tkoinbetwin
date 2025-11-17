@@ -14,6 +14,8 @@ import AdminSlashing from "@/pages/admin/slashing";
 import AdminApplications from "@/pages/admin/applications";
 import StakingAnalytics from "@/pages/admin/analytics/staking";
 import SlashingAnalytics from "@/pages/admin/analytics/slashing";
+import BurnConfig from "@/pages/admin/burn/config";
+import BurnProposals from "@/pages/admin/burn/proposals";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -31,6 +33,8 @@ function Router() {
       <Route path="/admin/applications" component={AdminApplications} />
       <Route path="/admin/analytics/staking" component={StakingAnalytics} />
       <Route path="/admin/analytics/slashing" component={SlashingAnalytics} />
+      <Route path="/admin/burn/config" component={BurnConfig} />
+      <Route path="/admin/burn/proposals" component={BurnProposals} />
       <Route path="/admin" component={Admin} />
       <Route component={NotFound} />
     </Switch>
