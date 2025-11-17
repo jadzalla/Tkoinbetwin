@@ -494,6 +494,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // ========================================
+  // Admin Routes - Staking Analytics
+  // ========================================
+  
+  // Get staking overview metrics (admin only)
+  app.get('/api/admin/analytics/staking/overview', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { StakingAnalyticsService } = await import('./services/staking-analytics-service');
+      const overview = await StakingAnalyticsService.getStakingOverview();
+      res.json(overview);
+    } catch (error) {
+      console.error("Error fetching staking overview:", error);
+      res.status(500).json({ message: "Failed to fetch staking overview" });
+    }
+  });
+  
+  // Get staking trends over time (admin only)
+  app.get('/api/admin/analytics/staking/trends', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { days } = req.query;
+      const { StakingAnalyticsService } = await import('./services/staking-analytics-service');
+      const trends = await StakingAnalyticsService.getStakingTrends(
+        days ? parseInt(days as string) : 30
+      );
+      res.json(trends);
+    } catch (error) {
+      console.error("Error fetching staking trends:", error);
+      res.status(500).json({ message: "Failed to fetch staking trends" });
+    }
+  });
+  
+  // Get agent health metrics (admin only)
+  app.get('/api/admin/analytics/staking/health', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { StakingAnalyticsService } = await import('./services/staking-analytics-service');
+      const health = await StakingAnalyticsService.getAgentHealthMetrics();
+      res.json(health);
+    } catch (error) {
+      console.error("Error fetching agent health metrics:", error);
+      res.status(500).json({ message: "Failed to fetch agent health metrics" });
+    }
+  });
+  
+  // Get recent staking activity (admin only)
+  app.get('/api/admin/analytics/staking/activity', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { limit } = req.query;
+      const { StakingAnalyticsService } = await import('./services/staking-analytics-service');
+      const activity = await StakingAnalyticsService.getRecentActivity(
+        limit ? parseInt(limit as string) : 20
+      );
+      res.json(activity);
+    } catch (error) {
+      console.error("Error fetching staking activity:", error);
+      res.status(500).json({ message: "Failed to fetch staking activity" });
+    }
+  });
+  
+  // ========================================
   // Admin Routes - Agent Management
   // ========================================
   

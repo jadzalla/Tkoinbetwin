@@ -297,6 +297,38 @@ export default function Admin() {
             </Card>
           </Link>
 
+          {/* Staking Analytics Link */}
+          <Link href="/admin/analytics/staking">
+            <Card className="hover-elevate active-elevate-2 cursor-pointer h-full" data-testid="card-staking-analytics">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-primary" />
+                  Staking Analytics
+                </CardTitle>
+                <CardDescription>
+                  Monitor agent staking health and trends
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center p-3 bg-muted/50 rounded-md">
+                    <span className="text-sm font-medium">Total Staked</span>
+                    <Badge variant="outline" data-testid="badge-total-staked">
+                      Loading...
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    View staking trends, tier distribution, and at-risk agents
+                  </p>
+                  <div className="flex items-center gap-2 text-primary text-sm font-medium">
+                    <span>View Analytics</span>
+                    <ExternalLink className="h-4 w-4" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+
           {/* Burn Rate Configuration */}
           <Card data-testid="card-burn-rate-config">
             <CardHeader>
