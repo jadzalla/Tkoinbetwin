@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +28,7 @@ const MINIMUM_STAKE = 10000;
 
 export default function RegisterAgentPage() {
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
 
@@ -132,11 +134,16 @@ export default function RegisterAgentPage() {
       if (data.success) {
         toast({
           title: "Registration Successful!",
-          description: data.message || "You are now registered as an agent.",
+          description: "You are now registered as an agent. Redirecting to dashboard...",
         });
         // Invalidate queries to refresh agent status
         queryClient.invalidateQueries({ queryKey: ["/api/agents/me"] });
-        queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+        
+        // Redirect to dashboard after 1.5 seconds
+        setTimeout(() => {
+          setLocation("/dashboard");
+        }, 1500);
       } else {
         toast({
           variant: "destructive",
