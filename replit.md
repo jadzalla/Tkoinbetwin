@@ -69,15 +69,17 @@ The frontend uses React, TypeScript, Vite, Tailwind CSS, and shadcn/ui, adhering
     - **Agent Creation**: Approval creates agent account with placeholder wallet ("WALLET_NOT_CONFIGURED"), status='pending' (awaiting wallet setup), tier-based daily/monthly limits, role upgrade to 'agent'.
     - **Testing**: Complete E2E coverage for submit flow (form validation, email pre-fill, duplicate prevention) and admin review flow (filtering, approval, rejection, agent account creation).
     - **Future Enhancements**: Document upload integration, automated KYC verification, stake setup wizard post-approval.
-- **Burn Proposal System**: ✅ **BACKEND-COMPLETE** - Manual approval workflow for token burns with maximum safety:
+- **Burn Proposal System**: ✅ **PRODUCTION-READY** - Manual approval workflow for token burns with maximum safety:
     - **Database Schema**: `burn_config` (system settings), `burn_proposals` (pending burns), `burn_history` (completed burns with verification).
     - **Safety Features**: Network detection (devnet/mainnet), configurable limits (min/max amounts, treasury percentage), cooldown periods, multi-gate approval.
     - **Backend Service**: `BurnProposalService` with safety calculations, treasury balance verification, limit enforcement.
     - **API Endpoints**: GET/PATCH /api/admin/burn/config, POST /api/admin/burn/calculate, POST /api/admin/burn/proposals, GET /api/admin/burn/proposals (list/history), POST /api/admin/burn/proposals/:id/approve|reject.
     - **Approval Workflow**: Admin calculates burn → Creates proposal → Reviews → Approves → Executes (separate from automated burn service).
-    - **Frontend UI**: Pending - Burn configuration (/admin/burn/config), Proposals dashboard (/admin/burn/proposals), History & analytics.
+    - **Configuration UI** (/admin/burn/config): Enable/disable toggle, network selection (devnet/mainnet), burn rate percentage, min/max burn amounts, max treasury %, cooldown period, config summary with last updated timestamp. React Hook Form + Shadcn components.
+    - **Proposals Dashboard** (/admin/burn/proposals): Stats cards (total burned, proposals, pending, approved), burn calculator with treasury balance + safety checks, proposal creation form with reason validation, proposals list with status filtering, approve/reject dialogs, comprehensive data-testid coverage.
+    - **Critical Fixes Applied**: useAuth import path correction, null guards for calculation.reasons to prevent crash on validation errors, clear state on API errors for proper error handling.
     - **Coexistence**: Works alongside existing automated `BurnService` - manual approval for controlled burns vs automated fee harvesting.
-    - **Future Enhancements**: On-chain burn execution, burn analytics dashboard, treasury visualization.
+    - **Future Enhancements**: On-chain burn execution (currently manual), burn analytics dashboard, treasury balance visualization, automated execution service.
 - **Analytics Dashboards**: ✅ **PRODUCTION-READY** - Comprehensive admin analytics for staking and slashing:
     - **Staking Analytics** (/admin/analytics/staking): Overview metrics, 30-day trends, tier distribution, agent health monitoring, activity feed.
     - **Slashing Analytics** (/admin/analytics/slashing): Violation frequency, severity distribution, penalty trends, agent behavior tracking.
