@@ -57,14 +57,18 @@ The frontend uses React, TypeScript, Vite, Tailwind CSS, and shadcn/ui, adhering
     - **Tier Downgrade Logic**: Automatic tier recalculation after slash execution based on remaining stake, with corresponding daily/monthly limit adjustments.
     - **Audit Trail**: Complete history in `slashing_events` + `stake_history` tables for compliance and transparency.
     - **Future Enhancements**: Automated violation detection triggers, on-chain slashing when migrating to token escrow, rate limiting for slash creation.
-- **Agent Onboarding System**: ✅ **BACKEND-COMPLETE** - Application and KYC workflow for new agent registration:
+- **Agent Onboarding System**: ✅ **PRODUCTION-READY** - Complete application and KYC workflow for new agent registration:
     - **Database Schema**: `agent_applications` table tracks business info, KYC documents, review status, and created agent reference.
     - **Application Flow**: User submits application → Admin reviews KYC → Approves (creates agent account) or Rejects.
-    - **Backend Service**: `ApplicationService` with atomic transactions for agent account creation, user role upgrade, application tracking.
-    - **API Endpoints**: POST /api/applications/submit, GET /api/applications/me, GET /api/admin/applications (list/stats), POST /api/admin/applications/:id/approve|reject (all with proper auth).
-    - **KYC Fields**: Business name/type, country/city/address, phone number, requested tier, KYC document storage (JSONB).
-    - **Frontend UI**: Pending - Application form (/apply), Admin review dashboard (/admin/applications).
-    - **Future Enhancements**: Document upload integration, automated KYC verification, stake setup wizard.
+    - **Backend Service**: `ApplicationService` with atomic transactions for agent account creation, user role upgrade, application tracking, duplicate prevention.
+    - **API Endpoints**: POST /api/applications/submit, GET /api/applications/me, GET /api/admin/applications (list/stats), POST /api/admin/applications/:id/approve|reject (all with Zod validation, proper auth).
+    - **Legacy Route**: /api/agents/apply returns 410 Gone to force clients to use validated endpoint.
+    - **KYC Fields**: Business name/type, country/city/address, phone number, email (pre-filled from auth), requested tier, KYC document storage (JSONB).
+    - **Application Form** (/apply): Complete public form with all required fields, email pre-fill from Replit Auth, read-only email field, react-hook-form + zodResolver validation, comprehensive data-testid coverage, E2E tested.
+    - **Admin Review Dashboard** (/admin/applications): Status filtering (All/Pending/Approved/Rejected), approve/reject dialogs, tuple-based TanStack Query keys with prefix-matching cache invalidation, business info display, status/tier badges, toast notifications, E2E tested.
+    - **Agent Creation**: Approval creates agent account with placeholder wallet ("WALLET_NOT_CONFIGURED"), status='pending' (awaiting wallet setup), tier-based daily/monthly limits, role upgrade to 'agent'.
+    - **Testing**: Complete E2E coverage for submit flow (form validation, email pre-fill, duplicate prevention) and admin review flow (filtering, approval, rejection, agent account creation).
+    - **Future Enhancements**: Document upload integration, automated KYC verification, stake setup wizard post-approval.
 - **Burn Proposal System**: ✅ **BACKEND-COMPLETE** - Manual approval workflow for token burns with maximum safety:
     - **Database Schema**: `burn_config` (system settings), `burn_proposals` (pending burns), `burn_history` (completed burns with verification).
     - **Safety Features**: Network detection (devnet/mainnet), configurable limits (min/max amounts, treasury percentage), cooldown periods, multi-gate approval.
