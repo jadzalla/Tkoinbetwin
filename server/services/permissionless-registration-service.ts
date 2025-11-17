@@ -7,8 +7,9 @@ import nacl from "tweetnacl";
 import bs58 from "bs58";
 import { baseUnitsToTokens } from "@shared/token-utils";
 import { solanaCore } from "../solana/solana-core";
+import { TIER_THRESHOLDS, getTierLimits } from "@shared/staking-constants";
 
-const MINIMUM_STAKE_REQUIREMENT = 10000; // 10,000 TKOIN for Basic tier
+const MINIMUM_STAKE_REQUIREMENT = TIER_THRESHOLDS.verified; // 10,000 TKOIN for Basic tier instant access
 
 interface PermissionlessRegistrationData {
   walletAddress: string;
@@ -286,7 +287,9 @@ export class PermissionlessRegistrationService {
         .set({ role: "agent" })
         .where(eq(users.id, data.replitUserId));
 
-      // 2. Create agent account
+      // 2. Create agent account with Basic tier limits
+      const basicLimits = getTierLimits('basic');
+      
       const [newAgent] = await tx
         .insert(agents)
         .values({
@@ -299,9 +302,9 @@ export class PermissionlessRegistrationService {
           verificationTier: "basic",
           status: "active", // Instant activation for permissionless
           
-          // Basic tier defaults
-          dailyLimit: "10000",
-          monthlyLimit: "100000",
+          // Basic tier defaults from TIER_LIMITS
+          dailyLimit: basicLimits.dailyLimit.toString(),
+          monthlyLimit: basicLimits.monthlyLimit.toString(),
           markup: "0.5",
           
           // Display info
