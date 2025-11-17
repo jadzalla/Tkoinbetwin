@@ -2,7 +2,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Coins, TrendingUp, DollarSign, Award } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Coins, TrendingUp, DollarSign, Award, CheckCircle2, Wallet } from "lucide-react";
 import type { Agent } from "@shared/schema";
 
 interface DashboardIndexProps {
@@ -45,6 +46,17 @@ export default function DashboardIndex({ agent }: DashboardIndexProps) {
             </CardDescription>
           </CardHeader>
         </Card>
+      )}
+
+      {agent.status === 'active' && agent.registrationType === 'permissionless' && (
+        <Alert className="border-green-500/50 bg-green-500/5" data-testid="alert-welcome-permissionless">
+          <CheckCircle2 className="h-4 w-4 text-green-500" />
+          <AlertDescription>
+            <strong>Welcome to Tkoin Protocol!</strong> You've successfully registered as a Basic tier agent via wallet verification. 
+            Your account is now active with ${Number(agent.dailyLimit).toLocaleString()} daily transaction limit. 
+            Stake additional TKOIN to unlock higher tiers and increased limits.
+          </AlertDescription>
+        </Alert>
       )}
 
       {agent.status === 'active' && (
