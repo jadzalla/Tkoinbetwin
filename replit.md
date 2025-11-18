@@ -43,6 +43,13 @@ The frontend uses React, TypeScript, Vite, Tailwind CSS, and shadcn/ui, adopting
     - **Trust Proxy Configuration**: Single trusted hop (Replit load balancer) prevents IP spoofing.
     - **Graceful Shutdown**: SIGTERM/SIGINT/SIGQUIT handlers ensure cleanup of interval timers.
     - **Admin Endpoint Protection**: All 50+ admin routes secured with isAuthenticated + isAdmin middleware.
+- **Observability & Monitoring (Production-Ready)**:
+    - **Structured Logging**: JSON-formatted logs with correlation IDs (UUIDs) for distributed tracing, consistent log levels (INFO/WARN/ERROR), structured context (timestamp, method, path, statusCode, duration).
+    - **Health Check Endpoints**:
+        - `/api/health/live`: Liveness probe (200 if server running).
+        - `/api/health/ready`: Readiness probe (checks database + Solana RPC connectivity, returns 503 if unhealthy).
+        - `/api/health`: Comprehensive health status with uptime, version, and detailed service checks.
+    - **Correlation IDs**: Every HTTP request tagged with unique UUID for end-to-end request tracing across logs.
 
 ### Feature Specifications
 - **Pricing Configurator**: Agents can set bid/ask spreads and FX buffers.

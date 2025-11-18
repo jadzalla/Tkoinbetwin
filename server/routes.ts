@@ -14,10 +14,185 @@ import { db } from "./db";
 import { tokenConfig } from "@shared/schema";
 import { eq } from "drizzle-orm";
 import { Connection } from "@solana/web3.js";
+import { logger } from "./utils/logger";
+
+const SERVER_START_TIME = Date.now();
+
+/**
+ * Format uptime in seconds to human-readable string
+ */
+function formatUptime(seconds: number): string {
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor((seconds % 86400) / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+  
+  const parts: string[] = [];
+  if (days > 0) parts.push(`${days}d`);
+  if (hours > 0) parts.push(`${hours}h`);
+  if (minutes > 0) parts.push(`${minutes}m`);
+  if (secs > 0 || parts.length === 0) parts.push(`${secs}s`);
+  
+  return parts.join(' ');
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
   await setupAuth(app);
+
+  // ========================================
+  // Health Check Routes (Public)
+  // ========================================
+  
+  /**
+   * Liveness check - Always returns 200 if server is running
+   * Used by load balancers to check if the service is alive
+   */
+  app.get('/api/health/live', (_req, res) => {
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  });
+
+  /**
+   * Readiness check - Verifies critical dependencies are available
+   * Returns 503 if any critical service is unavailable
+   */
+  app.get('/api/health/ready', async (_req, res) => {
+    const checks: Record<string, any> = {
+      database: { status: 'unknown' },
+      solana: { status: 'unknown' },
+    };
+
+    try {
+      // Check database connection
+      try {
+        await db.select().from(tokenConfig).limit(1);
+        checks.database = { status: 'healthy' };
+      } catch (error) {
+        logger.error('Database health check failed', error);
+        checks.database = { 
+          status: 'unhealthy', 
+          error: error instanceof Error ? error.message : 'Unknown error' 
+        };
+      }
+
+      // Check Solana RPC connection
+      try {
+        const { solanaCore } = await import('./solana/solana-core');
+        if (solanaCore.isReady()) {
+          const connectionTest = await solanaCore.testConnection();
+          if (connectionTest.success) {
+            checks.solana = { 
+              status: 'healthy',
+              slot: connectionTest.slot,
+            };
+          } else {
+            checks.solana = { 
+              status: 'unhealthy', 
+              error: connectionTest.error 
+            };
+          }
+        } else {
+          checks.solana = { 
+            status: 'not_configured',
+            message: 'Solana RPC not configured'
+          };
+        }
+      } catch (error) {
+        logger.error('Solana health check failed', error);
+        checks.solana = { 
+          status: 'unhealthy', 
+          error: error instanceof Error ? error.message : 'Unknown error' 
+        };
+      }
+
+      // Determine overall status - both database AND Solana must be healthy
+      // Solana is critical infrastructure, so not_configured is treated as unhealthy
+      const isHealthy = checks.database.status === 'healthy' && 
+                       checks.solana.status === 'healthy';
+
+      const statusCode = isHealthy ? 200 : 503;
+      res.status(statusCode).json({
+        status: isHealthy ? 'ready' : 'not_ready',
+        checks,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      logger.error('Health check endpoint failed', error);
+      res.status(503).json({
+        status: 'error',
+        error: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  });
+
+  /**
+   * Comprehensive health status - Includes uptime and system metrics
+   * Used for monitoring dashboards
+   */
+  app.get('/api/health', async (_req, res) => {
+    const uptime = Date.now() - SERVER_START_TIME;
+    const uptimeSeconds = Math.floor(uptime / 1000);
+    
+    const checks: Record<string, any> = {
+      database: { status: 'unknown' },
+      solana: { status: 'unknown' },
+    };
+
+    try {
+      // Check database
+      try {
+        await db.select().from(tokenConfig).limit(1);
+        checks.database = { status: 'healthy' };
+      } catch (error) {
+        checks.database = { 
+          status: 'unhealthy', 
+          error: error instanceof Error ? error.message : 'Unknown error' 
+        };
+      }
+
+      // Check Solana - lightweight connection test only (no balance fetch)
+      try {
+        const { solanaCore } = await import('./solana/solana-core');
+        if (solanaCore.isReady()) {
+          const connectionTest = await solanaCore.testConnection();
+          if (connectionTest.success) {
+            checks.solana = { 
+              status: 'healthy',
+              slot: connectionTest.slot,
+            };
+          } else {
+            checks.solana = { status: 'unhealthy', error: connectionTest.error };
+          }
+        } else {
+          checks.solana = { status: 'not_configured' };
+        }
+      } catch (error) {
+        checks.solana = { 
+          status: 'unhealthy', 
+          error: error instanceof Error ? error.message : 'Unknown error' 
+        };
+      }
+
+      res.json({
+        status: 'ok',
+        uptime: {
+          seconds: uptimeSeconds,
+          human: formatUptime(uptimeSeconds),
+        },
+        checks,
+        timestamp: new Date().toISOString(),
+        version: '1.0.0',
+      });
+    } catch (error) {
+      logger.error('Health endpoint failed', error);
+      res.status(500).json({
+        status: 'error',
+        error: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  });
 
   // ========================================
   // Authentication Routes

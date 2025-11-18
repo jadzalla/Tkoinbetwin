@@ -81,27 +81,34 @@ export function correlationMiddleware(req: any, res: any, next: any) {
   req.correlationId = Logger.generateCorrelationId();
   res.setHeader('X-Correlation-ID', req.correlationId);
   
-  logger.info('Incoming request', {
-    correlationId: req.correlationId,
-    method: req.method,
-    path: req.path,
-    ip: req.ip,
-    userAgent: req.headers['user-agent'],
-  });
+  // Skip logging for health check endpoints to avoid log flooding
+  const isHealthCheck = req.path.startsWith('/api/health');
+  
+  if (!isHealthCheck) {
+    logger.info('Incoming request', {
+      correlationId: req.correlationId,
+      method: req.method,
+      path: req.path,
+      ip: req.ip,
+      userAgent: req.headers['user-agent'],
+    });
+  }
   
   const startTime = Date.now();
   
   res.on('finish', () => {
-    const duration = Date.now() - startTime;
-    const level = res.statusCode >= 500 ? 'error' : res.statusCode >= 400 ? 'warn' : 'info';
-    
-    logger[level]('Request completed', {
-      correlationId: req.correlationId,
-      method: req.method,
-      path: req.path,
-      statusCode: res.statusCode,
-      duration: `${duration}ms`,
-    });
+    if (!isHealthCheck) {
+      const duration = Date.now() - startTime;
+      const level = res.statusCode >= 500 ? 'error' : res.statusCode >= 400 ? 'warn' : 'info';
+      
+      logger[level]('Request completed', {
+        correlationId: req.correlationId,
+        method: req.method,
+        path: req.path,
+        statusCode: res.statusCode,
+        duration: `${duration}ms`,
+      });
+    }
   });
   
   next();
