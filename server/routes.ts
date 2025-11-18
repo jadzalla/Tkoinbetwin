@@ -1238,6 +1238,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Update tier limit
   app.patch('/api/admin/tier-limits', isAuthenticated, isAdmin, async (req: any, res) => {
+    // Import tier limits service for cache invalidation
+    const { invalidateTierLimitsCache } = await import('./services/tier-limits-service');
+    
     try {
       const schema = z.object({
         tier: z.enum(['basic', 'verified', 'premium']),
@@ -1292,6 +1295,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       await storage.setSystemConfig(key, value, `${tier} tier ${limitType} transaction limit (USD)`, updatedBy);
+
+      // Invalidate tier limits cache so new values take effect immediately
+      invalidateTierLimitsCache();
 
       // Log to audit trail
       await storage.createAuditLog({
