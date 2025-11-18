@@ -208,7 +208,8 @@ export default function AdminPlatforms() {
 
   const generateTokenMutation = useMutation({
     mutationFn: async (platformId: string) => {
-      return await apiRequest("POST", `/api/admin/platforms/${platformId}/generate-token`, {});
+      const response = await apiRequest("POST", `/api/admin/platforms/${platformId}/generate-token`, {});
+      return await response.json();
     },
     onSuccess: (data: { token: string; maskedToken: string; createdAt: string }) => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/platforms", editingPlatform?.id, "tokens"] });
