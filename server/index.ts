@@ -4,6 +4,9 @@ import { setupVite, serveStatic, log } from "./vite";
 
 const app = express();
 
+// Enable trust proxy for proper IP extraction behind load balancers/proxies
+app.set('trust proxy', true);
+
 declare module 'http' {
   interface IncomingMessage {
     rawBody: unknown
@@ -68,6 +71,27 @@ app.use((req, res, next) => {
   } catch (error) {
     console.error('❌ Failed to initialize Solana Core:', error);
   }
+
+  // Start periodic cleanup of expired webhook nonces (every 10 minutes)
+  // Store timer handle to allow proper cleanup
+  const { storage } = await import('./storage');
+  const nonceCleanupTimer = setInterval(async () => {
+    try {
+      const deletedCount = await storage.cleanupExpiredNonces();
+      if (deletedCount > 0) {
+        console.log(`🧹 Cleaned up ${deletedCount} expired webhook nonces`);
+      }
+    } catch (error) {
+      console.error('❌ Failed to cleanup expired nonces:', error);
+    }
+  }, 10 * 60 * 1000); // 10 minutes
+
+  // Cleanup on server shutdown
+  process.on('SIGTERM', async () => {
+    clearInterval(nonceCleanupTimer);
+    const { cleanupRateLimitTimers } = await import('./middleware/rate-limit');
+    cleanupRateLimitTimers();
+  });
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;

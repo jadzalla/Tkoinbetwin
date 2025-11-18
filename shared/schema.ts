@@ -1210,3 +1210,31 @@ export const insertPlatformApiTokenSchema = createInsertSchema(platformApiTokens
 });
 export type InsertPlatformApiToken = z.infer<typeof insertPlatformApiTokenSchema>;
 export type PlatformApiToken = typeof platformApiTokens.$inferSelect;
+
+// Webhook Nonces (Replay Attack Prevention)
+export const webhookNonces = pgTable("webhook_nonces", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  
+  // Nonce & Platform
+  nonce: text("nonce").notNull().unique(), // Unique request identifier (UUID or random string)
+  platformId: text("platform_id").notNull().references(() => sovereignPlatforms.id, { onDelete: 'cascade' }),
+  
+  // Request Context
+  requestPath: text("request_path").notNull(), // e.g., /api/platform/withdrawal-request
+  requestTimestamp: timestamp("request_timestamp").notNull(), // From x-tkoin-timestamp header
+  
+  // Tracking
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  expiresAt: timestamp("expires_at").notNull(), // Auto-calculated: requestTimestamp + 5 minutes
+}, (table) => ({
+  nonceIdx: uniqueIndex("webhook_nonces_nonce_idx").on(table.nonce),
+  platformIdIdx: index("webhook_nonces_platform_id_idx").on(table.platformId),
+  expiresAtIdx: index("webhook_nonces_expires_at_idx").on(table.expiresAt), // For cleanup queries
+}));
+
+export const insertWebhookNonceSchema = createInsertSchema(webhookNonces).omit({ 
+  id: true,
+  createdAt: true,
+});
+export type InsertWebhookNonce = z.infer<typeof insertWebhookNonceSchema>;
+export type WebhookNonce = typeof webhookNonces.$inferSelect;

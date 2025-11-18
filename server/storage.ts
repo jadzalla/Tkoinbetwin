@@ -34,6 +34,8 @@ import type {
   InsertSovereignPlatform,
   PlatformApiToken,
   InsertPlatformApiToken,
+  WebhookNonce,
+  InsertWebhookNonce,
 } from '@shared/schema';
 import {
   users,
@@ -52,6 +54,7 @@ import {
   currencies,
   sovereignPlatforms,
   platformApiTokens,
+  webhookNonces,
 } from '@shared/schema';
 
 // Storage Interface
@@ -159,6 +162,10 @@ export interface IStorage {
   getPlatformApiTokensByPlatform(platformId: string): Promise<PlatformApiToken[]>;
   createPlatformApiToken(token: InsertPlatformApiToken): Promise<PlatformApiToken>;
   updatePlatformApiToken(id: string, updates: Partial<PlatformApiToken>): Promise<PlatformApiToken>;
+
+  // Webhook Nonce Operations (Replay Attack Prevention)
+  checkAndRecordNonce(nonce: InsertWebhookNonce): Promise<{ exists: boolean; recorded: boolean }>;
+  cleanupExpiredNonces(): Promise<number>;
 }
 
 // PostgreSQL Implementation
@@ -785,6 +792,36 @@ export class PostgresStorage implements IStorage {
     }
     
     return result[0];
+  }
+
+  async checkAndRecordNonce(nonce: InsertWebhookNonce): Promise<{ exists: boolean; recorded: boolean }> {
+    try {
+      const existing = await db.select()
+        .from(webhookNonces)
+        .where(eq(webhookNonces.nonce, nonce.nonce))
+        .limit(1);
+
+      if (existing.length > 0) {
+        return { exists: true, recorded: false };
+      }
+
+      await db.insert(webhookNonces).values(nonce);
+      return { exists: false, recorded: true };
+    } catch (error) {
+      if ((error as any).code === '23505') {
+        return { exists: true, recorded: false };
+      }
+      throw error;
+    }
+  }
+
+  async cleanupExpiredNonces(): Promise<number> {
+    const now = new Date();
+    const result = await db.delete(webhookNonces)
+      .where(lte(webhookNonces.expiresAt, now))
+      .returning();
+    
+    return result.length;
   }
 }
 

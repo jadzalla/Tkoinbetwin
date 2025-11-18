@@ -88,8 +88,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
   
+  // Import rate limiting for public endpoints
+  const { publicEndpointLimiter } = await import('./middleware/rate-limit');
+
   // Permissionless agent registration (requires wallet signature + on-chain TKOIN balance)
-  app.post('/api/agents/register-permissionless', isAuthenticated, async (req: any, res) => {
+  app.post('/api/agents/register-permissionless', publicEndpointLimiter, isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const email = req.user.claims.email;
@@ -2500,8 +2503,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Import rate limiting middleware
+  const { platformRateLimiter } = await import('./middleware/rate-limit');
+
   // Receive withdrawal request from sovereign platform
-  app.post('/api/webhooks/platform/:platformId/withdrawal', async (req, res) => {
+  app.post('/api/webhooks/platform/:platformId/withdrawal', platformRateLimiter, async (req, res) => {
     try {
       const { platformId } = req.params;
       const signature = req.headers['x-tkoin-signature'];
@@ -2555,6 +2561,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!isValid) {
         console.warn(`[Webhook] Invalid signature for ${platformId} withdrawal request`);
         return res.status(401).json({ message: "Invalid signature" });
+      }
+
+      // Check for nonce (replay attack prevention within 5-minute window)
+      const nonce = req.headers['x-tkoin-nonce'];
+      if (!nonce || typeof nonce !== 'string') {
+        return res.status(401).json({ message: "Missing or invalid nonce" });
+      }
+
+      // SECURITY: Use server-side timestamp for nonce expiry, not client-provided timestamp
+      // This prevents attackers from extending the replay window by sending future timestamps
+      const serverNow = Date.now();
+      const nonceExpiresAt = new Date(serverNow + 5 * 60 * 1000);
+      
+      const nonceCheck = await storage.checkAndRecordNonce({
+        nonce,
+        platformId,
+        requestPath: req.path,
+        requestTimestamp: new Date(serverNow), // Use server timestamp, not requestTime
+        expiresAt: nonceExpiresAt,
+      });
+
+      if (nonceCheck.exists) {
+        console.warn(`[Webhook] Replay attack detected - nonce already used: ${nonce}`);
+        return res.status(401).json({ message: "Nonce already used - potential replay attack" });
       }
 
       const { event, data } = req.body;
@@ -2625,7 +2655,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Backward compatibility: Old 1-Stake webhook endpoint
   // This maintains compatibility with existing BetWin integration
-  app.post('/api/webhooks/1stake/withdrawal', async (req, res) => {
+  app.post('/api/webhooks/1stake/withdrawal', platformRateLimiter, async (req, res) => {
     // Call platform-agnostic withdrawal handler with hardcoded platformId
     try {
       const platformId = 'platform_betwin';
@@ -2677,6 +2707,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!isValid) {
         console.warn(`[Webhook] Invalid signature for ${platformId} withdrawal request`);
         return res.status(401).json({ message: "Invalid signature" });
+      }
+
+      // Check for nonce (replay attack prevention within 5-minute window)
+      const nonce = req.headers['x-tkoin-nonce'];
+      if (!nonce || typeof nonce !== 'string') {
+        return res.status(401).json({ message: "Missing or invalid nonce" });
+      }
+
+      // SECURITY: Use server-side timestamp for nonce expiry, not client-provided timestamp
+      // This prevents attackers from extending the replay window by sending future timestamps
+      const serverNow = Date.now();
+      const nonceExpiresAt = new Date(serverNow + 5 * 60 * 1000);
+      
+      const nonceCheck = await storage.checkAndRecordNonce({
+        nonce,
+        platformId,
+        requestPath: req.path,
+        requestTimestamp: new Date(serverNow), // Use server timestamp, not requestTime
+        expiresAt: nonceExpiresAt,
+      });
+
+      if (nonceCheck.exists) {
+        console.warn(`[Webhook] Replay attack detected - nonce already used: ${nonce}`);
+        return res.status(401).json({ message: "Nonce already used - potential replay attack" });
       }
 
       const { event, data } = req.body;
