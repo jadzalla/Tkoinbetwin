@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -34,15 +35,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Link } from "wouter";
-import { Plus, ArrowLeft, ShieldAlert, Shield, Edit, Power, Eye, EyeOff, RefreshCw, Copy, Check } from "lucide-react";
-import type { SovereignPlatform, InsertSovereignPlatform } from "@shared/schema";
+import { Plus, ArrowLeft, ShieldAlert, Shield, Edit, RefreshCw, Copy, Check, Trash2, Key, Globe } from "lucide-react";
+import type { SovereignPlatform, InsertSovereignPlatform, PlatformApiToken } from "@shared/schema";
 import { insertSovereignPlatformSchema } from "@shared/schema";
 import { z } from "zod";
 
-// Create schema validation
 const createPlatformSchema = insertSovereignPlatformSchema.pick({
   id: true,
   name: true,
@@ -52,6 +53,7 @@ const createPlatformSchema = insertSovereignPlatformSchema.pick({
   contactEmail: true,
   supportUrl: true,
   isPublic: true,
+  tenantSubdomain: true,
 }).extend({
   id: z.string().regex(/^[a-z0-9_-]+$/, "ID must be lowercase alphanumeric with underscores/hyphens only"),
   name: z.string().min(1, "Name is required"),
@@ -60,12 +62,15 @@ const createPlatformSchema = insertSovereignPlatformSchema.pick({
   webhookUrl: z.string().url().or(z.literal("")).default(""),
   contactEmail: z.string().email().or(z.literal("")).default(""),
   supportUrl: z.string().url().or(z.literal("")).default(""),
+  tenantSubdomain: z.string().regex(/^[a-z0-9-]*$/, "Must be lowercase alphanumeric with hyphens only").or(z.literal("")).default(""),
 });
 
 type CreatePlatform = z.infer<typeof createPlatformSchema>;
 
-// Edit schema omits id since it's immutable
-const editPlatformSchema = createPlatformSchema.omit({ id: true });
+const editPlatformSchema = createPlatformSchema.omit({ id: true }).extend({
+  apiEnabled: z.boolean().default(false),
+  webhookEnabled: z.boolean().default(false),
+});
 type EditPlatform = z.infer<typeof editPlatformSchema>;
 
 export default function AdminPlatforms() {
@@ -75,12 +80,18 @@ export default function AdminPlatforms() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingPlatform, setEditingPlatform] = useState<SovereignPlatform | null>(null);
+  const [generatedToken, setGeneratedToken] = useState<{ token: string; maskedToken: string } | null>(null);
+  const [copiedStates, setCopiedStates] = useState<{ [key: string]: boolean }>({});
 
   const { data: platforms, isLoading: platformsLoading } = useQuery<SovereignPlatform[]>({
     queryKey: ["/api/admin/platforms"],
   });
 
-  // Create form
+  const { data: platformTokens } = useQuery<PlatformApiToken[]>({
+    queryKey: ["/api/admin/platforms", editingPlatform?.id, "tokens"],
+    enabled: !!editingPlatform?.id,
+  });
+
   const createForm = useForm<CreatePlatform>({
     resolver: zodResolver(createPlatformSchema),
     defaultValues: {
@@ -92,10 +103,10 @@ export default function AdminPlatforms() {
       contactEmail: "",
       supportUrl: "",
       isPublic: false,
+      tenantSubdomain: "",
     },
   });
 
-  // Edit form
   const editForm = useForm<EditPlatform>({
     resolver: zodResolver(editPlatformSchema),
     defaultValues: {
@@ -106,6 +117,9 @@ export default function AdminPlatforms() {
       contactEmail: "",
       supportUrl: "",
       isPublic: false,
+      apiEnabled: false,
+      webhookEnabled: false,
+      tenantSubdomain: "",
     },
   });
 
@@ -137,9 +151,6 @@ export default function AdminPlatforms() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/platforms"] });
-      setIsEditOpen(false);
-      setEditingPlatform(null);
-      editForm.reset();
       toast({
         title: "Platform Updated",
         description: "Platform details have been updated successfully",
@@ -195,6 +206,47 @@ export default function AdminPlatforms() {
     },
   });
 
+  const generateTokenMutation = useMutation({
+    mutationFn: async (platformId: string) => {
+      return await apiRequest("POST", `/api/admin/platforms/${platformId}/generate-token`, {});
+    },
+    onSuccess: (data: { token: string; maskedToken: string; createdAt: string }) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/platforms", editingPlatform?.id, "tokens"] });
+      setGeneratedToken({ token: data.token, maskedToken: data.maskedToken });
+      toast({
+        title: "API Token Generated",
+        description: "New API token has been generated. Copy it now - it won't be shown again!",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Token Generation Failed",
+        description: error.message || "Failed to generate API token",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const revokeTokenMutation = useMutation({
+    mutationFn: async ({ platformId, tokenId }: { platformId: string; tokenId: string }) => {
+      return await apiRequest("DELETE", `/api/admin/platforms/${platformId}/tokens/${tokenId}`, {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/platforms", editingPlatform?.id, "tokens"] });
+      toast({
+        title: "Token Revoked",
+        description: "API token has been revoked successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Revocation Failed",
+        description: error.message || "Failed to revoke token",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleCreateSubmit = (data: CreatePlatform) => {
     createMutation.mutate(data);
   };
@@ -206,6 +258,7 @@ export default function AdminPlatforms() {
 
   const openEditDialog = (platform: SovereignPlatform) => {
     setEditingPlatform(platform);
+    setGeneratedToken(null);
     editForm.reset({
       name: platform.name,
       displayName: platform.displayName || "",
@@ -214,12 +267,31 @@ export default function AdminPlatforms() {
       contactEmail: platform.contactEmail || "",
       supportUrl: platform.supportUrl || "",
       isPublic: platform.isPublic,
+      apiEnabled: platform.apiEnabled ?? false,
+      webhookEnabled: platform.webhookEnabled ?? false,
+      tenantSubdomain: platform.tenantSubdomain || "",
     });
     setIsEditOpen(true);
   };
 
-  // Removed: toggleSecretVisibility and copyToClipboard
-  // Security: Secrets are always masked and never exposed in the UI
+  const closeEditDialog = () => {
+    setIsEditOpen(false);
+    setEditingPlatform(null);
+    setGeneratedToken(null);
+    editForm.reset();
+  };
+
+  const copyToClipboard = async (text: string, key: string) => {
+    await navigator.clipboard.writeText(text);
+    setCopiedStates({ ...copiedStates, [key]: true });
+    setTimeout(() => {
+      setCopiedStates({ ...copiedStates, [key]: false });
+    }, 2000);
+    toast({
+      title: "Copied",
+      description: "Copied to clipboard",
+    });
+  };
 
   const maskSecret = (secret: string | undefined) => {
     if (!secret) return "••••••••";
@@ -321,7 +393,7 @@ export default function AdminPlatforms() {
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold mb-2">Sovereign Platforms</h1>
-            <p className="text-muted-foreground">Manage platform integrations and webhook credentials</p>
+            <p className="text-muted-foreground">Manage platform integrations, API access, and webhooks</p>
           </div>
 
           <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
@@ -399,21 +471,6 @@ export default function AdminPlatforms() {
                         <FormControl>
                           <Textarea {...field} placeholder="A brief description of the platform..." rows={3} data-testid="input-create-description" />
                         </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={createForm.control}
-                    name="webhookUrl"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Webhook URL (Optional)</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="https://platform.example.com/webhooks/tkoin" data-testid="input-create-webhook" />
-                        </FormControl>
-                        <FormDescription>Where Tkoin will send credit notifications</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -510,8 +567,8 @@ export default function AdminPlatforms() {
                   <TableRow>
                     <TableHead>Platform ID</TableHead>
                     <TableHead>Name</TableHead>
-                    <TableHead>Webhook URL</TableHead>
-                    <TableHead>Webhook Secret</TableHead>
+                    <TableHead className="text-center">API</TableHead>
+                    <TableHead className="text-center">Webhooks</TableHead>
                     <TableHead className="text-center">Status</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
@@ -530,49 +587,21 @@ export default function AdminPlatforms() {
                           )}
                         </div>
                       </TableCell>
-                      <TableCell data-testid={`text-webhook-${platform.id}`}>
-                        {platform.webhookUrl ? (
-                          <span className="text-xs font-mono">{platform.webhookUrl}</span>
-                        ) : (
-                          <span className="text-muted-foreground text-sm">Not configured</span>
-                        )}
+                      <TableCell className="text-center">
+                        <Badge
+                          variant={platform.apiEnabled ? "default" : "secondary"}
+                          data-testid={`badge-api-${platform.id}`}
+                        >
+                          {platform.apiEnabled ? "Enabled" : "Disabled"}
+                        </Badge>
                       </TableCell>
-                      <TableCell data-testid={`text-secret-${platform.id}`}>
-                        <div className="flex items-center gap-2">
-                          <code className="text-xs font-mono">
-                            {maskSecret(platform.webhookSecret)}
-                          </code>
-                          <div className="flex gap-1">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => {
-                                toast({
-                                  title: "Security Notice",
-                                  description: "Webhook secrets are always masked for security. Raw secrets are never exposed in the UI.",
-                                  variant: "default",
-                                });
-                              }}
-                              data-testid={`button-toggle-secret-${platform.id}`}
-                            >
-                              <Eye className="h-3 w-3" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => {
-                                toast({
-                                  title: "Cannot Copy Masked Secret",
-                                  description: "For security, masked secrets cannot be copied. If you need the full secret, regenerate it and capture it during setup.",
-                                  variant: "destructive",
-                                });
-                              }}
-                              data-testid={`button-copy-secret-${platform.id}`}
-                            >
-                              <Copy className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        </div>
+                      <TableCell className="text-center">
+                        <Badge
+                          variant={platform.webhookEnabled ? "default" : "secondary"}
+                          data-testid={`badge-webhook-${platform.id}`}
+                        >
+                          {platform.webhookEnabled ? "Enabled" : "Disabled"}
+                        </Badge>
                       </TableCell>
                       <TableCell className="text-center">
                         <Badge
@@ -590,32 +619,21 @@ export default function AdminPlatforms() {
                             onClick={() => openEditDialog(platform)}
                             data-testid={`button-edit-${platform.id}`}
                           >
-                            <Edit className="h-4 w-4" />
+                            <Edit className="h-3 w-3 mr-1" />
+                            Configure
                           </Button>
                           <Button
                             size="sm"
-                            variant={platform.isActive ? "destructive" : "default"}
-                            onClick={() => toggleMutation.mutate({
-                              platformId: platform.id,
-                              isActive: !platform.isActive
-                            })}
-                            disabled={toggleMutation.isPending}
+                            variant={platform.isActive ? "outline" : "default"}
+                            onClick={() =>
+                              toggleMutation.mutate({
+                                platformId: platform.id,
+                                isActive: !platform.isActive,
+                              })
+                            }
                             data-testid={`button-toggle-${platform.id}`}
                           >
-                            <Power className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => {
-                              if (confirm(`Regenerate webhook secret for ${platform.name}? This will break existing integrations until updated.`)) {
-                                regenerateSecretMutation.mutate(platform.id);
-                              }
-                            }}
-                            disabled={regenerateSecretMutation.isPending}
-                            data-testid={`button-regenerate-${platform.id}`}
-                          >
-                            <RefreshCw className="h-4 w-4" />
+                            {platform.isActive ? "Deactivate" : "Activate"}
                           </Button>
                         </div>
                       </TableCell>
@@ -625,146 +643,383 @@ export default function AdminPlatforms() {
               </Table>
             ) : (
               <div className="text-center py-12 text-muted-foreground">
-                <Shield className="h-12 w-12 mx-auto mb-2 opacity-50" />
                 <p>No platforms registered yet</p>
               </div>
             )}
           </CardContent>
         </Card>
 
-        {/* Edit Dialog */}
-        <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-          <DialogContent className="max-w-2xl" data-testid="dialog-edit-platform">
+        {/* Edit Platform Dialog with API Integration & Webhook Sections */}
+        <Dialog open={isEditOpen} onOpenChange={(open) => !open && closeEditDialog()}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" data-testid="dialog-edit-platform">
             <DialogHeader>
-              <DialogTitle>Edit Platform</DialogTitle>
+              <DialogTitle>Configure Platform: {editingPlatform?.name}</DialogTitle>
               <DialogDescription>
-                Update platform details (ID cannot be changed)
+                Manage platform details, API access, and webhook integrations
               </DialogDescription>
             </DialogHeader>
+            
             <Form {...editForm}>
-              <form onSubmit={editForm.handleSubmit(handleEditSubmit)} className="space-y-4">
-                <div className="space-y-2">
-                  <FormLabel>Platform ID</FormLabel>
-                  <Input
-                    value={editingPlatform?.id || ""}
-                    disabled
-                    className="bg-muted"
-                    data-testid="input-edit-id-disabled"
-                  />
-                  <FormDescription>ID cannot be changed after creation</FormDescription>
+              <form onSubmit={editForm.handleSubmit(handleEditSubmit)} className="space-y-6">
+                {/* Basic Details Section */}
+                <div>
+                  <h3 className="text-lg font-semibold mb-4">Basic Details</h3>
+                  <div className="space-y-4">
+                    <FormField
+                      control={editForm.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Platform Name</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="Example Platform" data-testid="input-edit-name" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={editForm.control}
+                      name="displayName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Display Name (Optional)</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="Example Platform Inc." data-testid="input-edit-display" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={editForm.control}
+                      name="description"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Description (Optional)</FormLabel>
+                          <FormControl>
+                            <Textarea {...field} placeholder="A brief description..." rows={3} data-testid="input-edit-description" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={editForm.control}
+                        name="contactEmail"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Contact Email (Optional)</FormLabel>
+                            <FormControl>
+                              <Input {...field} type="email" placeholder="contact@example.com" data-testid="input-edit-email" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={editForm.control}
+                        name="supportUrl"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Support URL (Optional)</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="https://support.example.com" data-testid="input-edit-support" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <FormField
+                      control={editForm.control}
+                      name="isPublic"
+                      render={({ field }) => (
+                        <FormItem className="flex items-center gap-2 space-y-0">
+                          <FormControl>
+                            <input
+                              type="checkbox"
+                              checked={field.value}
+                              onChange={field.onChange}
+                              className="h-4 w-4"
+                              data-testid="input-edit-public"
+                            />
+                          </FormControl>
+                          <FormLabel className="!mt-0">List in public platform directory</FormLabel>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </div>
 
-                <FormField
-                  control={editForm.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Platform Name</FormLabel>
-                      <FormControl>
-                        <Input {...field} data-testid="input-edit-name" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                <Separator />
+
+                {/* API Integration Section */}
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="text-lg font-semibold flex items-center gap-2">
+                        <Key className="h-5 w-5" />
+                        API Integration
+                      </h3>
+                      <p className="text-sm text-muted-foreground">Enable programmatic access to Tkoin Protocol</p>
+                    </div>
+                    <FormField
+                      control={editForm.control}
+                      name="apiEnabled"
+                      render={({ field }) => (
+                        <FormItem className="flex items-center gap-2 space-y-0">
+                          <FormLabel className="text-sm font-normal">API Access</FormLabel>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                              data-testid="switch-api-enabled"
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  {editForm.watch("apiEnabled") && (
+                    <div className="space-y-4 rounded-lg border p-4 bg-muted/20">
+                      <FormField
+                        control={editForm.control}
+                        name="tenantSubdomain"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Tenant Subdomain</FormLabel>
+                            <FormControl>
+                              <div className="flex items-center gap-2">
+                                <Input {...field} placeholder="your-platform" data-testid="input-tenant-subdomain" className="font-mono" />
+                                <span className="text-sm text-muted-foreground">.tkoin.protocol</span>
+                              </div>
+                            </FormControl>
+                            <FormDescription>Custom subdomain for API endpoints (optional)</FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <FormLabel>Base API URL</FormLabel>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              const baseUrl = editForm.watch("tenantSubdomain") 
+                                ? `https://${editForm.watch("tenantSubdomain")}.tkoin.protocol/api/v1`
+                                : `https://api.tkoin.protocol/platform/${editingPlatform?.id}`;
+                              copyToClipboard(baseUrl, "base-url");
+                            }}
+                            data-testid="button-copy-base-url"
+                          >
+                            {copiedStates["base-url"] ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                          </Button>
+                        </div>
+                        <code className="block p-3 bg-muted rounded text-sm font-mono">
+                          {editForm.watch("tenantSubdomain") 
+                            ? `https://${editForm.watch("tenantSubdomain")}.tkoin.protocol/api/v1`
+                            : `https://api.tkoin.protocol/platform/${editingPlatform?.id}`}
+                        </code>
+                      </div>
+
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <FormLabel>API Tokens</FormLabel>
+                          <Button
+                            type="button"
+                            size="sm"
+                            onClick={() => editingPlatform && generateTokenMutation.mutate(editingPlatform.id)}
+                            disabled={generateTokenMutation.isPending}
+                            data-testid="button-generate-token"
+                          >
+                            <Plus className="h-3 w-3 mr-1" />
+                            {generateTokenMutation.isPending ? "Generating..." : "Generate Token"}
+                          </Button>
+                        </div>
+
+                        {generatedToken && (
+                          <Card className="mb-4 border-primary">
+                            <CardHeader className="pb-3">
+                              <CardTitle className="text-sm text-primary">New API Token Generated</CardTitle>
+                              <CardDescription className="text-xs">
+                                Copy this token now - it will not be shown again
+                              </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                              <div className="flex items-center gap-2">
+                                <code className="flex-1 p-2 bg-muted rounded text-xs font-mono break-all">
+                                  {generatedToken.token}
+                                </code>
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  onClick={() => copyToClipboard(generatedToken.token, "new-token")}
+                                  data-testid="button-copy-new-token"
+                                >
+                                  {copiedStates["new-token"] ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                                </Button>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        )}
+
+                        {platformTokens && platformTokens.length > 0 ? (
+                          <div className="space-y-2">
+                            {platformTokens.map((token) => (
+                              <div
+                                key={token.id}
+                                className="flex items-center justify-between p-3 border rounded hover-elevate"
+                                data-testid={`token-row-${token.id}`}
+                              >
+                                <div className="flex-1">
+                                  <code className="text-xs font-mono">{token.maskedToken}</code>
+                                  <div className="flex items-center gap-3 mt-1">
+                                    <Badge variant={token.isActive ? "default" : "secondary"} className="text-xs">
+                                      {token.isActive ? "Active" : "Revoked"}
+                                    </Badge>
+                                    <span className="text-xs text-muted-foreground">
+                                      Created {new Date(token.createdAt).toLocaleDateString()}
+                                    </span>
+                                    {token.lastUsedAt && (
+                                      <span className="text-xs text-muted-foreground">
+                                        Last used {new Date(token.lastUsedAt).toLocaleDateString()}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                                {token.isActive && (
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() =>
+                                      editingPlatform &&
+                                      revokeTokenMutation.mutate({ platformId: editingPlatform.id, tokenId: token.id })
+                                    }
+                                    data-testid={`button-revoke-${token.id}`}
+                                  >
+                                    <Trash2 className="h-3 w-3 mr-1" />
+                                    Revoke
+                                  </Button>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-muted-foreground text-center py-4">
+                            No API tokens generated yet
+                          </p>
+                        )}
+                      </div>
+                    </div>
                   )}
-                />
-
-                <FormField
-                  control={editForm.control}
-                  name="displayName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Display Name</FormLabel>
-                      <FormControl>
-                        <Input {...field} data-testid="input-edit-display" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={editForm.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Description</FormLabel>
-                      <FormControl>
-                        <Textarea {...field} rows={3} data-testid="input-edit-description" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={editForm.control}
-                  name="webhookUrl"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Webhook URL</FormLabel>
-                      <FormControl>
-                        <Input {...field} data-testid="input-edit-webhook" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={editForm.control}
-                    name="contactEmail"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Contact Email</FormLabel>
-                        <FormControl>
-                          <Input {...field} type="email" data-testid="input-edit-email" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={editForm.control}
-                    name="supportUrl"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Support URL</FormLabel>
-                        <FormControl>
-                          <Input {...field} data-testid="input-edit-support" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
                 </div>
 
-                <FormField
-                  control={editForm.control}
-                  name="isPublic"
-                  render={({ field }) => (
-                    <FormItem className="flex items-center gap-2 space-y-0">
-                      <FormControl>
-                        <input
-                          type="checkbox"
-                          checked={field.value}
-                          onChange={field.onChange}
-                          className="h-4 w-4"
-                          data-testid="input-edit-public"
-                        />
-                      </FormControl>
-                      <FormLabel className="!mt-0">List in public platform directory</FormLabel>
-                      <FormMessage />
-                    </FormItem>
+                <Separator />
+
+                {/* Webhook Integration Section */}
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="text-lg font-semibold flex items-center gap-2">
+                        <Globe className="h-5 w-5" />
+                        Webhook Integration
+                      </h3>
+                      <p className="text-sm text-muted-foreground">Receive real-time notifications from Tkoin Protocol</p>
+                    </div>
+                    <FormField
+                      control={editForm.control}
+                      name="webhookEnabled"
+                      render={({ field }) => (
+                        <FormItem className="flex items-center gap-2 space-y-0">
+                          <FormLabel className="text-sm font-normal">Webhooks</FormLabel>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                              data-testid="switch-webhook-enabled"
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  {editForm.watch("webhookEnabled") && (
+                    <div className="space-y-4 rounded-lg border p-4 bg-muted/20">
+                      <FormField
+                        control={editForm.control}
+                        name="webhookUrl"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Webhook Endpoint URL</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="https://platform.example.com/webhooks/tkoin" data-testid="input-webhook-url" />
+                            </FormControl>
+                            <FormDescription>Your endpoint to receive webhook events</FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <FormLabel>Webhook Secret</FormLabel>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => editingPlatform && regenerateSecretMutation.mutate(editingPlatform.id)}
+                            disabled={regenerateSecretMutation.isPending}
+                            data-testid="button-regenerate-secret"
+                          >
+                            <RefreshCw className="h-3 w-3 mr-1" />
+                            {regenerateSecretMutation.isPending ? "Regenerating..." : "Regenerate"}
+                          </Button>
+                        </div>
+                        <code className="block p-3 bg-muted rounded text-sm font-mono">
+                          {maskSecret(editingPlatform?.webhookSecret)}
+                        </code>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Use this secret to verify webhook signatures (HMAC-SHA256)
+                        </p>
+                      </div>
+
+                      <div>
+                        <FormLabel className="mb-2 block">Event Permissions</FormLabel>
+                        <p className="text-xs text-muted-foreground mb-3">
+                          Configure which events your platform should receive (coming soon)
+                        </p>
+                        <div className="grid grid-cols-2 gap-2">
+                          {["deposit", "withdrawal", "purchase", "sale"].map((event) => (
+                            <div key={event} className="flex items-center gap-2 p-2 border rounded bg-background">
+                              <input type="checkbox" defaultChecked className="h-4 w-4" disabled />
+                              <span className="text-sm capitalize">{event}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
                   )}
-                />
+                </div>
 
                 <DialogFooter>
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => setIsEditOpen(false)}
+                    onClick={closeEditDialog}
                     data-testid="button-cancel-edit"
                   >
                     Cancel
@@ -774,7 +1029,7 @@ export default function AdminPlatforms() {
                     disabled={updateMutation.isPending}
                     data-testid="button-confirm-edit"
                   >
-                    {updateMutation.isPending ? "Updating..." : "Update Platform"}
+                    {updateMutation.isPending ? "Saving..." : "Save Changes"}
                   </Button>
                 </DialogFooter>
               </form>
