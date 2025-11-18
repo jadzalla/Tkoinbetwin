@@ -1448,6 +1448,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       isPublic: z.boolean().optional(),
       metadata: z.any().optional().nullable(),
       rateLimit: z.number().int().positive().optional(),
+      apiEnabled: z.boolean().optional(),
+      webhookEnabled: z.boolean().optional(),
+      tenantSubdomain: z.string().max(100).optional().nullable(),
     });
 
     const validationResult = updateSchema.safeParse(req.body);
@@ -1459,7 +1462,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
 
-    const { name, displayName, description, webhookUrl, contactEmail, supportUrl, isPublic, metadata, rateLimit } = validationResult.data;
+    const { name, displayName, description, webhookUrl, contactEmail, supportUrl, isPublic, metadata, rateLimit, apiEnabled, webhookEnabled, tenantSubdomain } = validationResult.data;
 
     // Build updates object (only include provided fields)
     const updates: any = {};
@@ -1472,6 +1475,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (isPublic !== undefined) updates.isPublic = isPublic;
     if (metadata !== undefined) updates.metadata = metadata;
     if (rateLimit !== undefined) updates.rateLimit = rateLimit;
+    if (apiEnabled !== undefined) updates.apiEnabled = apiEnabled;
+    if (webhookEnabled !== undefined) updates.webhookEnabled = webhookEnabled;
+    if (tenantSubdomain !== undefined) updates.tenantSubdomain = tenantSubdomain || null;
 
     try {
       // Update platform (storage throws NotFoundError if platform doesn't exist)
@@ -1613,6 +1619,165 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error regenerating webhook secret:", error);
       res.status(500).json({ 
         message: "Failed to regenerate webhook secret",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // ========================================
+  // Platform API Token Management (Admin Only)
+  // ========================================
+  
+  // Generate a new API token for a platform
+  app.post('/api/admin/platforms/:platformId/generate-token', isAuthenticated, isAdmin, async (req: any, res) => {
+    const { platformId } = req.params;
+
+    try {
+      // Validate platform exists
+      const platform = await storage.getSovereignPlatform(platformId);
+      if (!platform) {
+        return res.status(404).json({ message: `Platform '${platformId}' not found` });
+      }
+
+      // Generate random 64-char token (32 bytes)
+      const crypto = await import('node:crypto');
+      const fullToken = crypto.randomBytes(32).toString('hex');
+      
+      // Create SHA-256 hash for storage
+      const tokenHash = crypto.createHash('sha256').update(fullToken).digest('hex');
+      
+      // Create masked version for display
+      const maskedToken = `${fullToken.slice(0, 4)}${'*'.repeat(56)}${fullToken.slice(-4)}`;
+      
+      // Store in database
+      const createdToken = await storage.createPlatformApiToken({
+        platformId,
+        tokenHash,
+        maskedToken,
+        isActive: true,
+        createdBy: req.user.claims.email || req.user.claims.sub,
+      });
+
+      // Log token generation (security event)
+      await storage.createAuditLog({
+        eventType: 'platform_token_generated',
+        entityType: 'platform_api_token',
+        entityId: createdToken.id,
+        actorId: req.user.claims.sub,
+        actorType: 'admin',
+        metadata: {
+          platformId,
+          platformName: platform.name,
+          tokenId: createdToken.id,
+          maskedToken: createdToken.maskedToken,
+          createdBy: createdToken.createdBy,
+        },
+      });
+
+      // Return full token ONCE (never stored, never shown again)
+      res.status(201).json({
+        token: fullToken,
+        maskedToken: createdToken.maskedToken,
+        createdAt: createdToken.createdAt,
+        id: createdToken.id,
+      });
+    } catch (error) {
+      console.error("Error generating API token:", error);
+      res.status(500).json({ 
+        message: "Failed to generate API token",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // List all tokens for a platform (masked)
+  app.get('/api/admin/platforms/:platformId/tokens', isAuthenticated, isAdmin, async (req: any, res) => {
+    const { platformId } = req.params;
+
+    try {
+      // Validate platform exists
+      const platform = await storage.getSovereignPlatform(platformId);
+      if (!platform) {
+        return res.status(404).json({ message: `Platform '${platformId}' not found` });
+      }
+
+      // Get all tokens for this platform
+      const tokens = await storage.getPlatformApiTokensByPlatform(platformId);
+      
+      // Return only safe fields (never return tokenHash or full token)
+      const safeTokens = tokens.map(token => ({
+        id: token.id,
+        maskedToken: token.maskedToken,
+        isActive: token.isActive,
+        createdAt: token.createdAt,
+        lastUsedAt: token.lastUsedAt,
+        expiresAt: token.expiresAt,
+        createdBy: token.createdBy,
+      }));
+
+      res.json(safeTokens);
+    } catch (error) {
+      console.error("Error fetching API tokens:", error);
+      res.status(500).json({ 
+        message: "Failed to fetch API tokens",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Revoke a token
+  app.delete('/api/admin/platforms/:platformId/tokens/:tokenId', isAuthenticated, isAdmin, async (req: any, res) => {
+    const { platformId, tokenId } = req.params;
+
+    try {
+      // Validate platform exists
+      const platform = await storage.getSovereignPlatform(platformId);
+      if (!platform) {
+        return res.status(404).json({ message: `Platform '${platformId}' not found` });
+      }
+
+      // Get the token to verify it belongs to this platform
+      const token = await storage.getPlatformApiToken(tokenId);
+      if (!token) {
+        return res.status(404).json({ message: `API token '${tokenId}' not found` });
+      }
+
+      if (token.platformId !== platformId) {
+        return res.status(400).json({ message: `Token '${tokenId}' does not belong to platform '${platformId}'` });
+      }
+
+      // Revoke the token (set isActive = false)
+      await storage.updatePlatformApiToken(tokenId, { isActive: false });
+
+      // Log token revocation (security event)
+      await storage.createAuditLog({
+        eventType: 'platform_token_revoked',
+        entityType: 'platform_api_token',
+        entityId: tokenId,
+        actorId: req.user.claims.sub,
+        actorType: 'admin',
+        metadata: {
+          platformId,
+          platformName: platform.name,
+          tokenId,
+          maskedToken: token.maskedToken,
+          revokedBy: req.user.claims.email || req.user.claims.sub,
+        },
+      });
+
+      res.json({ 
+        success: true,
+        message: "API token revoked successfully",
+        tokenId,
+        maskedToken: token.maskedToken,
+      });
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        return res.status(404).json({ message: error.message });
+      }
+      console.error("Error revoking API token:", error);
+      res.status(500).json({ 
+        message: "Failed to revoke API token",
         error: error instanceof Error ? error.message : "Unknown error"
       });
     }

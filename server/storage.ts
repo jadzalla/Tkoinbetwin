@@ -32,6 +32,8 @@ import type {
   InsertCurrency,
   SovereignPlatform,
   InsertSovereignPlatform,
+  PlatformApiToken,
+  InsertPlatformApiToken,
 } from '@shared/schema';
 import {
   users,
@@ -49,6 +51,7 @@ import {
   agentCurrencySettings,
   currencies,
   sovereignPlatforms,
+  platformApiTokens,
 } from '@shared/schema';
 
 // Storage Interface
@@ -150,6 +153,12 @@ export interface IStorage {
   createSovereignPlatform(platform: InsertSovereignPlatform): Promise<SovereignPlatform>;
   updateSovereignPlatform(id: string, updates: Partial<SovereignPlatform>): Promise<SovereignPlatform>;
   toggleSovereignPlatformStatus(id: string, isActive: boolean): Promise<SovereignPlatform>;
+  
+  // Platform API Token Operations
+  getPlatformApiToken(id: string): Promise<PlatformApiToken | undefined>;
+  getPlatformApiTokensByPlatform(platformId: string): Promise<PlatformApiToken[]>;
+  createPlatformApiToken(token: InsertPlatformApiToken): Promise<PlatformApiToken>;
+  updatePlatformApiToken(id: string, updates: Partial<PlatformApiToken>): Promise<PlatformApiToken>;
 }
 
 // PostgreSQL Implementation
@@ -743,6 +752,36 @@ export class PostgresStorage implements IStorage {
     
     if (!result[0]) {
       throw new NotFoundError(`Platform '${id}' not found`);
+    }
+    
+    return result[0];
+  }
+
+  async getPlatformApiToken(id: string): Promise<PlatformApiToken | undefined> {
+    const result = await db.select().from(platformApiTokens).where(eq(platformApiTokens.id, id)).limit(1);
+    return result[0];
+  }
+
+  async getPlatformApiTokensByPlatform(platformId: string): Promise<PlatformApiToken[]> {
+    return await db.select()
+      .from(platformApiTokens)
+      .where(eq(platformApiTokens.platformId, platformId))
+      .orderBy(desc(platformApiTokens.createdAt));
+  }
+
+  async createPlatformApiToken(token: InsertPlatformApiToken): Promise<PlatformApiToken> {
+    const result = await db.insert(platformApiTokens).values(token).returning();
+    return result[0];
+  }
+
+  async updatePlatformApiToken(id: string, updates: Partial<PlatformApiToken>): Promise<PlatformApiToken> {
+    const result = await db.update(platformApiTokens)
+      .set(updates)
+      .where(eq(platformApiTokens.id, id))
+      .returning();
+    
+    if (!result[0]) {
+      throw new NotFoundError(`API token '${id}' not found`);
     }
     
     return result[0];

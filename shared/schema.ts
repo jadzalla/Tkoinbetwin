@@ -622,17 +622,44 @@ export const sovereignPlatforms = pgTable("sovereign_platforms", {
   supportUrl: text("support_url"),
   
   // API Configuration
-  apiKey: text("api_key"), // Optional API key for platform-to-Tkoin requests
+  apiKey: text("api_key"), // Optional API key for platform-to-Tkoin requests (deprecated - use platformApiTokens)
   rateLimit: integer("rate_limit").default(1000), // Requests per hour
+  apiEnabled: boolean("api_enabled").notNull().default(false), // Enable API access
+  webhookEnabled: boolean("webhook_enabled").notNull().default(false), // Enable webhook access
+  tenantSubdomain: varchar("tenant_subdomain", { length: 100 }), // Tenant subdomain for API endpoints
   
   // Metadata
-  metadata: jsonb("metadata"), // Additional platform-specific configuration
+  metadata: jsonb("metadata"), // Additional platform-specific configuration (now includes webhook permissions)
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 }, (table) => ({
   idIdx: index("sovereign_platforms_id_idx").on(table.id),
   activeIdx: index("sovereign_platforms_active_idx").on(table.isActive),
   publicIdx: index("sovereign_platforms_public_idx").on(table.isPublic),
+}));
+
+// Platform API Tokens
+export const platformApiTokens = pgTable("platform_api_tokens", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  
+  // Platform Reference
+  platformId: text("platform_id").notNull().references(() => sovereignPlatforms.id, { onDelete: 'cascade' }),
+  
+  // Token Data
+  tokenHash: text("token_hash").notNull().unique(), // SHA-256 hash of the full token
+  maskedToken: text("masked_token").notNull(), // First 4 and last 4 chars for display
+  
+  // Token Management
+  isActive: boolean("is_active").notNull().default(true),
+  expiresAt: timestamp("expires_at"), // Optional expiration date
+  lastUsedAt: timestamp("last_used_at"),
+  
+  // Metadata
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  createdBy: text("created_by"), // Admin who created the token
+}, (table) => ({
+  platformIdIdx: index("platform_api_tokens_platform_id_idx").on(table.platformId),
+  tokenHashIdx: uniqueIndex("platform_api_tokens_token_hash_idx").on(table.tokenHash),
 }));
 
 // Token Configuration (Solana Token-2022 - TKOIN)
@@ -1174,3 +1201,12 @@ export const insertBurnHistorySchema = createInsertSchema(burnHistory).omit({
 });
 export type InsertBurnHistory = z.infer<typeof insertBurnHistorySchema>;
 export type BurnHistory = typeof burnHistory.$inferSelect;
+
+// Platform API Tokens Types
+export const insertPlatformApiTokenSchema = createInsertSchema(platformApiTokens).omit({ 
+  id: true,
+  createdAt: true,
+  lastUsedAt: true,
+});
+export type InsertPlatformApiToken = z.infer<typeof insertPlatformApiTokenSchema>;
+export type PlatformApiToken = typeof platformApiTokens.$inferSelect;
