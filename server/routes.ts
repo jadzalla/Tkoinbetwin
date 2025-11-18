@@ -1197,6 +1197,126 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ========================================
+  // Admin Routes - Tier Limits Configuration
+  // ========================================
+
+  // Get all tier limits
+  app.get('/api/admin/tier-limits', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const keys = [
+        'tier_limits_basic_daily',
+        'tier_limits_basic_monthly',
+        'tier_limits_verified_daily',
+        'tier_limits_verified_monthly',
+        'tier_limits_premium_daily',
+        'tier_limits_premium_monthly'
+      ];
+
+      const configs = await Promise.all(keys.map(key => storage.getSystemConfig(key)));
+      
+      const tierLimits = {
+        basic: {
+          daily: configs[0]?.value || 1000,
+          monthly: configs[1]?.value || 10000,
+        },
+        verified: {
+          daily: configs[2]?.value || 10000,
+          monthly: configs[3]?.value || 100000,
+        },
+        premium: {
+          daily: configs[4]?.value || 50000,
+          monthly: configs[5]?.value || 500000,
+        },
+      };
+
+      res.json(tierLimits);
+    } catch (error) {
+      console.error("Error fetching tier limits:", error);
+      res.status(500).json({ message: "Failed to fetch tier limits" });
+    }
+  });
+
+  // Update tier limit
+  app.patch('/api/admin/tier-limits', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const schema = z.object({
+        tier: z.enum(['basic', 'verified', 'premium']),
+        limitType: z.enum(['daily', 'monthly']),
+        value: z.number().positive().min(100, 'Limit must be at least $100'),
+      });
+
+      const validation = schema.safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json({ 
+          message: "Invalid request", 
+          errors: validation.error.errors 
+        });
+      }
+
+      const { tier, limitType, value } = validation.data;
+      const key = `tier_limits_${tier}_${limitType}`;
+      const updatedBy = req.user?.claims?.email || 'admin';
+
+      // Additional validation: Ensure tier hierarchy is maintained
+      const allConfigs = await Promise.all([
+        storage.getSystemConfig('tier_limits_basic_daily'),
+        storage.getSystemConfig('tier_limits_basic_monthly'),
+        storage.getSystemConfig('tier_limits_verified_daily'),
+        storage.getSystemConfig('tier_limits_verified_monthly'),
+        storage.getSystemConfig('tier_limits_premium_daily'),
+        storage.getSystemConfig('tier_limits_premium_monthly'),
+      ]);
+
+      const currentLimits = {
+        basic: { daily: allConfigs[0]?.value || 1000, monthly: allConfigs[1]?.value || 10000 },
+        verified: { daily: allConfigs[2]?.value || 10000, monthly: allConfigs[3]?.value || 100000 },
+        premium: { daily: allConfigs[4]?.value || 50000, monthly: allConfigs[5]?.value || 500000 },
+      };
+
+      // Update the value being changed
+      currentLimits[tier][limitType] = value;
+
+      // Validate hierarchy: verified >= basic, premium >= verified
+      if (currentLimits.verified.daily < currentLimits.basic.daily ||
+          currentLimits.verified.monthly < currentLimits.basic.monthly) {
+        return res.status(400).json({ 
+          message: "Verified tier limits must be >= Basic tier limits" 
+        });
+      }
+
+      if (currentLimits.premium.daily < currentLimits.verified.daily ||
+          currentLimits.premium.monthly < currentLimits.verified.monthly) {
+        return res.status(400).json({ 
+          message: "Premium tier limits must be >= Verified tier limits" 
+        });
+      }
+
+      await storage.setSystemConfig(key, value, `${tier} tier ${limitType} transaction limit (USD)`, updatedBy);
+
+      // Log to audit trail
+      await storage.createAuditLog({
+        eventType: 'tier_limit_updated',
+        entityType: 'system_config',
+        entityId: key,
+        actorId: req.user.claims.sub,
+        actorType: 'admin',
+        metadata: { tier, limitType, value, updatedBy },
+      });
+
+      res.json({ 
+        success: true, 
+        tier, 
+        limitType, 
+        value,
+        message: `${tier} tier ${limitType} limit updated to $${value.toLocaleString()}` 
+      });
+    } catch (error) {
+      console.error("Error updating tier limit:", error);
+      res.status(500).json({ message: "Failed to update tier limit" });
+    }
+  });
+
+  // ========================================
   // Admin Routes - Sovereign Platform Management
   // ========================================
 
