@@ -36,6 +36,13 @@ The frontend uses React, TypeScript, Vite, Tailwind CSS, and shadcn/ui, adopting
     - **Traditional KYC Application**: For Verified/Premium Tiers, involves admin review and approval of submitted KYC documents.
 - **Burn Proposal System**: Manual approval workflow for token burns with safety features like network detection, configurable limits, cooldown periods, and multi-gate approval.
 - **Analytics Dashboards**: Comprehensive admin dashboards for staking and slashing metrics and trends.
+- **Security Hardening (Production-Ready)**:
+    - **Webhook Nonce Tracking**: Server-side timestamp validation prevents replay attacks within 5-minute window.
+    - **Platform Rate Limiting**: Per-platform API throttling with strict enforcement (missing/zero limits = blocked).
+    - **IP-Based Rate Limiting**: Public endpoints protected (100 req/15min), auth endpoints (20 req/15min).
+    - **Trust Proxy Configuration**: Single trusted hop (Replit load balancer) prevents IP spoofing.
+    - **Graceful Shutdown**: SIGTERM/SIGINT/SIGQUIT handlers ensure cleanup of interval timers.
+    - **Admin Endpoint Protection**: All 50+ admin routes secured with isAuthenticated + isAdmin middleware.
 
 ### Feature Specifications
 - **Pricing Configurator**: Agents can set bid/ask spreads and FX buffers.

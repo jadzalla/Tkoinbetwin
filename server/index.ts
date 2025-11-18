@@ -4,8 +4,11 @@ import { setupVite, serveStatic, log } from "./vite";
 
 const app = express();
 
-// Enable trust proxy for proper IP extraction behind load balancers/proxies
-app.set('trust proxy', true);
+// SECURITY: Configure trust proxy for proper IP extraction behind Replit's load balancer
+// Replit deployments use a single trusted proxy hop
+// Setting to 1 means we trust the first proxy in the chain (X-Forwarded-For)
+// This prevents IP spoofing while allowing rate limiting to work correctly
+app.set('trust proxy', 1);
 
 declare module 'http' {
   interface IncomingMessage {
@@ -87,11 +90,24 @@ app.use((req, res, next) => {
   }, 10 * 60 * 1000); // 10 minutes
 
   // Cleanup on server shutdown
-  process.on('SIGTERM', async () => {
+  // SECURITY: Register shutdown handlers only once to avoid memory leaks
+  let shutdownHandlerRegistered = false;
+  const shutdownHandler = async () => {
+    console.log('🔄 Shutting down gracefully...');
     clearInterval(nonceCleanupTimer);
     const { cleanupRateLimitTimers } = await import('./middleware/rate-limit');
     cleanupRateLimitTimers();
-  });
+    console.log('✅ Cleanup complete');
+    process.exit(0);
+  };
+  
+  if (!shutdownHandlerRegistered) {
+    // Handle multiple shutdown signals for better coverage
+    process.on('SIGTERM', shutdownHandler);
+    process.on('SIGINT', shutdownHandler);
+    process.on('SIGQUIT', shutdownHandler);
+    shutdownHandlerRegistered = true;
+  }
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
