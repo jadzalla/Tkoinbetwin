@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import { logger } from '../utils/logger';
 
 export interface WebhookPayload {
   event: string;
@@ -59,7 +60,7 @@ export class WebhookService {
       return crypto.timingSafeEqual(signatureBuffer, expectedBuffer);
     } catch (error) {
       // Log error but return false (don't leak information)
-      console.error('[Webhook] Signature verification error:', error);
+      logger.error('Webhook signature verification failed', error);
       return false;
     }
   }
@@ -79,7 +80,12 @@ export class WebhookService {
     
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        console.log(`[Webhook] Attempt ${attempt}/${maxRetries} to ${config.url}`);
+        logger.info('Webhook delivery attempt', {
+          attempt,
+          maxRetries,
+          url: config.url,
+          event: payload.event,
+        });
         
         const payloadString = JSON.stringify(payload);
         const signature = this.generateSignature(payloadString, payload.timestamp, config.secret);
@@ -111,7 +117,12 @@ export class WebhookService {
         }
         
         if (response.ok) {
-          console.log(`[Webhook] Success on attempt ${attempt}: ${response.status}`);
+          logger.info('Webhook delivered successfully', {
+            attempt,
+            statusCode: response.status,
+            url: config.url,
+            event: payload.event,
+          });
           return {
             success: true,
             statusCode: response.status,
@@ -122,7 +133,13 @@ export class WebhookService {
         }
         
         lastError = `HTTP ${response.status}: ${responseText}`;
-        console.warn(`[Webhook] Attempt ${attempt} failed: ${lastError}`);
+        logger.warn('Webhook delivery attempt failed', {
+          attempt,
+          maxRetries,
+          statusCode: response.status,
+          url: config.url,
+          error: lastError,
+        });
         
         // Don't retry on client errors (4xx), except 429 (rate limit)
         if (response.status >= 400 && response.status < 500 && response.status !== 429) {

@@ -22,6 +22,10 @@ app.use(express.json({
 }));
 app.use(express.urlencoded({ extended: false }));
 
+// Add correlation ID to all requests for distributed tracing
+import { correlationMiddleware } from './utils/logger';
+app.use(correlationMiddleware);
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
@@ -58,21 +62,30 @@ app.use((req, res, next) => {
   // Initialize Solana Core Service
   try {
     const { solanaCore } = await import('./solana/solana-core');
+    const { logger } = await import('./utils/logger');
     solanaCore.configure();
 
     // Test connection if configured
     if (solanaCore.isReady()) {
       const connectionTest = await solanaCore.testConnection();
       if (connectionTest.success) {
-        console.log(`   ✓ Connected to Solana (slot: ${connectionTest.slot})`);
         const balance = await solanaCore.getTreasuryBalance();
-        console.log(`   ✓ Treasury balance: ${balance.toFixed(4)} SOL\n`);
+        logger.info('Solana connection established', {
+          service: 'solana-core',
+          slot: connectionTest.slot,
+          treasuryBalance: balance.toFixed(4),
+          network: process.env.SOLANA_RPC_URL || 'devnet',
+        });
       } else {
-        console.warn(`   ⚠️  Connection test failed: ${connectionTest.error}\n`);
+        logger.warn('Solana connection test failed', {
+          service: 'solana-core',
+          error: connectionTest.error,
+        });
       }
     }
   } catch (error) {
-    console.error('❌ Failed to initialize Solana Core:', error);
+    const { logger } = await import('./utils/logger');
+    logger.error('Failed to initialize Solana Core', error);
   }
 
   // Start periodic cleanup of expired webhook nonces (every 10 minutes)
@@ -80,12 +93,17 @@ app.use((req, res, next) => {
   const { storage } = await import('./storage');
   const nonceCleanupTimer = setInterval(async () => {
     try {
+      const { logger } = await import('./utils/logger');
       const deletedCount = await storage.cleanupExpiredNonces();
       if (deletedCount > 0) {
-        console.log(`🧹 Cleaned up ${deletedCount} expired webhook nonces`);
+        logger.info('Cleaned up expired webhook nonces', {
+          service: 'nonce-cleanup',
+          count: deletedCount,
+        });
       }
     } catch (error) {
-      console.error('❌ Failed to cleanup expired nonces:', error);
+      const { logger } = await import('./utils/logger');
+      logger.error('Failed to cleanup expired nonces', error);
     }
   }, 10 * 60 * 1000); // 10 minutes
 
@@ -93,11 +111,12 @@ app.use((req, res, next) => {
   // SECURITY: Register shutdown handlers only once to avoid memory leaks
   let shutdownHandlerRegistered = false;
   const shutdownHandler = async () => {
-    console.log('🔄 Shutting down gracefully...');
+    const { logger } = await import('./utils/logger');
+    logger.info('Shutting down gracefully', { service: 'server' });
     clearInterval(nonceCleanupTimer);
     const { cleanupRateLimitTimers } = await import('./middleware/rate-limit');
     cleanupRateLimitTimers();
-    console.log('✅ Cleanup complete');
+    logger.info('Cleanup complete', { service: 'server' });
     process.exit(0);
   };
   
