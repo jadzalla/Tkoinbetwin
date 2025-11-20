@@ -64,6 +64,47 @@ The frontend uses React, TypeScript, Vite, Tailwind CSS, and shadcn/ui, adopting
 - **Auth**: Replit Auth (OpenID Connect)
 - **Database**: PostgreSQL (Neon-backed)
 
+## Token Deployment (Devnet)
+**TKOIN Token-2022 Deployed on Solana Devnet**
+
+- **Mint Address**: `9XPD1ZcAtNZgc1pGYYL3Z4W3mNqHKmqKDsUtsKKzAJE5`
+- **Treasury Wallet**: `953CKYH169xXxaNKVwLT9z9s38TEg1d2pQsY7d1Lv6dD`
+- **Treasury Token Account**: `GJ8ZUGBD7UAtffi8eWjfqN63nCMhPgmDuH44YNRct3R6`
+- **Network**: Devnet (`https://api.devnet.solana.com`)
+- **Deployed**: 2025-11-20
+
+**Token Configuration**:
+- **Name**: Tkoin
+- **Symbol**: TK
+- **Decimals**: 9 (Solana standard)
+- **Max Supply**: 1,000,000,000 TKOIN
+- **Current Supply**: 1,000,000,000 TKOIN (fully minted to treasury)
+- **Transfer Fee**: 1% (100 basis points)
+- **Max Transfer Fee Cap**: 1,000,000,000,000,000 (prevents excessive fees on large transfers)
+
+**Token Properties**:
+- **Freeze Authority**: `null` (sovereignty maintained - no freeze capability)
+- **Mint Authority**: Treasury wallet (controlled by protocol)
+- **Transfer Fee Config Authority**: Treasury wallet
+- **Withdraw Withheld Authority**: Treasury wallet
+- **Program**: Token-2022 (`TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb`)
+
+**Verified Features**:
+✅ Token deployed with Token-2022 program  
+✅ Transfer Fee Extension enabled (1% on all transfers)  
+✅ No freeze authority (sovereignty positioning)  
+✅ Initial supply minted to treasury  
+✅ Transfer fee mechanics tested and verified  
+
+**Deployment Scripts**:
+- `solana/scripts/02-deploy-token.ts`: Deploy token with Transfer Fee Extension
+- `solana/scripts/03-mint-initial-supply.ts`: Mint 1B TKOIN to treasury
+- `solana/scripts/04-test-transfer-fee.ts`: Verify 1% transfer fee mechanics
+
+**Solana Explorer**:
+- Token: `https://explorer.solana.com/address/9XPD1ZcAtNZgc1pGYYL3Z4W3mNqHKmqKDsUtsKKzAJE5?cluster=devnet`
+- Treasury: `https://explorer.solana.com/address/953CKYH169xXxaNKVwLT9z9s38TEg1d2pQsY7d1Lv6dD?cluster=devnet`
+
 ## External Dependencies
 - **Solana Blockchain**: For Token-2022 smart contracts and blockchain operations.
 - **Sovereign Platforms**: BetWin Casino (integrated), with future integrations planned for metaverses, DAOs, and other gaming platforms.
