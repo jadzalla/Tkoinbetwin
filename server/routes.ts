@@ -550,6 +550,589 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // ========================================
+  // P2P Marketplace Routes
+  // ========================================
+  
+  // Payment Methods - Agent Configuration
+  
+  // Get all payment methods for current agent
+  app.get('/api/agents/me/payment-methods', isAuthenticated, isApprovedAgent, async (req: any, res) => {
+    try {
+      const agent = req.agent;
+      const methods = await storage.getPaymentMethodsByAgent(agent.id);
+      res.json(methods);
+    } catch (error) {
+      console.error("Error fetching payment methods:", error);
+      res.status(500).json({ message: "Failed to fetch payment methods" });
+    }
+  });
+  
+  // Get active payment methods for an agent (public - sanitized, no sensitive data)
+  app.get('/api/agents/:agentId/payment-methods', async (req: any, res) => {
+    try {
+      const { agentId } = req.params;
+      const methods = await storage.getActivePaymentMethodsByAgent(agentId);
+      
+      // Sanitize: Remove sensitive accountDetails and instructions from public response
+      const sanitizedMethods = methods.map(method => ({
+        id: method.id,
+        methodType: method.methodType,
+        methodName: method.methodName,
+        displayName: method.displayName,
+        minAmount: method.minAmount,
+        maxAmount: method.maxAmount,
+        // DO NOT expose: accountDetails, instructions
+      }));
+      
+      res.json(sanitizedMethods);
+    } catch (error) {
+      console.error("Error fetching agent payment methods:", error);
+      res.status(500).json({ message: "Failed to fetch payment methods" });
+    }
+  });
+  
+  // Create payment method
+  app.post('/api/agents/me/payment-methods', isAuthenticated, isApprovedAgent, async (req: any, res) => {
+    try {
+      const agent = req.agent;
+      
+      // Validate request body
+      const { createPaymentMethodSchema } = await import('../shared/p2p-schemas');
+      const validation = createPaymentMethodSchema.safeParse(req.body);
+      
+      if (!validation.success) {
+        return res.status(400).json({ 
+          message: "Invalid request data",
+          errors: validation.error.errors 
+        });
+      }
+      
+      const data = validation.data;
+      
+      const method = await storage.createPaymentMethod({
+        agentId: agent.id,
+        ...data,
+        isActive: true,
+      });
+      
+      res.status(201).json(method);
+    } catch (error) {
+      console.error("Error creating payment method:", error);
+      res.status(500).json({ message: "Failed to create payment method" });
+    }
+  });
+  
+  // Update payment method
+  app.put('/api/agents/me/payment-methods/:id', isAuthenticated, isApprovedAgent, async (req: any, res) => {
+    try {
+      const agent = req.agent;
+      const { id } = req.params;
+      
+      // Validate request body
+      const { updatePaymentMethodSchema } = await import('../shared/p2p-schemas');
+      const validation = updatePaymentMethodSchema.safeParse(req.body);
+      
+      if (!validation.success) {
+        return res.status(400).json({ 
+          message: "Invalid request data",
+          errors: validation.error.errors 
+        });
+      }
+      
+      // Verify ownership
+      const existingMethod = await storage.getPaymentMethod(id);
+      if (!existingMethod || existingMethod.agentId !== agent.id) {
+        return res.status(404).json({ message: "Payment method not found" });
+      }
+      
+      const updated = await storage.updatePaymentMethod(id, validation.data);
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating payment method:", error);
+      res.status(500).json({ message: "Failed to update payment method" });
+    }
+  });
+  
+  // Delete payment method
+  app.delete('/api/agents/me/payment-methods/:id', isAuthenticated, isApprovedAgent, async (req: any, res) => {
+    try {
+      const agent = req.agent;
+      const { id } = req.params;
+      
+      // Verify ownership
+      const existingMethod = await storage.getPaymentMethod(id);
+      if (!existingMethod || existingMethod.agentId !== agent.id) {
+        return res.status(404).json({ message: "Payment method not found" });
+      }
+      
+      await storage.deletePaymentMethod(id);
+      res.json({ message: "Payment method deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting payment method:", error);
+      res.status(500).json({ message: "Failed to delete payment method" });
+    }
+  });
+  
+  // P2P Orders - User & Agent Management
+  
+  // Browse agents marketplace (public - allows filtering)
+  app.get('/api/p2p/agents', async (req: any, res) => {
+    try {
+      const { country, paymentMethod, minRating } = req.query;
+      
+      const filters: any = {
+        status: 'active',
+        verificationTier: undefined,
+      };
+      
+      let agents = await storage.getAllAgents(filters);
+      
+      // Filter by country
+      if (country) {
+        agents = agents.filter(a => a.country === country);
+      }
+      
+      // Filter by minimum rating
+      if (minRating) {
+        const minRatingNum = parseFloat(minRating);
+        agents = agents.filter(a => parseFloat(a.averageRating || '0') >= minRatingNum);
+      }
+      
+      // Filter by payment method (if provided, fetch agents who support it)
+      if (paymentMethod) {
+        const agentsWithMethod = new Set<string>();
+        for (const agent of agents) {
+          const methods = await storage.getActivePaymentMethodsByAgent(agent.id);
+          if (methods.some(m => m.methodType === paymentMethod)) {
+            agentsWithMethod.add(agent.id);
+          }
+        }
+        agents = agents.filter(a => agentsWithMethod.has(a.id));
+      }
+      
+      res.json(agents);
+    } catch (error) {
+      console.error("Error fetching marketplace agents:", error);
+      res.status(500).json({ message: "Failed to fetch agents" });
+    }
+  });
+  
+  // Create P2P order (user buys TKOIN from agent)
+  app.post('/api/p2p/orders', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      // Validate request body
+      const { createP2pOrderSchema } = await import('../shared/p2p-schemas');
+      const validation = createP2pOrderSchema.safeParse(req.body);
+      
+      if (!validation.success) {
+        return res.status(400).json({ 
+          message: "Invalid request data",
+          errors: validation.error.errors 
+        });
+      }
+      
+      const { agentId, orderType, tkoinAmount, fiatAmount, fiatCurrency, paymentMethodId } = validation.data;
+      
+      // Validate agent exists and is active
+      const agent = await storage.getAgent(agentId);
+      if (!agent || agent.status !== 'active') {
+        return res.status(400).json({ message: "Agent not available" });
+      }
+      
+      // Lock TKOIN in escrow (database-level inventory tracking)
+      const { EscrowService } = await import('../services/escrow-service');
+      const escrowService = new EscrowService(storage);
+      
+      const lockResult = await escrowService.lockTkoin(agentId, tkoinAmount);
+      if (!lockResult.success) {
+        return res.status(400).json({
+          message: lockResult.error || "Failed to lock TKOIN",
+          availableBalance: lockResult.availableBalance,
+          requiredAmount: lockResult.requiredAmount,
+        });
+      }
+      
+      // Calculate expiry time (30 minutes from now)
+      const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
+      
+      // Calculate exchange rate and spread
+      const exchangeRate = parseFloat(tkoinAmount) / parseFloat(fiatAmount);
+      const agentSpread = parseFloat(agent.markup || '0');
+      
+      // Create order with TKOIN locked
+      try {
+        const order = await storage.createP2pOrder({
+          agentId,
+          userId,
+          orderType,
+          tkoinAmount,
+          fiatAmount,
+          fiatCurrency,
+          exchangeRate: exchangeRate.toFixed(8),
+          agentSpread: agentSpread.toFixed(2),
+          paymentMethodId: paymentMethodId || null,
+          paymentMethodType: null,
+          tkoinLocked: true, // TKOIN is now locked in agent's inventory
+          status: 'created',
+          expiresAt,
+        });
+        
+        res.status(201).json(order);
+      } catch (error) {
+        // If order creation fails, unlock the TKOIN
+        await escrowService.unlockTkoin(agentId, tkoinAmount);
+        throw error;
+      }
+    } catch (error) {
+      console.error("Error creating P2P order:", error);
+      res.status(500).json({ message: "Failed to create order" });
+    }
+  });
+  
+  // Get user's P2P orders
+  app.get('/api/p2p/my-orders', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const orders = await storage.getP2pOrdersByUser(userId);
+      res.json(orders);
+    } catch (error) {
+      console.error("Error fetching user orders:", error);
+      res.status(500).json({ message: "Failed to fetch orders" });
+    }
+  });
+  
+  // Get agent's P2P orders
+  app.get('/api/agents/me/p2p-orders', isAuthenticated, isApprovedAgent, async (req: any, res) => {
+    try {
+      const agent = req.agent;
+      const orders = await storage.getP2pOrdersByAgent(agent.id);
+      res.json(orders);
+    } catch (error) {
+      console.error("Error fetching agent orders:", error);
+      res.status(500).json({ message: "Failed to fetch orders" });
+    }
+  });
+  
+  // Get specific P2P order
+  app.get('/api/p2p/orders/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.claims.sub;
+      
+      const order = await storage.getP2pOrder(id);
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+      
+      // Verify user is participant (buyer or seller)
+      const agent = await storage.getAgentByReplitUserId(userId);
+      const isParticipant = order.userId === userId || (agent && order.agentId === agent.id);
+      
+      if (!isParticipant) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      res.json(order);
+    } catch (error) {
+      console.error("Error fetching order:", error);
+      res.status(500).json({ message: "Failed to fetch order" });
+    }
+  });
+  
+  // Update order status (mark payment sent)
+  app.post('/api/p2p/orders/:id/payment-sent', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.claims.sub;
+      
+      const order = await storage.getP2pOrder(id);
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+      
+      // Verify user is the buyer
+      if (order.userId !== userId) {
+        return res.status(403).json({ message: "Only buyer can mark payment sent" });
+      }
+      
+      // Verify order is in correct state
+      if (order.status !== 'created' && order.status !== 'payment_pending') {
+        return res.status(400).json({ message: "Order cannot be updated in current state" });
+      }
+      
+      // Update order status
+      const updated = await storage.updateP2pOrder(id, {
+        status: 'payment_sent',
+        paymentSentAt: new Date(),
+      });
+      
+      res.json(updated);
+    } catch (error) {
+      console.error("Error marking payment sent:", error);
+      res.status(500).json({ message: "Failed to update order" });
+    }
+  });
+  
+  // Release TKOIN (agent confirms payment received)
+  app.post('/api/p2p/orders/:id/release', isAuthenticated, isApprovedAgent, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const agent = req.agent;
+      
+      const order = await storage.getP2pOrder(id);
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+      
+      // Verify agent is the seller
+      if (order.agentId !== agent.id) {
+        return res.status(403).json({ message: "Only seller can release funds" });
+      }
+      
+      // Verify order is in correct state
+      if (order.status !== 'payment_sent' && order.status !== 'verifying') {
+        return res.status(400).json({ message: "Order cannot be released in current state" });
+      }
+      
+      // Verify TKOIN is locked
+      if (!order.tkoinLocked) {
+        return res.status(400).json({ message: "TKOIN not locked for this order" });
+      }
+      
+      // Transfer TKOIN from agent to user (unlocks and deducts from agent balance)
+      const { EscrowService } = await import('../services/escrow-service');
+      const escrowService = new EscrowService(storage);
+      
+      const transferResult = await escrowService.transferTkoin(
+        order.agentId,
+        order.userId,
+        order.tkoinAmount
+      );
+      
+      if (!transferResult.success) {
+        return res.status(500).json({
+          message: transferResult.error || "Failed to transfer TKOIN"
+        });
+      }
+      
+      // Update order status to completed
+      const updated = await storage.updateP2pOrder(id, {
+        status: 'completed',
+        completedAt: new Date(),
+      });
+      
+      res.json(updated);
+    } catch (error) {
+      console.error("Error releasing funds:", error);
+      res.status(500).json({ message: "Failed to release funds" });
+    }
+  });
+  
+  // Cancel order
+  app.post('/api/p2p/orders/:id/cancel', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.claims.sub;
+      
+      const order = await storage.getP2pOrder(id);
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+      
+      // Verify user is participant
+      const agent = await storage.getAgentByReplitUserId(userId);
+      const isParticipant = order.userId === userId || (agent && order.agentId === agent.id);
+      
+      if (!isParticipant) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      // Only allow cancel if order is not completed/disputed
+      if (order.status === 'completed' || order.status === 'disputed') {
+        return res.status(400).json({ message: "Cannot cancel order in current state" });
+      }
+      
+      // Unlock TKOIN if it was locked
+      if (order.tkoinLocked) {
+        const { EscrowService } = await import('../services/escrow-service');
+        const escrowService = new EscrowService(storage);
+        
+        const unlockResult = await escrowService.unlockTkoin(order.agentId, order.tkoinAmount);
+        if (!unlockResult.success) {
+          console.error(`Failed to unlock TKOIN on order cancel: ${unlockResult.error}`);
+        }
+      }
+      
+      // Update order status to cancelled
+      const updated = await storage.updateP2pOrder(id, {
+        status: 'cancelled',
+      });
+      
+      res.json(updated);
+    } catch (error) {
+      console.error("Error cancelling order:", error);
+      res.status(500).json({ message: "Failed to cancel order" });
+    }
+  });
+  
+  // Order Chat Messages
+  
+  // Get order chat messages
+  app.get('/api/p2p/orders/:orderId/messages', isAuthenticated, async (req: any, res) => {
+    try {
+      const { orderId } = req.params;
+      const userId = req.user.claims.sub;
+      
+      // Verify user is participant
+      const order = await storage.getP2pOrder(orderId);
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+      
+      const agent = await storage.getAgentByReplitUserId(userId);
+      const isParticipant = order.userId === userId || (agent && order.agentId === agent.id);
+      
+      if (!isParticipant) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const messages = await storage.getOrderMessages(orderId);
+      res.json(messages);
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+      res.status(500).json({ message: "Failed to fetch messages" });
+    }
+  });
+  
+  // Send chat message
+  app.post('/api/p2p/orders/:orderId/messages', isAuthenticated, async (req: any, res) => {
+    try {
+      const { orderId } = req.params;
+      const userId = req.user.claims.sub;
+      
+      // Validate request body
+      const { sendMessageSchema } = await import('../shared/p2p-schemas');
+      const validation = sendMessageSchema.safeParse(req.body);
+      
+      if (!validation.success) {
+        return res.status(400).json({ 
+          message: "Invalid request data",
+          errors: validation.error.errors 
+        });
+      }
+      
+      const { content, messageType } = validation.data;
+      
+      // Verify user is participant
+      const order = await storage.getP2pOrder(orderId);
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+      
+      const agent = await storage.getAgentByReplitUserId(userId);
+      const isParticipant = order.userId === userId || (agent && order.agentId === agent.id);
+      
+      if (!isParticipant) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      // Determine sender type
+      const senderType = agent && order.agentId === agent.id ? 'agent' : 'user';
+      
+      const message = await storage.createOrderMessage({
+        orderId,
+        senderId: userId,
+        senderType,
+        messageType,
+        content,
+        imageUrl: null,
+        isRead: false,
+      });
+      
+      res.status(201).json(message);
+    } catch (error) {
+      console.error("Error sending message:", error);
+      res.status(500).json({ message: "Failed to send message" });
+    }
+  });
+  
+  // Payment Proofs
+  
+  // Get payment proofs for order
+  app.get('/api/p2p/orders/:orderId/payment-proofs', isAuthenticated, async (req: any, res) => {
+    try {
+      const { orderId } = req.params;
+      const userId = req.user.claims.sub;
+      
+      // Verify user is participant
+      const order = await storage.getP2pOrder(orderId);
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+      
+      const agent = await storage.getAgentByReplitUserId(userId);
+      const isParticipant = order.userId === userId || (agent && order.agentId === agent.id);
+      
+      if (!isParticipant) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const proofs = await storage.getPaymentProofs(orderId);
+      res.json(proofs);
+    } catch (error) {
+      console.error("Error fetching payment proofs:", error);
+      res.status(500).json({ message: "Failed to fetch payment proofs" });
+    }
+  });
+  
+  // Upload payment proof (simplified - URL only for now)
+  app.post('/api/p2p/orders/:orderId/payment-proofs', isAuthenticated, async (req: any, res) => {
+    try {
+      const { orderId } = req.params;
+      const userId = req.user.claims.sub;
+      
+      // Validate request body
+      const { uploadPaymentProofSchema } = await import('../shared/p2p-schemas');
+      const validation = uploadPaymentProofSchema.safeParse(req.body);
+      
+      if (!validation.success) {
+        return res.status(400).json({ 
+          message: "Invalid request data",
+          errors: validation.error.errors 
+        });
+      }
+      
+      const { fileUrl, fileName } = validation.data;
+      
+      // Verify user is the buyer
+      const order = await storage.getP2pOrder(orderId);
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+      
+      if (order.userId !== userId) {
+        return res.status(403).json({ message: "Only buyer can upload payment proof" });
+      }
+      
+      const proof = await storage.createPaymentProof({
+        orderId,
+        userId,
+        proofType: 'image',
+        fileUrl,
+        fileName: fileName || null,
+        fileSize: null,
+      });
+      
+      res.status(201).json(proof);
+    } catch (error) {
+      console.error("Error uploading payment proof:", error);
+      res.status(500).json({ message: "Failed to upload payment proof" });
+    }
+  });
+  
+  // ========================================
   // Admin Routes - Agent Slashing
   // ========================================
   

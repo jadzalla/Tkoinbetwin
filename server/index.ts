@@ -107,6 +107,11 @@ app.use((req, res, next) => {
     }
   }, 10 * 60 * 1000); // 10 minutes
 
+  // Start P2P order expiry service (checks every 60 seconds)
+  const { initializeOrderExpiryService } = await import('./services/order-expiry-service');
+  const orderExpiryService = initializeOrderExpiryService(storage);
+  orderExpiryService.start();
+
   // Cleanup on server shutdown
   // SECURITY: Register shutdown handlers only once to avoid memory leaks
   let shutdownHandlerRegistered = false;
@@ -114,6 +119,7 @@ app.use((req, res, next) => {
     const { logger } = await import('./utils/logger');
     logger.info('Shutting down gracefully', { service: 'server' });
     clearInterval(nonceCleanupTimer);
+    orderExpiryService.stop();
     const { cleanupRateLimitTimers } = await import('./middleware/rate-limit');
     cleanupRateLimitTimers();
     logger.info('Cleanup complete', { service: 'server' });

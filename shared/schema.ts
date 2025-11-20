@@ -58,7 +58,9 @@ export const agents = pgTable("agents", {
   
   // Wallet & Inventory
   solanaWallet: text("solana_wallet").notNull(),
-  tkoinBalance: decimal("tkoin_balance", { precision: 20, scale: 8 }).notNull().default("0"),
+  tkoinBalance: decimal("tkoin_balance", { precision: 20, scale: 8 }).notNull().default("0"), // Total TKOIN owned
+  lockedBalance: decimal("locked_balance", { precision: 20, scale: 8 }).notNull().default("0"), // TKOIN locked in active P2P orders
+  // Available balance = tkoinBalance - lockedBalance (calculated, not stored)
   
   // Limits & Settings
   dailyLimit: decimal("daily_limit", { precision: 20, scale: 2 }).notNull().default("10000"),
@@ -85,6 +87,11 @@ export const agents = pgTable("agents", {
   averageRating: decimal("average_rating", { precision: 3, scale: 2 }).default("0"),
   totalRatings: integer("total_ratings").notNull().default(0),
   
+  // P2P Contact & Communication
+  phoneNumber: text("phone_number"),
+  contactPreference: text("contact_preference").notNull().default("in_app"), // in_app, phone, whatsapp
+  showPhoneOnOrder: boolean("show_phone_on_order").notNull().default(false),
+  
   // Metadata
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
@@ -94,6 +101,148 @@ export const agents = pgTable("agents", {
   replitUserIdIdx: index("agents_replit_user_id_idx").on(table.replitUserId),
   statusIdx: index("agents_status_idx").on(table.status),
   locationIdx: index("agents_location_idx").on(table.country, table.city),
+}));
+
+// Payment Methods (Agent P2P Payment Options)
+export const paymentMethods = pgTable("payment_methods", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  
+  agentId: varchar("agent_id").notNull().references(() => agents.id),
+  
+  // Method Details
+  methodType: text("method_type").notNull(), // bank_transfer, mobile_money, paypal, cash, crypto
+  methodName: text("method_name").notNull(), // e.g., "Bank of America", "M-Pesa", "PayPal"
+  
+  // Account Details (encrypted or partially masked)
+  accountDetails: jsonb("account_details"), // { accountNumber, accountName, bankName, etc }
+  
+  // Display & Instructions
+  displayName: text("display_name").notNull(), // User-facing name
+  instructions: text("instructions"), // Payment instructions for users
+  
+  // Limits
+  minAmount: decimal("min_amount", { precision: 20, scale: 2 }).notNull().default("10"),
+  maxAmount: decimal("max_amount", { precision: 20, scale: 2 }).notNull().default("5000"),
+  
+  // Status
+  isActive: boolean("is_active").notNull().default(true),
+  
+  // Metadata
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => ({
+  agentIdIdx: index("payment_methods_agent_id_idx").on(table.agentId),
+  methodTypeIdx: index("payment_methods_method_type_idx").on(table.methodType),
+}));
+
+// P2P Orders (User ↔ Agent Escrow Transactions)
+export const p2pOrders = pgTable("p2p_orders", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  
+  // Parties
+  agentId: varchar("agent_id").notNull().references(() => agents.id),
+  userId: text("user_id").notNull(), // Replit user ID
+  userWallet: text("user_wallet"),
+  
+  // Order Type & Amount
+  orderType: text("order_type").notNull(), // buy_tkoin (user buys from agent), sell_tkoin (user sells to agent)
+  tkoinAmount: decimal("tkoin_amount", { precision: 20, scale: 8 }).notNull(),
+  fiatAmount: decimal("fiat_amount", { precision: 20, scale: 2 }).notNull(),
+  fiatCurrency: text("fiat_currency").notNull().default("USD"),
+  
+  // Pricing
+  exchangeRate: decimal("exchange_rate", { precision: 20, scale: 8 }).notNull(), // TKOIN per 1 fiat unit
+  agentSpread: decimal("agent_spread", { precision: 5, scale: 2 }).notNull(), // percentage
+  
+  // Payment Method
+  paymentMethodId: varchar("payment_method_id").references(() => paymentMethods.id),
+  paymentMethodType: text("payment_method_type"), // bank_transfer, mobile_money, etc
+  
+  // Escrow Status
+  tkoinLocked: boolean("tkoin_locked").notNull().default(false),
+  escrowTxSignature: text("escrow_tx_signature"), // On-chain escrow lock signature
+  
+  // Order Lifecycle
+  status: text("status").notNull().default("created"), // created, payment_pending, payment_sent, verifying, completed, cancelled, disputed, expired
+  
+  // Timers
+  expiresAt: timestamp("expires_at").notNull(),
+  paymentSentAt: timestamp("payment_sent_at"),
+  completedAt: timestamp("completed_at"),
+  
+  // Dispute
+  disputeReason: text("dispute_reason"),
+  disputedBy: text("disputed_by"), // user, agent
+  disputedAt: timestamp("disputed_at"),
+  resolvedBy: text("resolved_by"), // admin user ID
+  resolvedAt: timestamp("resolved_at"),
+  resolutionNotes: text("resolution_notes"),
+  
+  // Transaction Reference
+  transactionId: varchar("transaction_id"),
+  solanaSignature: text("solana_signature"), // Final TKOIN transfer signature
+  
+  // Metadata
+  notes: text("notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => ({
+  agentIdIdx: index("p2p_orders_agent_id_idx").on(table.agentId),
+  userIdIdx: index("p2p_orders_user_id_idx").on(table.userId),
+  statusIdx: index("p2p_orders_status_idx").on(table.status),
+  expiresAtIdx: index("p2p_orders_expires_at_idx").on(table.expiresAt),
+  createdAtIdx: index("p2p_orders_created_at_idx").on(table.createdAt),
+}));
+
+// Order Messages (In-App Chat for P2P Orders)
+export const orderMessages = pgTable("order_messages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  
+  orderId: varchar("order_id").notNull().references(() => p2pOrders.id),
+  
+  // Sender
+  senderId: text("sender_id").notNull(), // Replit user ID
+  senderType: text("sender_type").notNull(), // user, agent, admin
+  
+  // Message Content
+  messageType: text("message_type").notNull().default("text"), // text, image, system
+  content: text("content").notNull(),
+  
+  // Image/File
+  imageUrl: text("image_url"),
+  
+  // Status
+  isRead: boolean("is_read").notNull().default(false),
+  
+  // Metadata
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => ({
+  orderIdIdx: index("order_messages_order_id_idx").on(table.orderId),
+  createdAtIdx: index("order_messages_created_at_idx").on(table.createdAt),
+}));
+
+// Payment Proofs (Receipt/Screenshot Uploads)
+export const paymentProofs = pgTable("payment_proofs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  
+  orderId: varchar("order_id").notNull().references(() => p2pOrders.id),
+  userId: text("user_id").notNull(),
+  
+  // Proof Details
+  proofType: text("proof_type").notNull().default("image"), // image, document
+  fileUrl: text("file_url").notNull(),
+  fileName: text("file_name"),
+  fileSize: integer("file_size"), // bytes
+  
+  // Verification
+  verifiedBy: text("verified_by"), // agent or admin user ID
+  verifiedAt: timestamp("verified_at"),
+  verificationNotes: text("verification_notes"),
+  
+  // Metadata
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => ({
+  orderIdIdx: index("payment_proofs_order_id_idx").on(table.orderId),
 }));
 
 // Exchange Orders (Agent Stablecoin Purchases)
@@ -1238,3 +1387,42 @@ export const insertWebhookNonceSchema = createInsertSchema(webhookNonces).omit({
 });
 export type InsertWebhookNonce = z.infer<typeof insertWebhookNonceSchema>;
 export type WebhookNonce = typeof webhookNonces.$inferSelect;
+
+// Payment Methods Types
+export const insertPaymentMethodSchema = createInsertSchema(paymentMethods).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true,
+});
+export type InsertPaymentMethod = z.infer<typeof insertPaymentMethodSchema>;
+export type PaymentMethod = typeof paymentMethods.$inferSelect;
+
+// P2P Orders Types
+export const insertP2pOrderSchema = createInsertSchema(p2pOrders).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true,
+  paymentSentAt: true,
+  completedAt: true,
+  disputedAt: true,
+  resolvedAt: true,
+});
+export type InsertP2pOrder = z.infer<typeof insertP2pOrderSchema>;
+export type P2pOrder = typeof p2pOrders.$inferSelect;
+
+// Order Messages Types
+export const insertOrderMessageSchema = createInsertSchema(orderMessages).omit({ 
+  id: true, 
+  createdAt: true,
+});
+export type InsertOrderMessage = z.infer<typeof insertOrderMessageSchema>;
+export type OrderMessage = typeof orderMessages.$inferSelect;
+
+// Payment Proofs Types
+export const insertPaymentProofSchema = createInsertSchema(paymentProofs).omit({ 
+  id: true, 
+  createdAt: true,
+  verifiedAt: true,
+});
+export type InsertPaymentProof = z.infer<typeof insertPaymentProofSchema>;
+export type PaymentProof = typeof paymentProofs.$inferSelect;

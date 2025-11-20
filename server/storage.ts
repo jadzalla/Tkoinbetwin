@@ -36,6 +36,14 @@ import type {
   InsertPlatformApiToken,
   WebhookNonce,
   InsertWebhookNonce,
+  PaymentMethod,
+  InsertPaymentMethod,
+  P2pOrder,
+  InsertP2pOrder,
+  OrderMessage,
+  InsertOrderMessage,
+  PaymentProof,
+  InsertPaymentProof,
 } from '@shared/schema';
 import {
   users,
@@ -55,6 +63,10 @@ import {
   sovereignPlatforms,
   platformApiTokens,
   webhookNonces,
+  paymentMethods,
+  p2pOrders,
+  orderMessages,
+  paymentProofs,
 } from '@shared/schema';
 
 // Storage Interface
@@ -71,6 +83,9 @@ export interface IStorage {
   createAgent(agent: InsertAgent): Promise<Agent>;
   updateAgent(id: string, updates: Partial<Agent>): Promise<Agent | undefined>;
   updateAgentBalance(id: string, newBalance: string): Promise<void>;
+  lockAgentTkoin(agentId: string, amount: string): Promise<{ success: boolean; error?: string; availableBalance?: string }>;
+  unlockAgentTkoin(agentId: string, amount: string): Promise<{ success: boolean; error?: string }>;
+  transferAgentTkoin(fromAgentId: string, toUserId: string, amount: string): Promise<{ success: boolean; error?: string }>;
   
   // Agent Currency Settings Operations
   getAgentCurrencySettings(agentId: string, currency: string): Promise<AgentCurrencySettings | undefined>;
@@ -166,6 +181,33 @@ export interface IStorage {
   // Webhook Nonce Operations (Replay Attack Prevention)
   checkAndRecordNonce(nonce: InsertWebhookNonce): Promise<{ exists: boolean; recorded: boolean }>;
   cleanupExpiredNonces(): Promise<number>;
+  
+  // Payment Method Operations (P2P Marketplace)
+  getPaymentMethod(id: string): Promise<PaymentMethod | undefined>;
+  getPaymentMethodsByAgent(agentId: string): Promise<PaymentMethod[]>;
+  getActivePaymentMethodsByAgent(agentId: string): Promise<PaymentMethod[]>;
+  createPaymentMethod(method: InsertPaymentMethod): Promise<PaymentMethod>;
+  updatePaymentMethod(id: string, updates: Partial<PaymentMethod>): Promise<PaymentMethod | undefined>;
+  deletePaymentMethod(id: string): Promise<void>;
+  
+  // P2P Order Operations
+  getP2pOrder(id: string): Promise<P2pOrder | undefined>;
+  getP2pOrdersByAgent(agentId: string): Promise<P2pOrder[]>;
+  getP2pOrdersByUser(userId: string): Promise<P2pOrder[]>;
+  getActiveP2pOrders(agentId?: string): Promise<P2pOrder[]>;
+  createP2pOrder(order: InsertP2pOrder): Promise<P2pOrder>;
+  updateP2pOrder(id: string, updates: Partial<P2pOrder>): Promise<P2pOrder | undefined>;
+  expireP2pOrders(): Promise<{ count: number; expiredOrders: P2pOrder[] }>;
+  
+  // Order Message Operations (In-App Chat)
+  getOrderMessages(orderId: string): Promise<OrderMessage[]>;
+  createOrderMessage(message: InsertOrderMessage): Promise<OrderMessage>;
+  markMessagesAsRead(orderId: string, userId: string): Promise<void>;
+  
+  // Payment Proof Operations
+  getPaymentProofs(orderId: string): Promise<PaymentProof[]>;
+  createPaymentProof(proof: InsertPaymentProof): Promise<PaymentProof>;
+  verifyPaymentProof(id: string, verifiedBy: string, notes?: string): Promise<PaymentProof | undefined>;
 }
 
 // PostgreSQL Implementation
@@ -246,6 +288,179 @@ export class PostgresStorage implements IStorage {
     await db.update(agents)
       .set({ tkoinBalance: newBalance, updatedAt: new Date() })
       .where(eq(agents.id, id));
+  }
+
+  /**
+   * Atomically lock TKOIN for an order
+   * Uses database-side increment to prevent race conditions
+   * Returns success=false if insufficient balance
+   */
+  async lockAgentTkoin(agentId: string, amount: string): Promise<{
+    success: boolean;
+    error?: string;
+    availableBalance?: string;
+  }> {
+    const { default: Decimal } = await import('decimal.js');
+    
+    // First, get current balances for validation
+    const agent = await this.getAgent(agentId);
+    if (!agent) {
+      return { success: false, error: "Agent not found" };
+    }
+
+    const totalBalance = new Decimal(agent.tkoinBalance || '0');
+    const lockedBalance = new Decimal(agent.lockedBalance || '0');
+    const availableBalance = totalBalance.minus(lockedBalance);
+    const requiredAmount = new Decimal(amount);
+
+    // Check if sufficient balance
+    if (availableBalance.lessThan(requiredAmount)) {
+      return {
+        success: false,
+        error: "Insufficient TKOIN balance",
+        availableBalance: availableBalance.toString(),
+      };
+    }
+
+    // Atomic SQL update with database-side increment to prevent race conditions
+    // Using locked_balance = locked_balance + amount ensures concurrent requests accumulate instead of overwriting
+    const result = await db.update(agents)
+      .set({
+        lockedBalance: sql`${agents.lockedBalance}::numeric + ${amount}::numeric`,
+        updatedAt: new Date(),
+      })
+      .where(and(
+        eq(agents.id, agentId),
+        // Ensure balance is still sufficient after any concurrent updates
+        sql`${agents.tkoinBalance}::numeric - ${agents.lockedBalance}::numeric >= ${amount}::numeric`
+      ))
+      .returning();
+
+    if (result.length === 0) {
+      // Update failed - concurrent request consumed the balance
+      return {
+        success: false,
+        error: "Concurrent order creation detected - insufficient balance",
+        availableBalance: availableBalance.toString(),
+      };
+    }
+
+    return { success: true };
+  }
+
+  /**
+   * Atomically unlock TKOIN from a cancelled or expired order
+   * Uses database-side decrement to prevent race conditions
+   */
+  async unlockAgentTkoin(agentId: string, amount: string): Promise<{
+    success: boolean;
+    error?: string;
+  }> {
+    const { default: Decimal } = await import('decimal.js');
+    
+    // Validate agent exists
+    const agent = await this.getAgent(agentId);
+    if (!agent) {
+      return { success: false, error: "Agent not found" };
+    }
+
+    const requiredAmount = new Decimal(amount);
+    const lockedBalance = new Decimal(agent.lockedBalance || '0');
+
+    // Check if sufficient locked balance to unlock
+    if (lockedBalance.lessThan(requiredAmount)) {
+      return {
+        success: false,
+        error: `Cannot unlock ${amount} TKOIN - only ${lockedBalance.toString()} TKOIN is locked`,
+      };
+    }
+
+    // Atomic SQL update with database-side decrement
+    // Using locked_balance = locked_balance - amount ensures concurrent unlocks accumulate
+    const result = await db.update(agents)
+      .set({
+        lockedBalance: sql`${agents.lockedBalance}::numeric - ${amount}::numeric`,
+        updatedAt: new Date(),
+      })
+      .where(and(
+        eq(agents.id, agentId),
+        // Ensure locked balance is still sufficient after any concurrent updates
+        sql`${agents.lockedBalance}::numeric >= ${amount}::numeric`
+      ))
+      .returning();
+
+    if (result.length === 0) {
+      return {
+        success: false,
+        error: "Concurrent unlock detected - insufficient locked balance",
+      };
+    }
+
+    return { success: true };
+  }
+
+  /**
+   * Atomically transfer TKOIN from agent to user on order completion
+   * Uses database-side decrements to prevent race conditions
+   */
+  async transferAgentTkoin(fromAgentId: string, toUserId: string, amount: string): Promise<{
+    success: boolean;
+    error?: string;
+  }> {
+    const { default: Decimal } = await import('decimal.js');
+    
+    // Validate agent exists
+    const agent = await this.getAgent(fromAgentId);
+    if (!agent) {
+      return { success: false, error: "Agent not found" };
+    }
+
+    const requiredAmount = new Decimal(amount);
+    const totalBalance = new Decimal(agent.tkoinBalance || '0');
+    const lockedBalance = new Decimal(agent.lockedBalance || '0');
+
+    // Validate balances
+    if (totalBalance.lessThan(requiredAmount)) {
+      return {
+        success: false,
+        error: `Cannot transfer ${amount} TKOIN - agent only has ${totalBalance.toString()} TKOIN`,
+      };
+    }
+
+    if (lockedBalance.lessThan(requiredAmount)) {
+      return {
+        success: false,
+        error: `Cannot transfer ${amount} TKOIN - only ${lockedBalance.toString()} TKOIN is locked`,
+      };
+    }
+
+    // Atomic SQL update with database-side decrements for both balances
+    // Decrements both tkoin_balance AND locked_balance atomically
+    const result = await db.update(agents)
+      .set({
+        tkoinBalance: sql`${agents.tkoinBalance}::numeric - ${amount}::numeric`,
+        lockedBalance: sql`${agents.lockedBalance}::numeric - ${amount}::numeric`,
+        updatedAt: new Date(),
+      })
+      .where(and(
+        eq(agents.id, fromAgentId),
+        // Ensure both balances are still sufficient after any concurrent updates
+        sql`${agents.tkoinBalance}::numeric >= ${amount}::numeric`,
+        sql`${agents.lockedBalance}::numeric >= ${amount}::numeric`
+      ))
+      .returning();
+
+    if (result.length === 0) {
+      return {
+        success: false,
+        error: "Concurrent transfer detected - insufficient balance",
+      };
+    }
+
+    // TODO: Add TKOIN to user's balance (currently database-level tracking only)
+    // In future, this will trigger an on-chain SPL token transfer to user's wallet
+
+    return { success: true };
   }
 
   // Agent Currency Settings Operations
@@ -822,6 +1037,163 @@ export class PostgresStorage implements IStorage {
       .returning();
     
     return result.length;
+  }
+
+  // Payment Method Operations (P2P Marketplace)
+  async getPaymentMethod(id: string): Promise<PaymentMethod | undefined> {
+    const result = await db.select().from(paymentMethods).where(eq(paymentMethods.id, id)).limit(1);
+    return result[0];
+  }
+
+  async getPaymentMethodsByAgent(agentId: string): Promise<PaymentMethod[]> {
+    return await db.select()
+      .from(paymentMethods)
+      .where(eq(paymentMethods.agentId, agentId))
+      .orderBy(desc(paymentMethods.createdAt));
+  }
+
+  async getActivePaymentMethodsByAgent(agentId: string): Promise<PaymentMethod[]> {
+    return await db.select()
+      .from(paymentMethods)
+      .where(and(
+        eq(paymentMethods.agentId, agentId),
+        eq(paymentMethods.isActive, true)
+      ))
+      .orderBy(desc(paymentMethods.createdAt));
+  }
+
+  async createPaymentMethod(method: InsertPaymentMethod): Promise<PaymentMethod> {
+    const result = await db.insert(paymentMethods).values(method).returning();
+    return result[0];
+  }
+
+  async updatePaymentMethod(id: string, updates: Partial<PaymentMethod>): Promise<PaymentMethod | undefined> {
+    const result = await db.update(paymentMethods)
+      .set({
+        ...updates,
+        updatedAt: new Date(),
+      })
+      .where(eq(paymentMethods.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deletePaymentMethod(id: string): Promise<void> {
+    await db.delete(paymentMethods).where(eq(paymentMethods.id, id));
+  }
+
+  // P2P Order Operations
+  async getP2pOrder(id: string): Promise<P2pOrder | undefined> {
+    const result = await db.select().from(p2pOrders).where(eq(p2pOrders.id, id)).limit(1);
+    return result[0];
+  }
+
+  async getP2pOrdersByAgent(agentId: string): Promise<P2pOrder[]> {
+    return await db.select()
+      .from(p2pOrders)
+      .where(eq(p2pOrders.agentId, agentId))
+      .orderBy(desc(p2pOrders.createdAt));
+  }
+
+  async getP2pOrdersByUser(userId: string): Promise<P2pOrder[]> {
+    return await db.select()
+      .from(p2pOrders)
+      .where(eq(p2pOrders.userId, userId))
+      .orderBy(desc(p2pOrders.createdAt));
+  }
+
+  async getActiveP2pOrders(agentId?: string): Promise<P2pOrder[]> {
+    const conditions = [
+      inArray(p2pOrders.status, ['created', 'payment_pending', 'payment_sent', 'verifying'])
+    ];
+    
+    if (agentId) {
+      conditions.push(eq(p2pOrders.agentId, agentId));
+    }
+    
+    return await db.select()
+      .from(p2pOrders)
+      .where(and(...conditions))
+      .orderBy(desc(p2pOrders.createdAt));
+  }
+
+  async createP2pOrder(order: InsertP2pOrder): Promise<P2pOrder> {
+    const result = await db.insert(p2pOrders).values(order).returning();
+    return result[0];
+  }
+
+  async updateP2pOrder(id: string, updates: Partial<P2pOrder>): Promise<P2pOrder | undefined> {
+    const result = await db.update(p2pOrders)
+      .set({
+        ...updates,
+        updatedAt: new Date(),
+      })
+      .where(eq(p2pOrders.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async expireP2pOrders(): Promise<{ count: number; expiredOrders: P2pOrder[] }> {
+    const now = new Date();
+    const result = await db.update(p2pOrders)
+      .set({ status: 'expired' })
+      .where(and(
+        inArray(p2pOrders.status, ['created', 'payment_pending', 'payment_sent']),
+        lte(p2pOrders.expiresAt, now)
+      ))
+      .returning();
+    
+    return {
+      count: result.length,
+      expiredOrders: result,
+    };
+  }
+
+  // Order Message Operations (In-App Chat)
+  async getOrderMessages(orderId: string): Promise<OrderMessage[]> {
+    return await db.select()
+      .from(orderMessages)
+      .where(eq(orderMessages.orderId, orderId))
+      .orderBy(orderMessages.createdAt);
+  }
+
+  async createOrderMessage(message: InsertOrderMessage): Promise<OrderMessage> {
+    const result = await db.insert(orderMessages).values(message).returning();
+    return result[0];
+  }
+
+  async markMessagesAsRead(orderId: string, userId: string): Promise<void> {
+    await db.update(orderMessages)
+      .set({ isRead: true })
+      .where(and(
+        eq(orderMessages.orderId, orderId),
+        sql`${orderMessages.senderId} != ${userId}` // Mark messages from others as read
+      ));
+  }
+
+  // Payment Proof Operations
+  async getPaymentProofs(orderId: string): Promise<PaymentProof[]> {
+    return await db.select()
+      .from(paymentProofs)
+      .where(eq(paymentProofs.orderId, orderId))
+      .orderBy(desc(paymentProofs.createdAt));
+  }
+
+  async createPaymentProof(proof: InsertPaymentProof): Promise<PaymentProof> {
+    const result = await db.insert(paymentProofs).values(proof).returning();
+    return result[0];
+  }
+
+  async verifyPaymentProof(id: string, verifiedBy: string, notes?: string): Promise<PaymentProof | undefined> {
+    const result = await db.update(paymentProofs)
+      .set({
+        verifiedBy,
+        verifiedAt: new Date(),
+        verificationNotes: notes,
+      })
+      .where(eq(paymentProofs.id, id))
+      .returning();
+    return result[0];
   }
 }
 
