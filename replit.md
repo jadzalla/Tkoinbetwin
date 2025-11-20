@@ -99,10 +99,10 @@ The frontend uses React, TypeScript, Vite, Tailwind CSS, and shadcn/ui, adopting
 
 **Token Metadata (IPFS)**:
 - **Metadata PDA**: `9jxbeCfxDxwhAw79m4qx79o6VHMYmc47GU7mFX1UfcGx`
-- **Logo IPFS Hash**: `QmP3Ykv9MpE9Qcay9WHd8p1uVuUj2EA9egx87CtYFcU5Hj`
-- **Logo URI**: `https://coral-occasional-jackal-975.mypinata.cloud/ipfs/QmP3Ykv9MpE9Qcay9WHd8p1uVuUj2EA9egx87CtYFcU5Hj`
-- **Metadata JSON IPFS Hash**: `QmbAuzSBT7DxwLAydcE3GGNKEUPC2nrVcBHvq9Gkh52FiQ`
-- **Metadata JSON URI**: `https://coral-occasional-jackal-975.mypinata.cloud/ipfs/QmbAuzSBT7DxwLAydcE3GGNKEUPC2nrVcBHvq9Gkh52FiQ`
+- **Logo IPFS Hash**: `QmcFUAjXKvqyiBqdnDgBe4J2AdRCEAqqpCod781SJCcRV5` (Logo v2 - 512x512, transparent)
+- **Logo URI**: `https://coral-occasional-jackal-975.mypinata.cloud/ipfs/QmcFUAjXKvqyiBqdnDgBe4J2AdRCEAqqpCod781SJCcRV5`
+- **Metadata JSON IPFS Hash**: `QmWXqUm2mPPoVMALNvyk8hswfeR4VhbDUCbcwHARiGWNfG`
+- **Metadata JSON URI**: `https://coral-occasional-jackal-975.mypinata.cloud/ipfs/QmWXqUm2mPPoVMALNvyk8hswfeR4VhbDUCbcwHARiGWNfG`
 
 **Deployment Scripts**:
 - `solana/scripts/02-deploy-token.ts`: Deploy token with Transfer Fee Extension
