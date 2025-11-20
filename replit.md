@@ -43,6 +43,7 @@ The frontend uses React, TypeScript, Vite, Tailwind CSS, and shadcn/ui, adopting
     - **Timed Transactions**: Orders expire after 30 minutes of inactivity to prevent stale locks.
     - **Economic Model**: 0% on-chain transfer fees (protocol decision). Agent spreads (1-2%) provide margins; platform integration fees (0.25-0.5%) generate revenue.
     - **Security**: Payment methods sanitized for public viewing, accountDetails restricted to agent-owned routes.
+    - **Agent Lifecycle**: Dual-field filtering using `status` (pending → approved → suspended → revoked, compliance-controlled) AND `availabilityStatus` (offline → online → busy, agent-controlled). Marketplace shows only approved+online agents; order creation validates both fields.
 - **Burn Proposal System**: Manual approval workflow for token burns with safety features like network detection, configurable limits, cooldown periods, and multi-gate approval.
 - **Analytics Dashboards**: Comprehensive admin dashboards for staking and slashing metrics and trends.
 - **Security Hardening (Production-Ready)**:

@@ -201,7 +201,7 @@ export const isApprovedAgent: RequestHandler = async (req, res, next) => {
       return res.status(403).json({ message: "Not registered as an agent" });
     }
     
-    if (agent.status !== 'active') {
+    if (agent.status !== 'approved') {
       return res.status(403).json({ message: `Agent status is: ${agent.status}` });
     }
     

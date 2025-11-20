@@ -726,11 +726,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { country, paymentMethod, minRating } = req.query;
       
       const filters: any = {
-        status: 'active',
+        status: 'approved',
         verificationTier: undefined,
       };
       
       let agents = await storage.getAllAgents(filters);
+      
+      // Filter to only online agents
+      agents = agents.filter(a => a.availabilityStatus === 'online');
       
       // Filter by country
       if (country) {
@@ -813,10 +816,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const { agentId, orderType, tkoinAmount, fiatAmount, fiatCurrency, paymentMethodId } = validation.data;
       
-      // Validate agent exists and is active
+      // Validate agent exists and is available
       const agent = await storage.getAgent(agentId);
-      if (!agent || agent.status !== 'active') {
-        return res.status(400).json({ message: "Agent not available" });
+      if (!agent) {
+        return res.status(404).json({ message: "Agent not found" });
+      }
+      if (agent.status !== 'approved') {
+        return res.status(400).json({ message: "Agent is not approved" });
+      }
+      if (agent.availabilityStatus !== 'online') {
+        return res.status(400).json({ message: "Agent is not currently available" });
       }
       
       // Lock TKOIN in escrow (database-level inventory tracking)
