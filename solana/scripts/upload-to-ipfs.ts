@@ -16,9 +16,17 @@ async function uploadToIPFS(filePath: string): Promise<string> {
     throw new Error(`File not found: ${filePath}`);
   }
 
-  console.log('📤 Uploading to IPFS via NFT.Storage...');
+  console.log('📤 Uploading to IPFS via Pinata...');
   console.log('   File:', filePath);
   console.log('');
+
+  // Verify Pinata credentials
+  const apiKey = process.env.PINATA_API_KEY;
+  const apiSecret = process.env.PINATA_SECRET_API_KEY;
+
+  if (!apiKey || !apiSecret) {
+    throw new Error('Missing Pinata credentials. Set PINATA_API_KEY and PINATA_SECRET_API_KEY');
+  }
 
   // Read file
   const fileBuffer = fs.readFileSync(filePath);
@@ -28,81 +36,42 @@ async function uploadToIPFS(filePath: string): Promise<string> {
   const formData = new FormData();
   formData.append('file', fileBuffer, fileName);
 
-  // NFT.Storage public gateway endpoint (no API key needed for small files)
-  // Alternative: use web3.storage or Pinata
-  const response = await fetch('https://api.nft.storage/upload', {
+  // Upload to Pinata
+  const response = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${process.env.NFT_STORAGE_API_KEY || ''}`,
+      'pinata_api_key': apiKey,
+      'pinata_secret_api_key': apiSecret,
     },
     body: formData,
   });
 
   if (!response.ok) {
-    // If NFT.Storage fails, try alternative approach
-    console.log('⚠️  NFT.Storage upload failed, trying alternative...');
-    return await uploadToInfuraIPFS(filePath, fileBuffer, fileName);
+    const errorText = await response.text();
+    throw new Error(`Pinata upload failed: ${response.statusText} - ${errorText}`);
   }
 
-  const data = await response.json() as { ok: boolean; value: { cid: string } };
+  const data = await response.json() as { IpfsHash: string; PinSize: number; Timestamp: string };
   
-  if (!data.ok) {
-    throw new Error('Upload failed');
-  }
-
-  const ipfsHash = data.value.cid;
+  const ipfsHash = data.IpfsHash;
   const ipfsUrl = `ipfs://${ipfsHash}`;
-  const gatewayUrl = `https://nftstorage.link/ipfs/${ipfsHash}`;
+  const gatewayUrl = `https://gateway.pinata.cloud/ipfs/${ipfsHash}`;
 
   console.log('✅ Upload successful!');
   console.log('   IPFS Hash:', ipfsHash);
   console.log('   IPFS URL:', ipfsUrl);
   console.log('   Gateway URL:', gatewayUrl);
+  console.log('   Pin Size:', data.PinSize, 'bytes');
   console.log('');
 
   // Verify accessibility
   console.log('🔍 Verifying accessibility...');
   const verifyResponse = await fetch(gatewayUrl);
   if (verifyResponse.ok) {
-    console.log('✅ File is accessible via IPFS gateway');
+    console.log('✅ File is accessible via Pinata gateway');
   } else {
-    console.log('⚠️  File may take a few moments to propagate to gateways');
+    console.log('⚠️  File may take a few moments to propagate');
   }
-
-  return ipfsHash;
-}
-
-/**
- * Fallback: Upload to Infura IPFS (no auth required)
- */
-async function uploadToInfuraIPFS(
-  filePath: string,
-  fileBuffer: Buffer,
-  fileName: string
-): Promise<string> {
-  console.log('📤 Using Infura IPFS gateway...');
-  
-  const formData = new FormData();
-  formData.append('file', fileBuffer, fileName);
-
-  const response = await fetch('https://ipfs.infura.io:5001/api/v0/add', {
-    method: 'POST',
-    body: formData,
-  });
-
-  if (!response.ok) {
-    throw new Error(`Infura IPFS upload failed: ${response.statusText}`);
-  }
-
-  const data = await response.json() as { Hash: string };
-  const ipfsHash = data.Hash;
-  const ipfsUrl = `ipfs://${ipfsHash}`;
-  const gatewayUrl = `https://ipfs.io/ipfs/${ipfsHash}`;
-
-  console.log('✅ Upload successful!');
-  console.log('   IPFS Hash:', ipfsHash);
-  console.log('   IPFS URL:', ipfsUrl);
-  console.log('   Gateway URL:', gatewayUrl);
 
   return ipfsHash;
 }
