@@ -95,15 +95,28 @@ The frontend uses React, TypeScript, Vite, Tailwind CSS, and shadcn/ui, adopting
 ✅ No freeze authority (sovereignty positioning)  
 ✅ Initial supply minted to treasury  
 ✅ Transfer fee mechanics tested and verified  
+✅ Metaplex Token Metadata successfully added to existing token (Metadata PDA: 9jxbeCfxDxwhAw79m4qx79o6VHMYmc47GU7mFX1UfcGx) - token now displays as "Tkoin (TK)" with logo in wallets/explorers
+
+**Token Metadata (IPFS)**:
+- **Metadata PDA**: `9jxbeCfxDxwhAw79m4qx79o6VHMYmc47GU7mFX1UfcGx`
+- **Logo IPFS Hash**: `QmP3Ykv9MpE9Qcay9WHd8p1uVuUj2EA9egx87CtYFcU5Hj`
+- **Logo URI**: `ipfs://QmP3Ykv9MpE9Qcay9WHd8p1uVuUj2EA9egx87CtYFcU5Hj`
+- **Logo Gateway URL**: `https://gateway.pinata.cloud/ipfs/QmP3Ykv9MpE9Qcay9WHd8p1uVuUj2EA9egx87CtYFcU5Hj`
+- **Metadata JSON IPFS Hash**: `QmPz1rkDzUEKhqM7eXtPHDhMDFLJKSA8hRo5Gh5msqZNA8`
+- **Metadata JSON URI**: `ipfs://QmPz1rkDzUEKhqM7eXtPHDhMDFLJKSA8hRo5Gh5msqZNA8`
+- **Metadata JSON Gateway URL**: `https://gateway.pinata.cloud/ipfs/QmPz1rkDzUEKhqM7eXtPHDhMDFLJKSA8hRo5Gh5msqZNA8`
 
 **Deployment Scripts**:
 - `solana/scripts/02-deploy-token.ts`: Deploy token with Transfer Fee Extension
 - `solana/scripts/03-mint-initial-supply.ts`: Mint 1B TKOIN to treasury
 - `solana/scripts/04-test-transfer-fee.ts`: Verify 1% transfer fee mechanics
+- `solana/scripts/05-add-metaplex-metadata.ts`: Add Metaplex metadata to existing token
+- `solana/scripts/upload-to-ipfs.ts`: Upload assets to IPFS via Pinata
 
 **Solana Explorer**:
 - Token: `https://explorer.solana.com/address/9XPD1ZcAtNZgc1pGYYL3Z4W3mNqHKmqKDsUtsKKzAJE5?cluster=devnet`
 - Treasury: `https://explorer.solana.com/address/953CKYH169xXxaNKVwLT9z9s38TEg1d2pQsY7d1Lv6dD?cluster=devnet`
+- Metadata PDA: `https://explorer.solana.com/address/9jxbeCfxDxwhAw79m4qx79o6VHMYmc47GU7mFX1UfcGx?cluster=devnet`
 
 ## External Dependencies
 - **Solana Blockchain**: For Token-2022 smart contracts and blockchain operations.
