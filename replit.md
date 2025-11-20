@@ -100,17 +100,16 @@ The frontend uses React, TypeScript, Vite, Tailwind CSS, and shadcn/ui, adopting
 **Token Metadata (IPFS)**:
 - **Metadata PDA**: `9jxbeCfxDxwhAw79m4qx79o6VHMYmc47GU7mFX1UfcGx`
 - **Logo IPFS Hash**: `QmP3Ykv9MpE9Qcay9WHd8p1uVuUj2EA9egx87CtYFcU5Hj`
-- **Logo URI**: `ipfs://QmP3Ykv9MpE9Qcay9WHd8p1uVuUj2EA9egx87CtYFcU5Hj`
-- **Logo Gateway URL**: `https://gateway.pinata.cloud/ipfs/QmP3Ykv9MpE9Qcay9WHd8p1uVuUj2EA9egx87CtYFcU5Hj`
-- **Metadata JSON IPFS Hash**: `QmPz1rkDzUEKhqM7eXtPHDhMDFLJKSA8hRo5Gh5msqZNA8`
-- **Metadata JSON URI**: `ipfs://QmPz1rkDzUEKhqM7eXtPHDhMDFLJKSA8hRo5Gh5msqZNA8`
-- **Metadata JSON Gateway URL**: `https://gateway.pinata.cloud/ipfs/QmPz1rkDzUEKhqM7eXtPHDhMDFLJKSA8hRo5Gh5msqZNA8`
+- **Logo URI**: `https://coral-occasional-jackal-975.mypinata.cloud/ipfs/QmP3Ykv9MpE9Qcay9WHd8p1uVuUj2EA9egx87CtYFcU5Hj`
+- **Metadata JSON IPFS Hash**: `QmbAuzSBT7DxwLAydcE3GGNKEUPC2nrVcBHvq9Gkh52FiQ`
+- **Metadata JSON URI**: `https://coral-occasional-jackal-975.mypinata.cloud/ipfs/QmbAuzSBT7DxwLAydcE3GGNKEUPC2nrVcBHvq9Gkh52FiQ`
 
 **Deployment Scripts**:
 - `solana/scripts/02-deploy-token.ts`: Deploy token with Transfer Fee Extension
 - `solana/scripts/03-mint-initial-supply.ts`: Mint 1B TKOIN to treasury
 - `solana/scripts/04-test-transfer-fee.ts`: Verify 1% transfer fee mechanics
 - `solana/scripts/05-add-metaplex-metadata.ts`: Add Metaplex metadata to existing token
+- `solana/scripts/06-update-metadata-uri.ts`: Update metadata URI for existing token
 - `solana/scripts/upload-to-ipfs.ts`: Upload assets to IPFS via Pinata
 
 **Solana Explorer**:
