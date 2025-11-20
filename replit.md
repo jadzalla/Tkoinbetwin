@@ -34,6 +34,15 @@ The frontend uses React, TypeScript, Vite, Tailwind CSS, and shadcn/ui, adopting
 - **Hybrid Agent Registration System**: Dual-path onboarding:
     - **Permissionless Instant Registration**: For Basic Tier, requires 10,000+ TKOIN in Solana wallet (no KYC).
     - **Traditional KYC Application**: For Verified/Premium Tiers, involves admin review and approval of submitted KYC documents.
+- **P2P Marketplace (Production-Ready)**:
+    - **Atomic Escrow System**: Database-side arithmetic prevents race conditions and overselling. All operations (lock/unlock/transfer) are atomic using SQL constraints.
+    - **Order States**: created → payment_sent → verifying → completed/disputed/cancelled. Auto-expiry after 30 minutes.
+    - **Payment Methods**: Agents configure multiple methods (Bank Transfer, M-Pesa, PayPal, etc.) with min/max limits and account details.
+    - **In-App Chat**: Real-time messaging between buyers and sellers within order context.
+    - **Payment Proofs**: Users upload screenshots/receipts for payment verification.
+    - **Timed Transactions**: Orders expire after 30 minutes of inactivity to prevent stale locks.
+    - **Economic Model**: 0% on-chain transfer fees (protocol decision). Agent spreads (1-2%) provide margins; platform integration fees (0.25-0.5%) generate revenue.
+    - **Security**: Payment methods sanitized for public viewing, accountDetails restricted to agent-owned routes.
 - **Burn Proposal System**: Manual approval workflow for token burns with safety features like network detection, configurable limits, cooldown periods, and multi-gate approval.
 - **Analytics Dashboards**: Comprehensive admin dashboards for staking and slashing metrics and trends.
 - **Security Hardening (Production-Ready)**:
