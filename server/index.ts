@@ -16,11 +16,12 @@ declare module 'http' {
   }
 }
 app.use(express.json({
+  limit: '10mb', // Increased to handle base64-encoded payment proofs (2MB file → ~2.7MB base64)
   verify: (req, _res, buf) => {
     req.rawBody = buf;
   }
 }));
-app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({ extended: false, limit: '10mb' }));
 
 // Add correlation ID to all requests for distributed tracing
 import { correlationMiddleware } from './utils/logger';

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, Link, useLocation } from "wouter";
-import { ArrowLeft, AlertCircle } from "lucide-react";
+import { ArrowLeft, AlertCircle, Crown, ShieldCheck, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -22,16 +22,31 @@ export default function AgentDetail() {
   const [createOrderOpen, setCreateOrderOpen] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | null>(null);
 
-  const { data: agent, isLoading: agentLoading } = useQuery<AgentWithMethods>({
-    queryKey: ["/api/agents", agentId],
-  });
-
-  const { data: paymentMethods, isLoading: methodsLoading } = useQuery<PaymentMethod[]>({
-    queryKey: ["/api/agents", agentId, "payment-methods", "public"],
+  const { data: agent, isLoading: agentLoading, isError: agentError } = useQuery<AgentWithMethods>({
+    queryKey: [`/api/p2p/agents/${agentId}`],
     enabled: !!agentId,
   });
 
-  const isLoading = agentLoading || methodsLoading;
+  const paymentMethods = agent?.paymentMethods || [];
+  const isLoading = agentLoading;
+
+  if (!agentId) {
+    return (
+      <div className="min-h-screen bg-background p-6">
+        <div className="max-w-5xl mx-auto">
+          <Alert variant="destructive" data-testid="alert-missing-agent-id">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>Invalid agent ID</AlertDescription>
+          </Alert>
+          <Link href="/marketplace">
+            <Button variant="outline" className="mt-4" data-testid="button-back-to-marketplace">
+              Back to Marketplace
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   const getTierBadgeColor = (tier: string) => {
     switch (tier) {
@@ -43,9 +58,9 @@ export default function AgentDetail() {
 
   const getTierIcon = (tier: string) => {
     switch (tier) {
-      case "premium": return "👑";
-      case "verified": return "✓";
-      default: return "🥉";
+      case "premium": return <Crown className="h-6 w-6" />;
+      case "verified": return <ShieldCheck className="h-6 w-6" />;
+      default: return <Award className="h-6 w-6" />;
     }
   };
 
@@ -81,11 +96,29 @@ export default function AgentDetail() {
     );
   }
 
+  if (agentError) {
+    return (
+      <div className="min-h-screen bg-background p-6">
+        <div className="max-w-5xl mx-auto">
+          <Alert variant="destructive" data-testid="error-loading-agent">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>Failed to load agent information</AlertDescription>
+          </Alert>
+          <Link href="/marketplace">
+            <Button variant="outline" className="mt-4" data-testid="button-back-to-marketplace">
+              Back to Marketplace
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   if (!agent) {
     return (
       <div className="min-h-screen bg-background p-6">
         <div className="max-w-5xl mx-auto">
-          <Alert variant="destructive">
+          <Alert variant="destructive" data-testid="alert-agent-not-found">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>Agent not found</AlertDescription>
           </Alert>

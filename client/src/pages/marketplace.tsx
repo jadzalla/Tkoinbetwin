@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { Search, SlidersHorizontal, ArrowUpDown } from "lucide-react";
+import { Search, SlidersHorizontal, ArrowUpDown, Crown, ShieldCheck, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,8 +21,8 @@ export default function Marketplace() {
   const [selectedPaymentType, setSelectedPaymentType] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("rating");
 
-  const { data: agents, isLoading } = useQuery<AgentWithMethods[]>({
-    queryKey: ["/api/agents"],
+  const { data: agents, isLoading, isError, error } = useQuery<AgentWithMethods[]>({
+    queryKey: ["/api/p2p/agents"],
   });
 
   const { data: paymentMethods } = useQuery<PaymentMethod[]>({
@@ -69,9 +69,9 @@ export default function Marketplace() {
 
   const getTierIcon = (tier: string) => {
     switch (tier) {
-      case "premium": return "👑";
-      case "verified": return "✓";
-      default: return "🥉";
+      case "premium": return <Crown className="h-4 w-4" />;
+      case "verified": return <ShieldCheck className="h-4 w-4" />;
+      default: return <Award className="h-4 w-4" />;
     }
   };
 
@@ -153,6 +153,11 @@ export default function Marketplace() {
                 </CardContent>
               </Card>
             ))}
+          </div>
+        ) : isError ? (
+          <div className="text-center py-16" data-testid="error-loading-agents">
+            <p className="text-destructive text-lg mb-2">Failed to load agents</p>
+            <p className="text-sm text-muted-foreground">{error?.message || "Please try again later"}</p>
           </div>
         ) : sortedAgents.length === 0 ? (
           <div className="text-center py-16">

@@ -10,6 +10,8 @@ import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { P2pOrder, OrderMessage, Agent, PaymentMethod } from "@/../../shared/schema";
@@ -24,15 +26,23 @@ export default function OrderDetail() {
   const { toast } = useToast();
   const [message, setMessage] = useState("");
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
+  const [proofDialogOpen, setProofDialogOpen] = useState(false);
+  const [proofUrl, setProofUrl] = useState("");
+  const [proofFile, setProofFile] = useState<File | null>(null);
 
-  const { data: order, isLoading: orderLoading } = useQuery<OrderWithDetails>({
+  const { data: order, isLoading: orderLoading, isError: orderError } = useQuery<OrderWithDetails>({
     queryKey: ["/api/p2p/orders", orderId],
     refetchInterval: 5000, // Refetch every 5 seconds
   });
 
-  const { data: messages, isLoading: messagesLoading } = useQuery<OrderMessage[]>({
+  const { data: messages, isLoading: messagesLoading, isError: messagesError } = useQuery<OrderMessage[]>({
     queryKey: ["/api/p2p/orders", orderId, "messages"],
     refetchInterval: 3000, // Refetch every 3 seconds
+  });
+
+  const { data: proofs } = useQuery<any[]>({
+    queryKey: ["/api/p2p/orders", orderId, "payment-proofs"],
+    enabled: !!orderId,
   });
 
   const sendMessageMutation = useMutation({
@@ -116,6 +126,80 @@ export default function OrderDetail() {
     },
   });
 
+  const uploadProofMutation = useMutation({
+    mutationFn: async (fileUrl: string) => {
+      const response = await apiRequest("POST", `/api/p2p/orders/${orderId}/payment-proofs`, {
+        proofType: "image",
+        fileUrl,
+        fileName: proofFile?.name || "payment_proof",
+        fileSize: proofFile?.size,
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/p2p/orders", orderId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/p2p/orders", orderId, "payment-proofs"] });
+      setProofDialogOpen(false);
+      setProofUrl("");
+      setProofFile(null);
+      toast({
+        title: "Payment proof uploaded",
+        description: "The agent will review your proof",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to upload proof",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload an image file",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) { // 2MB limit
+      toast({
+        title: "File too large",
+        description: "Please upload an image smaller than 2MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setProofFile(file);
+    
+    // Convert to data URL
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setProofUrl(e.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleUploadProof = () => {
+    if (!proofUrl.trim()) {
+      toast({
+        title: "No file selected",
+        description: "Please select a proof image",
+        variant: "destructive",
+      });
+      return;
+    }
+    uploadProofMutation.mutate(proofUrl);
+  };
+
   // Calculate time remaining
   useEffect(() => {
     if (!order || order.status === "completed" || order.status === "cancelled") {
@@ -184,6 +268,24 @@ export default function OrderDetail() {
               </CardHeader>
             </Card>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (orderError) {
+    return (
+      <div className="min-h-screen bg-background p-6">
+        <div className="max-w-6xl mx-auto">
+          <Alert variant="destructive" data-testid="error-loading-order">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>Failed to load order details</AlertDescription>
+          </Alert>
+          <Link href="/orders">
+            <Button variant="outline" className="mt-4" data-testid="button-back-to-orders">
+              Back to My Orders
+            </Button>
+          </Link>
         </div>
       </div>
     );
@@ -302,6 +404,13 @@ export default function OrderDetail() {
                       <Skeleton className="h-16 w-full" />
                       <Skeleton className="h-16 w-full" />
                     </div>
+                  ) : messagesError ? (
+                    <Alert variant="destructive" data-testid="error-loading-messages">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription className="text-xs">
+                        Failed to load messages. Please refresh the page.
+                      </AlertDescription>
+                    </Alert>
                   ) : !messages || messages.length === 0 ? (
                     <p className="text-sm text-muted-foreground text-center py-8">
                       No messages yet. Start the conversation!
@@ -382,11 +491,41 @@ export default function OrderDetail() {
                   <Button 
                     className="w-full" 
                     variant="outline"
+                    onClick={() => setProofDialogOpen(true)}
                     data-testid="button-upload-proof"
                   >
-                    <Upload className="h-4 w-4 mr-2" />
+                    <Upload className="h-4 w-4" />
                     Upload Payment Proof
                   </Button>
+
+                  {/* Display uploaded proofs */}
+                  {proofs && proofs.length > 0 && (
+                    <div className="mt-3 space-y-2" data-testid="section-payment-proofs">
+                      <p className="text-sm font-medium">Uploaded Proofs ({proofs.length})</p>
+                      {proofs.map((proof: any) => (
+                        <div key={proof.id} className="border rounded-lg p-2" data-testid={`proof-${proof.id}`}>
+                          <div className="flex items-start gap-2">
+                            <img 
+                              src={proof.fileUrl} 
+                              alt="Payment proof" 
+                              className="w-16 h-16 object-cover rounded"
+                            />
+                            <div className="flex-1 min-w-0 text-xs">
+                              <p className="font-medium truncate">{proof.fileName}</p>
+                              <p className="text-muted-foreground">
+                                {new Date(proof.createdAt).toLocaleString()}
+                              </p>
+                              {proof.verifiedAt && (
+                                <Badge variant="outline" className="mt-1 text-xs bg-green-500/10 text-green-600">
+                                  Verified
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </>
               )}
 
@@ -421,6 +560,55 @@ export default function OrderDetail() {
           </Card>
         </div>
       </div>
+
+      {/* Payment Proof Upload Dialog */}
+      <Dialog open={proofDialogOpen} onOpenChange={setProofDialogOpen}>
+        <DialogContent data-testid="dialog-upload-proof">
+          <DialogHeader>
+            <DialogTitle>Upload Payment Proof</DialogTitle>
+            <DialogDescription>
+              Provide a link to your payment proof (screenshot, receipt, etc.)
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="proof-file">Payment Proof (Image)</Label>
+              <Input
+                id="proof-file"
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                data-testid="input-proof-file"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Upload a screenshot or photo of your payment (max 2MB)
+              </p>
+            </div>
+            {proofFile && (
+              <div className="text-sm">
+                <p className="font-medium">Selected file:</p>
+                <p className="text-muted-foreground">{proofFile.name} ({(proofFile.size / 1024).toFixed(1)} KB)</p>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setProofDialogOpen(false)}
+              data-testid="button-cancel-upload"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleUploadProof}
+              disabled={uploadProofMutation.isPending || !proofFile}
+              data-testid="button-submit-proof"
+            >
+              {uploadProofMutation.isPending ? "Uploading..." : "Upload Proof"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -755,10 +755,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
         agents = agents.filter(a => agentsWithMethod.has(a.id));
       }
       
-      res.json(agents);
+      // Fetch payment methods for each agent
+      const agentsWithMethods = await Promise.all(
+        agents.map(async (agent) => {
+          const paymentMethods = await storage.getActivePaymentMethodsByAgent(agent.id);
+          return {
+            ...agent,
+            paymentMethods,
+          };
+        })
+      );
+      
+      res.json(agentsWithMethods);
     } catch (error) {
       console.error("Error fetching marketplace agents:", error);
       res.status(500).json({ message: "Failed to fetch agents" });
+    }
+  });
+  
+  // Get single agent with payment methods (public)
+  app.get('/api/p2p/agents/:id', async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      
+      const agent = await storage.getAgent(id);
+      if (!agent) {
+        return res.status(404).json({ message: "Agent not found" });
+      }
+      
+      const paymentMethods = await storage.getActivePaymentMethodsByAgent(agent.id);
+      
+      res.json({
+        ...agent,
+        paymentMethods,
+      });
+    } catch (error) {
+      console.error("Error fetching agent details:", error);
+      res.status(500).json({ message: "Failed to fetch agent" });
     }
   });
   
@@ -1062,8 +1095,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updated = await storage.updateP2pOrder(id, {
         status: 'cancelled',
         tkoinLocked: false,
-        cancelledAt: new Date(),
-        cancelReason: reason || null,
       });
       
       console.log(`[P2P] Order ${id} cancelled - TKOIN unlocked`);
