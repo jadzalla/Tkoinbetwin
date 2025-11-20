@@ -5,8 +5,9 @@
  * This script deploys the Tkoin token on Solana with:
  * - Token-2022 standard (latest SPL token implementation)
  * - Transfer fee extension (1% burn on deposits - configurable via system config)
- * - 100,000,000 max supply
- * - 8 decimal places
+ * - 1,000,000,000 max supply (1 billion tokens)
+ * - 9 decimal places (Solana standard)
+ * - No freeze authority (maintains sovereignty)
  * 
  * Prerequisites:
  * - Treasury wallet generated (run 01-generate-treasury-wallet.ts)
@@ -23,11 +24,11 @@ import fs from 'fs';
 // Token configuration
 const TOKEN_CONFIG = {
   name: 'Tkoin',
-  symbol: 'TKOIN',
-  decimals: 8,
-  maxSupply: 100_000_000, // 100 million
+  symbol: 'TK',
+  decimals: 9,
+  maxSupply: 1_000_000_000, // 1 billion
   transferFeeBasisPoints: 100, // 1% = 100 basis points (configurable via system_config)
-  maxTransferFee: BigInt(1_000_000 * 10 ** 8), // 1M TKOIN max fee
+  maxTransferFee: BigInt(1_000_000 * 10 ** 9), // 1M TKOIN max fee
 };
 
 async function main() {
