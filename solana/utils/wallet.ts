@@ -52,3 +52,39 @@ export function ensureWalletDirectory(): string {
   }
   return walletDir;
 }
+
+/**
+ * Load keypair from environment variable
+ * Expects SOLANA_TREASURY_PRIVATE_KEY to be a JSON array of numbers
+ */
+export function loadKeypairFromEnv(envVarName: string = 'SOLANA_TREASURY_PRIVATE_KEY'): Keypair {
+  const secretKeyString = process.env[envVarName];
+  if (!secretKeyString) {
+    throw new Error(`Environment variable ${envVarName} not found`);
+  }
+  
+  // Clean up the string - remove extra quotes and trim
+  let cleanedString = secretKeyString.trim();
+  
+  // If the string starts and ends with quotes, remove them
+  if ((cleanedString.startsWith('"') && cleanedString.endsWith('"')) ||
+      (cleanedString.startsWith("'") && cleanedString.endsWith("'"))) {
+    cleanedString = cleanedString.slice(1, -1);
+  }
+  
+  try {
+    // If the string doesn't start with [, add brackets (for comma-separated format)
+    if (!cleanedString.startsWith('[')) {
+      cleanedString = `[${cleanedString}]`;
+    }
+    
+    const secretKeyArray = JSON.parse(cleanedString);
+    return Keypair.fromSecretKey(Uint8Array.from(secretKeyArray));
+  } catch (error) {
+    console.error('Failed to parse private key from environment variable');
+    console.error('String length:', cleanedString.length);
+    console.error('First 50 chars:', cleanedString.substring(0, 50));
+    console.error('Last 50 chars:', cleanedString.substring(cleanedString.length - 50));
+    throw new Error(`Invalid private key format in ${envVarName}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}

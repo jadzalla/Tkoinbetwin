@@ -111,9 +111,9 @@ export async function getOrCreateTokenAccount(
     payer,
     mint,
     owner,
-    allowOwnerOffCurve,
-    'confirmed',
-    TOKEN_2022_PROGRAM_ID
+    { commitment: 'confirmed' },
+    TOKEN_2022_PROGRAM_ID,
+    allowOwnerOffCurve
   );
 
   console.log('✅ Token account created/retrieved:', tokenAccount.toBase58());

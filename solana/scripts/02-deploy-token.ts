@@ -17,7 +17,7 @@
 
 import { Connection, Keypair, clusterApiUrl } from '@solana/web3.js';
 import { createTokenWithTransferFee, airdropSol } from '../utils/token';
-import { loadKeypairFromFile } from '../utils/wallet';
+import { loadKeypairFromFile, loadKeypairFromEnv } from '../utils/wallet';
 import path from 'path';
 import fs from 'fs';
 
@@ -41,16 +41,24 @@ async function main() {
   console.log('🔗 Network:', rpcUrl);
   console.log('');
 
-  // Load treasury wallet
-  const walletPath = path.join(process.cwd(), 'solana', 'wallets', 'treasury-wallet.json');
+  // Load treasury wallet from environment or file
+  let treasuryWallet: Keypair;
   
-  if (!fs.existsSync(walletPath)) {
-    console.error('❌ Treasury wallet not found!');
-    console.error('   Run: npm run generate:wallet');
-    process.exit(1);
+  if (process.env.SOLANA_TREASURY_PRIVATE_KEY) {
+    console.log('🔑 Loading treasury wallet from environment...');
+    treasuryWallet = loadKeypairFromEnv('SOLANA_TREASURY_PRIVATE_KEY');
+  } else {
+    const walletPath = path.join(process.cwd(), 'solana', 'wallets', 'treasury-wallet.json');
+    
+    if (!fs.existsSync(walletPath)) {
+      console.error('❌ Treasury wallet not found!');
+      console.error('   Set SOLANA_TREASURY_PRIVATE_KEY environment variable');
+      console.error('   OR run: npm run generate:wallet');
+      process.exit(1);
+    }
+    
+    treasuryWallet = loadKeypairFromFile(walletPath);
   }
-
-  const treasuryWallet = loadKeypairFromFile(walletPath);
   console.log('💼 Treasury Wallet:', treasuryWallet.publicKey.toBase58());
 
   // Check balance
@@ -94,7 +102,10 @@ async function main() {
     treasuryWallet: treasuryWallet.publicKey.toBase58(),
     network: rpcUrl,
     deployedAt: new Date().toISOString(),
-    config: TOKEN_CONFIG,
+    config: {
+      ...TOKEN_CONFIG,
+      maxTransferFee: TOKEN_CONFIG.maxTransferFee.toString(), // Convert BigInt to string
+    },
   };
 
   const deploymentPath = path.join(process.cwd(), 'solana', 'deployment.json');
