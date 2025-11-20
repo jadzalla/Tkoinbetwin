@@ -27,8 +27,8 @@ import { loadKeypairFromEnv } from '../utils/wallet';
 import path from 'path';
 import fs from 'fs';
 
-// New metadata URI (with logo v2)
-const NEW_METADATA_URI = 'https://coral-occasional-jackal-975.mypinata.cloud/ipfs/QmWXqUm2mPPoVMALNvyk8hswfeR4VhbDUCbcwHARiGWNfG';
+// New metadata URI (with optimized centered logo)
+const NEW_METADATA_URI = 'https://coral-occasional-jackal-975.mypinata.cloud/ipfs/QmfJUZVJ8x1hCHHiVHPvBXopMJNmRfEQHD4iTnMt21L4Ae';
 
 async function main() {
   console.log('🔄 Updating Metaplex Metadata URI...');
