@@ -18,6 +18,10 @@ import StakingAnalytics from "@/pages/admin/analytics/staking";
 import SlashingAnalytics from "@/pages/admin/analytics/slashing";
 import BurnConfig from "@/pages/admin/burn/config";
 import BurnProposals from "@/pages/admin/burn/proposals";
+import Marketplace from "@/pages/marketplace";
+import AgentDetail from "@/pages/agent-detail";
+import Orders from "@/pages/orders";
+import OrderDetail from "@/pages/order-detail";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -29,6 +33,12 @@ function Router() {
       <Route path="/dashboard/:rest+" component={Dashboard} />
       <Route path="/apply" component={Apply} />
       <Route path="/register-agent" component={RegisterAgent} />
+      {/* P2P Marketplace routes */}
+      <Route path="/marketplace" component={Marketplace} />
+      <Route path="/marketplace/agent/:agentId" component={AgentDetail} />
+      <Route path="/orders" component={Orders} />
+      <Route path="/orders/:orderId" component={OrderDetail} />
+      {/* Admin routes */}
       <Route path="/admin/platforms" component={AdminPlatforms} />
       <Route path="/admin/currencies" component={AdminCurrencies} />
       <Route path="/admin/tier-limits" component={AdminTierLimits} />

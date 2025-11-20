@@ -145,6 +145,22 @@
 - "Contact Agent" button
 - Hover: hover-elevate (subtle elevation without scaling)
 
+**P2P Order Cards** (User/Agent Dashboards):
+- Order ID and status badge (created/payment_sent/verifying/completed/cancelled)
+- TKOIN amount (large, JetBrains Mono) and fiat equivalent
+- Agent/User info with avatar
+- Payment method icon and name
+- Countdown timer (30 min) with warning when <5 min
+- Action buttons based on status and role
+- Hover: hover-elevate
+
+**Order Status Tracker** (Order Detail Page):
+- Horizontal stepper showing: Created → Payment Sent → Verifying → Completed
+- Each step with icon, label, and timestamp
+- Current step highlighted in purple
+- Completed steps in green
+- Future steps in gray
+
 **Transaction Tables**:
 - Columns: Date, Type, Amount, Rate, Cost, Profit, Margin %
 - Profit column in green/red with +/- prefix
