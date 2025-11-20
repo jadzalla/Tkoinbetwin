@@ -61,12 +61,16 @@ async function upsertUser(
     throw new Error("User claims missing required 'sub' field");
   }
   
+  // Map OIDC role claim to database role (default to 'user')
+  const role = claims["role"] === "admin" ? "admin" : claims["role"] === "agent" ? "agent" : "user";
+  
   await storage.upsertUser({
     id: claims["sub"],
     email: claims["email"] || null,
     firstName: claims["first_name"] || null,
     lastName: claims["last_name"] || null,
     profileImageUrl: claims["profile_image_url"] || null,
+    role,
   });
 }
 

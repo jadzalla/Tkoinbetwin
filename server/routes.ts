@@ -568,7 +568,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Get active payment methods for an agent (public - sanitized, no sensitive data)
-  app.get('/api/agents/:agentId/payment-methods', async (req: any, res) => {
+  app.get('/api/agents/:agentId/payment-methods/public', async (req: any, res) => {
     try {
       const { agentId } = req.params;
       const methods = await storage.getActivePaymentMethodsByAgent(agentId);
@@ -588,6 +588,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching agent payment methods:", error);
       res.status(500).json({ message: "Failed to fetch payment methods" });
+    }
+  });
+
+  // Get all payment methods for an agent (authenticated - full details)
+  app.get('/api/agents/:agentId/payment-methods', isAuthenticated, async (req: any, res) => {
+    try {
+      const { agentId } = req.params;
+      const methods = await storage.getPaymentMethodsByAgent(agentId);
+      res.json(methods);
+    } catch (error) {
+      console.error("Error fetching agent payment methods:", error);
+      res.status(500).json({ message: "Failed to fetch payment methods" });
+    }
+  });
+
+  // Create payment method for specific agent (Admin only - for testing)
+  app.post('/api/agents/:agentId/payment-methods', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { agentId } = req.params;
+      
+      // Validate request body
+      const { createPaymentMethodSchema } = await import('../shared/p2p-schemas');
+      const validation = createPaymentMethodSchema.safeParse(req.body);
+      
+      if (!validation.success) {
+        return res.status(400).json({ 
+          message: "Invalid request data",
+          errors: validation.error.errors 
+        });
+      }
+      
+      const data = validation.data;
+      
+      const method = await storage.createPaymentMethod({
+        agentId,
+        ...data,
+        isActive: true,
+      });
+      
+      console.log(`[Admin] Created payment method ${method.id} for agent ${agentId}`);
+      
+      res.status(201).json(method);
+    } catch (error) {
+      console.error("Error creating payment method:", error);
+      res.status(500).json({ message: "Failed to create payment method" });
     }
   });
   
@@ -742,7 +787,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Lock TKOIN in escrow (database-level inventory tracking)
-      const { EscrowService } = await import('../services/escrow-service');
+      const { EscrowService } = await import('./services/escrow-service');
       const escrowService = new EscrowService(storage);
       
       const lockResult = await escrowService.lockTkoin(agentId, tkoinAmount);
@@ -902,7 +947,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Transfer TKOIN from agent to user (unlocks and deducts from agent balance)
-      const { EscrowService } = await import('../services/escrow-service');
+      const { EscrowService } = await import('./services/escrow-service');
       const escrowService = new EscrowService(storage);
       
       const transferResult = await escrowService.transferTkoin(
@@ -930,11 +975,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Complete order (simplified for testing - transfers TKOIN and marks as completed)
+  app.patch('/api/p2p/orders/:id/complete', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      
+      const order = await storage.getP2pOrder(id);
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+      
+      // Verify TKOIN is locked
+      if (!order.tkoinLocked) {
+        return res.status(400).json({ message: "TKOIN not locked for this order" });
+      }
+      
+      // Transfer TKOIN from agent to user (unlocks and deducts from agent balance)
+      const { EscrowService } = await import('./services/escrow-service');
+      const escrowService = new EscrowService(storage);
+      
+      const transferResult = await escrowService.transferTkoin(
+        order.agentId,
+        order.userId,
+        order.tkoinAmount
+      );
+      
+      if (!transferResult.success) {
+        return res.status(500).json({
+          message: transferResult.error || "Failed to transfer TKOIN"
+        });
+      }
+      
+      // Update order status to completed and mark TKOIN as no longer locked
+      const updated = await storage.updateP2pOrder(id, {
+        status: 'completed',
+        tkoinLocked: false,
+        completedAt: new Date(),
+      });
+      
+      console.log(`[P2P] Order ${id} completed - TKOIN transferred from agent to user`);
+      
+      res.json(updated);
+    } catch (error) {
+      console.error("Error completing order:", error);
+      res.status(500).json({ message: "Failed to complete order" });
+    }
+  });
+  
   // Cancel order
-  app.post('/api/p2p/orders/:id/cancel', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/p2p/orders/:id/cancel', isAuthenticated, async (req: any, res) => {
     try {
       const { id } = req.params;
       const userId = req.user.claims.sub;
+      const { reason } = req.body;
       
       const order = await storage.getP2pOrder(id);
       if (!order) {
@@ -956,7 +1049,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Unlock TKOIN if it was locked
       if (order.tkoinLocked) {
-        const { EscrowService } = await import('../services/escrow-service');
+        const { EscrowService } = await import('./services/escrow-service');
         const escrowService = new EscrowService(storage);
         
         const unlockResult = await escrowService.unlockTkoin(order.agentId, order.tkoinAmount);
@@ -965,10 +1058,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Update order status to cancelled
+      // Update order status to cancelled and mark TKOIN as no longer locked
       const updated = await storage.updateP2pOrder(id, {
         status: 'cancelled',
+        tkoinLocked: false,
+        cancelledAt: new Date(),
+        cancelReason: reason || null,
       });
+      
+      console.log(`[P2P] Order ${id} cancelled - TKOIN unlocked`);
       
       res.json(updated);
     } catch (error) {
@@ -1648,6 +1746,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching stats:", error);
       res.status(500).json({ message: "Failed to fetch statistics" });
+    }
+  });
+
+  // Create agent (Admin only - for testing and manual agent creation)
+  app.post('/api/agents', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { 
+        replitUserId,
+        email,
+        username,
+        tkoinBalance = '0',
+        solanaWallet = 'ADMIN_CREATED',
+        verificationTier = 'basic',
+        displayName,
+        bio
+      } = req.body;
+
+      // Validate required fields
+      if (!replitUserId || !email || !username) {
+        return res.status(400).json({ 
+          message: "Missing required fields: replitUserId, email, username" 
+        });
+      }
+
+      // Check if agent already exists for this user
+      const existingAgent = await storage.getAgentByReplitUserId(replitUserId);
+      if (existingAgent) {
+        return res.status(409).json({ 
+          message: "Agent already exists for this user" 
+        });
+      }
+
+      // Create agent (without auto-managed fields)
+      const createdAgent = await storage.createAgent({
+        replitUserId,
+        email,
+        username,
+        lockedBalance: '0',
+        solanaWallet,
+        verificationTier,
+        displayName: displayName || username,
+        bio: bio || null,
+        status: 'active',
+        availabilityStatus: 'online',
+        commissionTier: 'bronze',
+      });
+
+      // Update agent balance if specified (admin override)
+      if (tkoinBalance && tkoinBalance !== '0') {
+        await storage.updateAgentBalance(createdAgent.id, tkoinBalance);
+      }
+
+      // Fetch final agent state
+      const agent = await storage.getAgent(createdAgent.id);
+
+      console.log(`[Admin] Created agent ${agent!.id} with ${tkoinBalance} TKOIN balance`);
+
+      res.status(201).json(agent);
+    } catch (error) {
+      console.error("Error creating agent:", error);
+      res.status(500).json({ message: "Failed to create agent" });
     }
   });
   
