@@ -210,6 +210,12 @@ export interface IStorage {
   getPaymentProofs(orderId: string): Promise<PaymentProof[]>;
   createPaymentProof(proof: InsertPaymentProof): Promise<PaymentProof>;
   verifyPaymentProof(id: string, verifiedBy: string, notes?: string): Promise<PaymentProof | undefined>;
+  
+  // User Settlement Operations (BetWin Integration)
+  createUserSettlement(settlement: InsertUserSettlement): Promise<UserSettlement>;
+  getUserSettlements(userId: string, platformId?: string): Promise<UserSettlement[]>;
+  getUserSettlementBalance(userId: string, platformId: string): Promise<string>;
+  updateUserSettlement(id: string, updates: Partial<UserSettlement>): Promise<UserSettlement | undefined>;
 }
 
 // PostgreSQL Implementation
@@ -1201,6 +1207,45 @@ export class PostgresStorage implements IStorage {
         verificationNotes: notes,
       })
       .where(eq(paymentProofs.id, id))
+      .returning();
+    return result[0];
+  }
+  
+  // User Settlement Operations (BetWin Integration)
+  async createUserSettlement(settlement: InsertUserSettlement): Promise<UserSettlement> {
+    const result = await db.insert(userSettlements).values(settlement).returning();
+    return result[0];
+  }
+
+  async getUserSettlements(userId: string, platformId?: string): Promise<UserSettlement[]> {
+    let query = db.select().from(userSettlements).where(eq(userSettlements.userId, userId));
+    if (platformId) {
+      query = query.where(and(
+        eq(userSettlements.userId, userId),
+        eq(userSettlements.platformId, platformId)
+      ));
+    }
+    return query.orderBy(desc(userSettlements.createdAt));
+  }
+
+  async getUserSettlementBalance(userId: string, platformId: string): Promise<string> {
+    const result = await db.select({
+      total: sql<string>`COALESCE(SUM(${userSettlements.tkoinAmount}), '0')`.mapWith(String)
+    })
+    .from(userSettlements)
+    .where(and(
+      eq(userSettlements.userId, userId),
+      eq(userSettlements.platformId, platformId),
+      eq(userSettlements.type, 'deposit'),
+      eq(userSettlements.status, 'completed')
+    ));
+    return result[0]?.total || '0';
+  }
+
+  async updateUserSettlement(id: string, updates: Partial<UserSettlement>): Promise<UserSettlement | undefined> {
+    const result = await db.update(userSettlements)
+      .set(updates)
+      .where(eq(userSettlements.id, id))
       .returning();
     return result[0];
   }
