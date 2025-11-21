@@ -1,0 +1,68 @@
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+/lang/fr.json:1   Failed to load resource: the server responded with a status of 404 ()
+login:1  Uncaught (in promise) Y
+inpage.js:1  StreamMiddleware - Unknown response id "744001161"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "744001161"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "744001161"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "744001162"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "744001162"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "744001162"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "3361390803"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "3361390803"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "3361390803"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "3361390804"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "3361390804"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "3361390804"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "744001163"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "744001163"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "744001163"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "3361390805"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "3361390805"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "3361390805"
+(anonymous) @ inpage.js:1
+(index):1 [Intervention] Slow network is detected. See https://www.chromestatus.com/feature/5636954674692096 for more details. Fallback font will be used while loading: https://betwin.tkoin.finance/fonts/vendor/materialdesignicons-webfont.woff2
+[NEW] Explain Console errors by using Copilot in Edge: click
+         
+         to explain an error. 
+        Learn more
+        Don't show again
