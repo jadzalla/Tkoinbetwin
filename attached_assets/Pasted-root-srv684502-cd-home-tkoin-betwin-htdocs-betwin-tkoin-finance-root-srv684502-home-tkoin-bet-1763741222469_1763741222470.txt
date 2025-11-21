@@ -1,0 +1,71 @@
+root@srv684502:~# cd /home/tkoin-betwin/htdocs/betwin.tkoin.finance/
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# # Check the frontend framework
+head -50 /home/tkoin-betwin/htdocs/betwin.tkoin.finance/package.json | grep -E "vue|react|angular|laravel"
+
+# Check the directory structure
+ls -la /home/tkoin-betwin/htdocs/betwin.tkoin.finance/resources/
+
+# Find existing Vue/React components
+find /home/tkoin-betwin/htdocs/betwin.tkoin.finance/resources -name "*.vue" -o -name "*.jsx" -o -name "*.tsx" | head -10
+
+# Check for Blade templates (if Laravel-based)
+find /home/tkoin-betwin/htdocs/betwin.tkoin.finance/resources/views -name "*.blade.php" | head -10
+
+# Check app structure
+ls -la /home/tkoin-betwin/htdocs/betwin.tkoin.finance/app/
+
+# Look for account/dashboard pages
+find /home/tkoin-betwin/htdocs/betwin.tkoin.finance -path "*/account*" -o -path "*/dashboard*" | head -20
+total 16
+drwxrwx---  4 tkoin-betwin tkoin-betwin 4096 Nov  9 10:00 .
+drwxrwx--- 15 tkoin-betwin tkoin-betwin 4096 Nov 21 15:32 ..
+drwxrwx---  3 tkoin-betwin tkoin-betwin 4096 Nov  8 12:04 lang
+drwxrwx---  4 tkoin-betwin tkoin-betwin 4096 Nov  9 10:00 views
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/resources/views/index.blade.php
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/resources/views/emails/welcome.blade.php
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/resources/views/emails/message.blade.php
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/resources/views/vendor/mail/text/layout.blade.php
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/resources/views/vendor/mail/text/header.blade.php
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/resources/views/vendor/mail/text/subcopy.blade.php
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/resources/views/vendor/mail/text/message.blade.php
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/resources/views/vendor/mail/text/footer.blade.php
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/resources/views/vendor/mail/text/table.blade.php
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/resources/views/vendor/mail/text/button.blade.php
+total 68
+drwxrwx--- 17 tkoin-betwin tkoin-betwin 4096 Nov  9 10:00 .
+drwxrwx--- 15 tkoin-betwin tkoin-betwin 4096 Nov 21 15:32 ..
+drwxrwx---  2 tkoin-betwin tkoin-betwin 4096 Nov  9 10:00 Casts
+drwxrwx---  3 tkoin-betwin tkoin-betwin 4096 Nov  8 12:04 Console
+drwxrwx---  2 tkoin-betwin tkoin-betwin 4096 Nov  9 15:30 Events
+drwxrwx---  2 tkoin-betwin tkoin-betwin 4096 Nov  9 10:00 Exceptions
+drwxrwx---  2 tkoin-betwin tkoin-betwin 4096 Nov  9 10:00 Facades
+drwxrwx---  6 tkoin-betwin tkoin-betwin 4096 Nov  9 10:00 Helpers
+drwxrwx---  5 tkoin-betwin tkoin-betwin 4096 Nov  9 10:00 Http
+drwxrwx---  2 tkoin-betwin tkoin-betwin 4096 Nov  9 10:00 Listeners
+drwxrwx---  2 tkoin-betwin tkoin-betwin 4096 Nov  9 10:00 Mail
+drwxrwx---  3 tkoin-betwin tkoin-betwin 4096 Nov 21 15:43 Models
+drwxrwx---  3 tkoin-betwin tkoin-betwin 4096 Nov  9 10:00 Notifications
+drwxrwx---  2 tkoin-betwin tkoin-betwin 4096 Nov  9 10:00 Providers
+drwxrwx---  2 tkoin-betwin tkoin-betwin 4096 Nov 21 12:25 Repositories
+drwxrwx---  2 tkoin-betwin tkoin-betwin 4096 Nov  9 10:00 Rules
+drwxrwx---  5 tkoin-betwin tkoin-betwin 4096 Nov 21 12:26 Services
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/vendor/attestto/solana-php-sdk/build/html-coverage/dashboard.html
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/vendor/attestto/solana-php-sdk/build/html-coverage/Instructions/dashboard.html
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/vendor/attestto/solana-php-sdk/build/html-coverage/Borsh/dashboard.html
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/vendor/attestto/solana-php-sdk/build/html-coverage/Interfaces/dashboard.html
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/vendor/attestto/solana-php-sdk/build/html-coverage/Exceptions/dashboard.html
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/vendor/attestto/solana-php-sdk/build/html-coverage/Accounts/dashboard.html
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/vendor/attestto/solana-php-sdk/build/html-coverage/Accounts/Did/dashboard.html
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/vendor/attestto/solana-php-sdk/build/html-coverage/Accounts/Sns/dashboard.html
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/vendor/attestto/solana-php-sdk/build/html-coverage/Util/dashboard.html
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/vendor/attestto/solana-php-sdk/build/html-coverage/State/dashboard.html
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/vendor/attestto/solana-php-sdk/build/html-coverage/Programs/dashboard.html
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/vendor/attestto/solana-php-sdk/build/html-coverage/Programs/SplToken/dashboard.html
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/vendor/attestto/solana-php-sdk/build/html-coverage/Programs/SplToken/Instructions/dashboard.html
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/vendor/attestto/solana-php-sdk/build/html-coverage/Programs/SplToken/Actions/dashboard.html
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/vendor/attestto/solana-php-sdk/build/html-coverage/Programs/SNS/dashboard.html
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/vendor/attestto/solana-php-sdk/build/html-coverage/Programs/SNS/Deprecated/dashboard.html
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/vendor/attestto/solana-php-sdk/build/html-coverage/Programs/SNS/Nft/dashboard.html
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/vendor/phpunit/php-code-coverage/src/Report/Html/Renderer/Template/dashboard_branch.html.dist
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/vendor/phpunit/php-code-coverage/src/Report/Html/Renderer/Template/dashboard.html.dist
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# 
