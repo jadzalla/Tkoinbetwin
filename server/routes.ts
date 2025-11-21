@@ -198,6 +198,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Authentication Routes
   // ========================================
   
+  // Development only: Bootstrap admin access for current logged-in user
+  // This allows the first user to grant themselves admin access
+  // In production, initial admin should be set via database or environment
+  if (process.env.NODE_ENV !== 'production') {
+    app.post('/api/dev/bootstrap-admin', isAuthenticated, async (req: any, res) => {
+      try {
+        const userId = req.user.claims.sub;
+        logger.info('Bootstrap admin requested', { userId });
+        
+        await storage.updateUserRole(userId, 'admin');
+        logger.info('User role updated to admin', { userId });
+        
+        res.json({ 
+          message: "Admin access granted",
+          userId,
+          role: 'admin'
+        });
+      } catch (error) {
+        logger.error('Failed to bootstrap admin', error);
+        res.status(500).json({ message: "Failed to grant admin access" });
+      }
+    });
+  }
+  
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;

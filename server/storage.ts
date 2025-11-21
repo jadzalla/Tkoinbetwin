@@ -74,6 +74,7 @@ export interface IStorage {
   // User Operations (Required for Replit Auth)
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
+  updateUserRole(userId: string, role: 'user' | 'agent' | 'admin'): Promise<void>;
   
   // Agent Operations
   getAgent(id: string): Promise<Agent | undefined>;
@@ -235,6 +236,13 @@ export class PostgresStorage implements IStorage {
       })
       .returning();
     return result[0];
+  }
+
+  async updateUserRole(userId: string, role: 'user' | 'agent' | 'admin'): Promise<void> {
+    await db
+      .update(users)
+      .set({ role, updatedAt: new Date() })
+      .where(eq(users.id, userId));
   }
 
   // Agent Operations
