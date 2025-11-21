@@ -1,0 +1,68 @@
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance/public# # Step 4: Clear all caches
+cd /home/tkoin-betwin/htdocs/betwin.tkoin.finance && php artisan view:clear && php artisan config:clear && php artisan cache:clear && php artisan route:clear
+
+   INFO  Compiled views cleared successfully.  
+
+
+   INFO  Configuration cache cleared successfully.  
+
+
+   INFO  Application cache cleared successfully.  
+
+
+   INFO  Route cache cleared successfully.  
+
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# # Step 5: Test the wallet page
+curl -s https://betwin.tkoin.finance/user/tkoin-wallet 2>&1 | grep -o "Tkoin Wallet\|Error\|Balance" | head -1
+Tkoin Wallet
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# # Check if our route is in the file
+grep -n "tkoin-wallet" /home/tkoin-betwin/htdocs/betwin.tkoin.finance/routes/web.php
+34:Route::get('/user/tkoin-wallet', function() {
+35:    return view('user.tkoin-wallet');
+39:Route::get('/user/tkoin-wallet', function () {
+40:    return view('user.tkoin-wallet');
+41:})->middleware('auth')->name('user.tkoin-wallet');
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# # Show the LAST 50 lines of routes/web.php to see if it's there
+tail -50 /home/tkoin-betwin/htdocs/betwin.tkoin.finance/routes/web.php
+<?php
+/**
+ *   1Stake iGaming Platform
+ *   -----------------------
+ *   web.php
+ * 
+ *   @copyright  Copyright (c) 1stake, All rights reserved
+ *   @author     1stake <sales@1stake.app>
+ *   @see        https://1stake.app
+*/
+
+
+
+use App\Http\Controllers\Auth\VerificationController;
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\PageController;
+
+Route::get('manifest.json', [PageController::class, 'makeManifestFile']);
+
+
+Route::get('email/verify/{id}/{hash}', [VerificationController::class, 'verify'])
+    ->name('verification.verify')
+    ->middleware(['auth:sanctum', 'signed', 'throttle:6,1']);
+
+
+
+Route::get('login', [PageController::class, 'index'])->middleware('referrer')->name('login');
+
+Route::get('{path}', [PageController::class, 'index'])->where('path', '.*')->middleware('referrer');
+
+
+
+// Tkoin Wallet
+Route::get('/user/tkoin-wallet', function() {
+    return view('user.tkoin-wallet');
+})->middleware(['auth'])->name('user.tkoin');
+
+// Tkoin Wallet Route
+Route::get('/user/tkoin-wallet', function () {
+    return view('user.tkoin-wallet');
+})->middleware('auth')->name('user.tkoin-wallet');
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# 
