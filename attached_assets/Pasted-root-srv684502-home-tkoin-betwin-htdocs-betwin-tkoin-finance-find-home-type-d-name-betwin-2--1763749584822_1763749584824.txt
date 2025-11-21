@@ -1,0 +1,26 @@
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# find /home -type d -name "betwin*" 2>/dev/null | grep -E "(laravel|htdocs|public_html)" | head -5^C
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# # Step 1: Create the wallet Blade view file 
+cat > /home/tkoin-betwin/htdocs/betwin.tkoin.finance/resources/views/user/tkoin-wallet.blade.php << 'EOFVIEW'
+@extends('layouts.app')
+@section('content')
+<div class="container" style="max-width: 600px; margin: 40px auto;">  <div style="background: white; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); overflow: hidden;">
+    @include('components.tkoin-wallet')
+  </div>
+</div>
+@endsection
+EOFVIEW
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# # Step 2: Verify the Blade component exists 
+ls -la /home/tkoin-betwin/htdocs/betwin.tkoin.finance/resources/views/components/tkoin-wallet.blade.php
+-rw-rw-r-- 1 tkoin-betwin tkoin-betwin 8247 Nov 21 17:26 /home/tkoin-betwin/htdocs/betwin.tkoin.finance/resources/views/components/tkoin-wallet.blade.php
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# # Step 3: Verify the JavaScript file exists 
+ls -la /home/tkoin-betwin/htdocs/betwin.tkoin.finance/public/js/tkoin-wallet.js
+-rw-rw-r-- 1 root root 5165 Nov 21 17:12 /home/tkoin-betwin/htdocs/betwin.tkoin.finance/public/js/tkoin-wallet.js
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# # Step 4: Add the route to routes/web.php (find the correct routes file first)
+find /home/tkoin-betwin/htdocs/betwin.tkoin.finance -name "web.php" -o -name "routes.php" | grep -i route
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/packages/installer/routes/web.php
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/routes/web.php
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# # Step 5: Once you have the routes file path, add this at the end (before the last closing brace)
+# Replace /path/to/routes with the actual path from Step 4
+tail -20 /path/to/routes/web.php
+tail: cannot open '/path/to/routes/web.php' for reading: No such file or directory
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# 
