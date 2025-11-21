@@ -1,0 +1,53 @@
+inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "3710208312"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "3710208313"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "799758501"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "799758502"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "3710208312"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "3710208312"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "3710208313"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "3710208313"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "799758501"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "799758501"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "799758502"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "799758502"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "799758503"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "799758503"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "799758503"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "3710208314"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "3710208314"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "3710208314"
+(anonymous) @ inpage.js:1
+[NEW] Explain Console errors by using Copilot in Edge: click
+         
+         to explain an error. 
+        Learn more
+        Don't show again
