@@ -1426,3 +1426,44 @@ export const insertPaymentProofSchema = createInsertSchema(paymentProofs).omit({
 });
 export type InsertPaymentProof = z.infer<typeof insertPaymentProofSchema>;
 export type PaymentProof = typeof paymentProofs.$inferSelect;
+
+// User Settlement Ledger (Platform Deposits & Withdrawals)
+export const userSettlements = pgTable("user_settlements", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  
+  // User & Platform
+  userId: text("user_id").notNull(), // Replit user ID
+  platformId: varchar("platform_id").notNull().references(() => sovereignPlatforms.id),
+  
+  // Settlement Type & Amount
+  type: text("type").notNull(), // deposit, withdrawal
+  tkoinAmount: decimal("tkoin_amount", { precision: 20, scale: 8 }).notNull(),
+  
+  // Status & Tracking
+  status: text("status").notNull().default("pending"), // pending, completed, failed
+  
+  // Related Order
+  p2pOrderId: varchar("p2p_order_id").references(() => p2pOrders.id),
+  
+  // Transaction Reference
+  solanaSignature: text("solana_signature"),
+  
+  // Metadata
+  memo: text("memo"),
+  errorMessage: text("error_message"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  completedAt: timestamp("completed_at"),
+}, (table) => ({
+  userIdIdx: index("user_settlements_user_id_idx").on(table.userId),
+  platformIdIdx: index("user_settlements_platform_id_idx").on(table.platformId),
+  statusIdx: index("user_settlements_status_idx").on(table.status),
+  createdAtIdx: index("user_settlements_created_at_idx").on(table.createdAt),
+}));
+
+export const insertUserSettlementSchema = createInsertSchema(userSettlements).omit({ 
+  id: true, 
+  createdAt: true,
+  completedAt: true,
+});
+export type InsertUserSettlement = z.infer<typeof insertUserSettlementSchema>;
+export type UserSettlement = typeof userSettlements.$inferSelect;

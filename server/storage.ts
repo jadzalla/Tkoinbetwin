@@ -67,6 +67,7 @@ import {
   p2pOrders,
   orderMessages,
   paymentProofs,
+  userSettlements,
 } from '@shared/schema';
 
 // Storage Interface
