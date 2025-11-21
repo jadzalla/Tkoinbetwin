@@ -9,6 +9,7 @@ import { baseUnitsToTokens } from "@shared/token-utils";
 import { solanaCore } from "../solana/solana-core";
 import { TIER_THRESHOLDS } from "@shared/staking-constants";
 import { getLimitsForTier } from "./tier-limits-service";
+import { TKOIN_MINT_ADDRESS } from "@shared/token-constants";
 
 const MINIMUM_STAKE_REQUIREMENT = TIER_THRESHOLDS.verified; // 10,000 TKOIN for Basic tier instant access
 
@@ -202,18 +203,16 @@ export class PermissionlessRegistrationService {
         };
       }
 
-      // 1. Get TKOIN mint address from database
-      const [config] = await db.select().from(tokenConfig).limit(1);
-      
-      if (!config || !config.mintAddress) {
+      // 1. Get TKOIN mint address from environment (for devnet/mainnet compatibility)
+      if (!TKOIN_MINT_ADDRESS) {
         return {
           success: false,
           balance: 0,
-          reason: "TKOIN token not deployed yet. Please wait for token deployment or use the permissioned application path."
+          reason: "TKOIN token mint address not configured. Please contact the administrator."
         };
       }
 
-      const mintPublicKey = new PublicKey(config.mintAddress);
+      const mintPublicKey = new PublicKey(TKOIN_MINT_ADDRESS);
       const walletPublicKey = new PublicKey(walletAddress);
 
       // 2. Get associated token account address
