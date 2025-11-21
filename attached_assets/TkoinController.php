@@ -35,7 +35,7 @@ class TkoinController extends Controller
     public function balance(Request $request)
     {
         $user = $request->user();
-        $account = $user->account();
+        $account = $user->account;
 
         if (!$account) {
             return response()->json([
@@ -61,7 +61,7 @@ class TkoinController extends Controller
         ]);
 
         $user = $request->user();
-        $account = $user->account();
+        $account = $user->account;
 
         if (!$account) {
             throw ValidationException::withMessages([
@@ -113,7 +113,7 @@ class TkoinController extends Controller
         ]);
 
         $user = $request->user();
-        $account = $user->account();
+        $account = $user->account;
 
         if (!$account) {
             throw ValidationException::withMessages([
@@ -257,7 +257,7 @@ class TkoinController extends Controller
 
             Log::info('Settlement cancelled', [
                 'settlement_id' => $settlement->id,
-                'user_id' => $user->id,
+                'user_id' => $request->user()->id,
             ]);
 
             return response()->json([
