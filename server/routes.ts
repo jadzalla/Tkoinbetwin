@@ -3790,6 +3790,106 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ========================================
+  // User Settlement Routes (BetWin Integration)
+  // ========================================
+
+  // Get user's balance on a platform
+  app.get('/api/user/balance/:platformId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { platformId } = req.params;
+      
+      const balance = await storage.getUserSettlementBalance(userId, platformId);
+      res.json({ balance, platformId, userId });
+    } catch (error) {
+      console.error("Error fetching settlement balance:", error);
+      res.status(500).json({ message: "Failed to fetch balance" });
+    }
+  });
+
+  // List user's deposit transactions
+  app.get('/api/user/deposits', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { platformId } = req.query;
+      
+      const settlements = await storage.getUserSettlements(userId, platformId);
+      const deposits = settlements.filter(s => s.type === 'deposit');
+      res.json(deposits);
+    } catch (error) {
+      console.error("Error fetching deposits:", error);
+      res.status(500).json({ message: "Failed to fetch deposits" });
+    }
+  });
+
+  // Initiate a deposit (user requests TKOIN from marketplace)
+  app.post('/api/user/deposits/request', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { platformId, tkoinAmount } = req.body;
+      
+      if (!platformId || !tkoinAmount) {
+        return res.status(400).json({ message: "platformId and tkoinAmount required" });
+      }
+      
+      // Create settlement record (status: pending until P2P order completes)
+      const settlement = await storage.createUserSettlement({
+        userId,
+        platformId,
+        type: 'deposit',
+        tkoinAmount: tkoinAmount.toString(),
+        status: 'pending',
+      });
+      
+      res.status(201).json(settlement);
+    } catch (error) {
+      console.error("Error creating deposit request:", error);
+      res.status(500).json({ message: "Failed to create deposit request" });
+    }
+  });
+
+  // List user's withdrawal transactions
+  app.get('/api/user/withdrawals', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { platformId } = req.query;
+      
+      const settlements = await storage.getUserSettlements(userId, platformId);
+      const withdrawals = settlements.filter(s => s.type === 'withdrawal');
+      res.json(withdrawals);
+    } catch (error) {
+      console.error("Error fetching withdrawals:", error);
+      res.status(500).json({ message: "Failed to fetch withdrawals" });
+    }
+  });
+
+  // Initiate a withdrawal (user requests to convert TKOIN back)
+  app.post('/api/user/withdrawals/request', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { platformId, tkoinAmount } = req.body;
+      
+      if (!platformId || !tkoinAmount) {
+        return res.status(400).json({ message: "platformId and tkoinAmount required" });
+      }
+      
+      // Create settlement record (status: pending until verified on-chain)
+      const settlement = await storage.createUserSettlement({
+        userId,
+        platformId,
+        type: 'withdrawal',
+        tkoinAmount: tkoinAmount.toString(),
+        status: 'pending',
+      });
+      
+      res.status(201).json(settlement);
+    } catch (error) {
+      console.error("Error creating withdrawal request:", error);
+      res.status(500).json({ message: "Failed to create withdrawal request" });
+    }
+  });
+
+  // ========================================
   // Agent Application Routes
   // ========================================
 

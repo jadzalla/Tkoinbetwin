@@ -44,6 +44,8 @@ import type {
   InsertOrderMessage,
   PaymentProof,
   InsertPaymentProof,
+  UserSettlement,
+  InsertUserSettlement,
 } from '@shared/schema';
 import {
   users,
@@ -1218,14 +1220,13 @@ export class PostgresStorage implements IStorage {
   }
 
   async getUserSettlements(userId: string, platformId?: string): Promise<UserSettlement[]> {
-    let query = db.select().from(userSettlements).where(eq(userSettlements.userId, userId));
+    const conditions = [eq(userSettlements.userId, userId)];
     if (platformId) {
-      query = query.where(and(
-        eq(userSettlements.userId, userId),
-        eq(userSettlements.platformId, platformId)
-      ));
+      conditions.push(eq(userSettlements.platformId, platformId));
     }
-    return query.orderBy(desc(userSettlements.createdAt));
+    return await db.select().from(userSettlements)
+      .where(and(...conditions))
+      .orderBy(desc(userSettlements.createdAt));
   }
 
   async getUserSettlementBalance(userId: string, platformId: string): Promise<string> {
