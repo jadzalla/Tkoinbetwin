@@ -1,0 +1,66 @@
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# head -40 app/Models/User.php | grep -i "hasapitokens"
+use Laravel\Sanctum\HasApiTokens;
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# php artisan tinker
+Psy Shell v0.12.8 (PHP 8.3.27 — cli) by Justin Hileman
+> $user = App\Models\User::find(1);
+= App\Models\User {#6715
+    +id: 1,
+    +referrer_id: null,
+    +rank_id: null,
+    name: "Betwin Admin",
+    +email: "chainoocom@gmail.com",
+    code: "2149cb17-2830-43ad-91f2-c4639c54b4a6",
+    +role: 2,
+    +status: 0,
+    +kyc_status: 0,
+    +fields: null,
+    +flags: null,
+    +banned_from_chat: 0,
+    +avatar: "1762682555_74ca1856b655.svg",
+    +permissions: null,
+    +affiliate_commissions: null,
+    +notes: null,
+    +password: "$2y$10$SyVReX9R/tVhxzQpVd98POGisycwDfbjFl4lkigpI31besB4YhTF2",
+    +remember_token: "TOF9nqGsMiVNWtVvJUjrFeWhXlpmUoeagQi1xE7PFnYkaYa6VU1OVIK8pRKM",
+    +totp_secret: null,
+    +pap_visitor_id: null,
+    +last_seen_at: "2025-11-21 15:13:48",
+    +email_verified_at: "2025-11-09 10:02:35",
+    +created_at: "2025-11-09 10:02:35",
+    +updated_at: "2025-11-21 15:13:48",
+    display_name: "Betwin Admin",
+    avatar_url: "https://betwin.tkoin.finance/storage/avatars/1762682555_74ca1856b655.svg",
+    is_online: false,
+  }
+
+> $token = $user->createToken('api-token')->plainTextToken;
+
+   BadMethodCallException  Call to undefined method App\Models\User::createToken().
+
+> echo $token
+
+   WARNING  Undefined variable $token in /home/tkoin-betwin/htdocs/betwin.tkoin.financeeval()'d code.
+
+> exit
+
+   INFO  Goodbye.
+
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# grep -n "^class User\|^{$" app/Models/User.php | head -5
+37:class User extends Authenticatable implements MustVerifyEmail
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# grep -n "^class User\|^{$" app/Models/User.php | head -5
+37:class User extends Authenticatable implements MustVerifyEmail
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# sed -i '/^class User extends Model/a\    use HasApiTokens;' app/Models/User.php
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# grep -A 2 "^class User" app/Models/User.php
+class User extends Authenticatable implements MustVerifyEmail
+{
+    use HasFactory;
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# grep -A 2 "^class User" app/Models/User.php
+class User extends Authenticatable implements MustVerifyEmail
+{
+    use HasFactory;
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# php artisan tinker
+> $user = App\Models\User::find(1);
+> $token = $user->createToken('api-token')->plainTextToken;
+> echo $token;
+Psy Shell v0.12.8 (PHP 8.3.27 — cli) by Justin Hileman
+> 
