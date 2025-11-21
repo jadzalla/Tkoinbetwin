@@ -1,0 +1,70 @@
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+tkoin-wallet-link.html:1   Failed to load resource: the server responded with a status of 404 ()
+inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "3159138665"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "3159138666"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "758275165"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "758275166"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "3159138667"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "758275167"
+(anonymous) @ inpage.js:1
+/lang/fr.json:1   Failed to load resource: the server responded with a status of 404 ()
+inpage.js:1  StreamMiddleware - Unknown response id "3159138665"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "3159138665"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "3159138666"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "3159138666"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "758275165"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "758275165"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "758275166"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "758275166"
+(anonymous) @ inpage.js:1
+tkoin-wallet:1  Uncaught (in promise) Y
+inpage.js:1  StreamMiddleware - Unknown response id "3159138667"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "3159138667"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "758275167"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "758275167"
+(anonymous) @ inpage.js:1
+tkoin-wallet:1 [Intervention] Slow network is detected. See https://www.chromestatus.com/feature/5636954674692096 for more details. Fallback font will be used while loading: https://betwin.tkoin.finance/fonts/vendor/materialdesignicons-webfont.woff2
+manifest.json:1   Failed to load resource: net::ERR_CONNECTION_CLOSED
+[NEW] Explain Console errors by using Copilot in Edge: click
+         
+         to explain an error. 
+        Learn more
+        Don't show again
