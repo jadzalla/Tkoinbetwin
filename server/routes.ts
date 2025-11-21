@@ -199,9 +199,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ========================================
   
   // Development only: Bootstrap admin access for current logged-in user
+  // SECURITY: Only enabled when ENABLE_DEV_BOOTSTRAP=true (must be explicitly set)
   // This allows the first user to grant themselves admin access
   // In production, initial admin should be set via database or environment
-  if (process.env.NODE_ENV !== 'production') {
+  const enableDevBootstrap = process.env.ENABLE_DEV_BOOTSTRAP === 'true';
+  
+  if (enableDevBootstrap) {
+    logger.warn('SECURITY WARNING: Dev bootstrap endpoint is ENABLED. Disable in production!', {
+      ENABLE_DEV_BOOTSTRAP: process.env.ENABLE_DEV_BOOTSTRAP,
+      NODE_ENV: process.env.NODE_ENV
+    });
+    
     app.post('/api/dev/bootstrap-admin', isAuthenticated, async (req: any, res) => {
       try {
         const userId = req.user.claims.sub;
@@ -219,6 +227,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         logger.error('Failed to bootstrap admin', error);
         res.status(500).json({ message: "Failed to grant admin access" });
       }
+    });
+  } else {
+    // Return 404 when bootstrap is disabled
+    app.post('/api/dev/bootstrap-admin', (req, res) => {
+      res.status(404).json({ message: "Not found" });
     });
   }
   

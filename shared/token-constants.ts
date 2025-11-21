@@ -24,12 +24,26 @@ const rpcUrl = typeof process !== 'undefined' ? process.env.SOLANA_RPC_URL : imp
 export const TOKEN_NETWORK = rpcUrl?.includes('mainnet') ? 'mainnet-beta' : 'devnet';
 
 // Token Mint Address (environment-based for devnet/mainnet compatibility)
-// Backend uses process.env, frontend will use hardcoded value for now
-// When migrating to mainnet, update both TKOIN_MINT_ADDRESS env var and this constant
-export const TKOIN_MINT_ADDRESS = 
-  typeof process !== 'undefined' 
-    ? process.env.TKOIN_MINT_ADDRESS! 
-    : '9XPD1ZcAtNZgc1pGYYL3Z4W3mNqHKmqKDsUtsKKzAJE5'; // Devnet mint
+// Backend uses process.env with validation, frontend uses Vite env var
+const getMintAddress = (): string => {
+  if (typeof process !== 'undefined') {
+    // Server-side: require TKOIN_MINT_ADDRESS environment variable
+    const mintAddress = process.env.TKOIN_MINT_ADDRESS;
+    if (!mintAddress) {
+      throw new Error(
+        'CRITICAL: TKOIN_MINT_ADDRESS environment variable is not set. ' +
+        'This is required for all blockchain operations. ' +
+        'Please set it to the appropriate token mint address for your environment (devnet or mainnet).'
+      );
+    }
+    return mintAddress;
+  } else {
+    // Client-side: use Vite environment variable or fallback to devnet
+    return import.meta?.env?.VITE_TKOIN_MINT_ADDRESS || '9XPD1ZcAtNZgc1pGYYL3Z4W3mNqHKmqKDsUtsKKzAJE5';
+  }
+};
+
+export const TKOIN_MINT_ADDRESS = getMintAddress();
 
 // Description
 export const TOKEN_DESCRIPTION = "Tkoin Protocol - Sovereignty Stack liquidity token";

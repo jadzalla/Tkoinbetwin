@@ -7,6 +7,7 @@ import Home from "@/pages/home";
 import Dashboard from "@/pages/dashboard";
 import Apply from "@/pages/apply";
 import RegisterAgent from "@/pages/register-agent";
+import DevBootstrap from "@/pages/dev-bootstrap";
 import Admin from "@/pages/admin";
 import AdminCurrencies from "@/pages/admin/currencies";
 import AdminPlatforms from "@/pages/admin/platforms";
@@ -33,6 +34,7 @@ function Router() {
       <Route path="/dashboard/:rest+" component={Dashboard} />
       <Route path="/apply" component={Apply} />
       <Route path="/register-agent" component={RegisterAgent} />
+      <Route path="/dev/bootstrap" component={DevBootstrap} />
       {/* P2P Marketplace routes */}
       <Route path="/marketplace" component={Marketplace} />
       <Route path="/marketplace/agent/:agentId" component={AgentDetail} />

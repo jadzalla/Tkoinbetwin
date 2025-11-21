@@ -127,6 +127,35 @@ The frontend uses React, TypeScript, Vite, Tailwind CSS, and shadcn/ui, adopting
 - Treasury: `https://explorer.solana.com/address/953CKYH169xXxaNKVwLT9z9s38TEg1d2pQsY7d1Lv6dD?cluster=devnet`
 - Metadata PDA: `https://explorer.solana.com/address/9jxbeCfxDxwhAw79m4qx79o6VHMYmc47GU7mFX1UfcGx?cluster=devnet`
 
+## Environment Configuration (Mainnet-Ready)
+
+The system is designed to be environment-agnostic, allowing seamless migration from devnet to mainnet by changing only environment variables:
+
+### Required Environment Variables
+- **SOLANA_RPC_URL**: Solana RPC endpoint
+  - Devnet: `https://api.devnet.solana.com`
+  - Mainnet: `https://api.mainnet-beta.solana.com` (or dedicated RPC provider)
+- **TKOIN_MINT_ADDRESS**: Token mint address
+  - Devnet: `9XPD1ZcAtNZgc1pGYYL3Z4W3mNqHKmqKDsUtsKKzAJE5`
+  - Mainnet: (to be deployed)
+- **SOLANA_TREASURY_WALLET**: Treasury wallet public key
+- **SOLANA_TREASURY_PRIVATE_KEY**: Treasury wallet private key (base58 encoded)
+
+### Migration to Mainnet
+To migrate from devnet to mainnet:
+1. Deploy TKOIN token on mainnet using deployment scripts in `solana/scripts/`
+2. Update `SOLANA_RPC_URL` to mainnet endpoint
+3. Update `TKOIN_MINT_ADDRESS` to new mainnet token address
+4. Update `SOLANA_TREASURY_WALLET` and `SOLANA_TREASURY_PRIVATE_KEY` to mainnet wallet
+5. Restart application - **no code changes required**
+
+### Development Bootstrap
+- **Dev Admin Access**: Navigate to `/dev/bootstrap` to grant yourself admin access (development only)
+- **SECURITY**: The bootstrap route requires `ENABLE_DEV_BOOTSTRAP=true` to be explicitly set in environment variables
+- **NEVER** enable this in production environments
+- Once logged in, click "Grant Admin Access" to update your role to admin
+- In production, set initial admin via database seed or manual SQL query
+
 ## External Dependencies
 - **Solana Blockchain**: For Token-2022 smart contracts and blockchain operations.
 - **Sovereign Platforms**: BetWin Casino (integrated), with future integrations planned for metaverses, DAOs, and other gaming platforms.
