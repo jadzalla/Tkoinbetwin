@@ -1,0 +1,118 @@
+{
+  "name": "1stake/platform",
+  "description": "1Stake iGaming Platform",
+  "keywords": [
+    "laravel",
+    "casino",
+    "games"
+  ],
+  "authors": [
+    {
+      "name": "1stake",
+      "email": "sales@1stake.app",
+      "homepage": "https://1stake.app",
+      "role": "Developer"
+    }
+  ],
+  "license": "MIT",
+  "type": "project",
+  "require": {
+    "php": "^8.2",
+    "ext-bcmath": "*",
+    "ext-gmp": "*",
+    "ext-json": "*",
+    "ext-pdo": "*",
+    "ext-sodium": "*",
+    "ext-zip": "*",
+    "attestto/solana-php-sdk": "@dev",
+    "bacon/bacon-qr-code": "^3.0",
+    "crispchat/php-crisp-api": "^1.7",
+    "financialplugins/omnipay-skrill": "^1.0",
+    "firebase/php-jwt": "^6.4",
+    "guzzlehttp/guzzle": "^7.8",
+    "kornrunner/ethereum-offline-raw-tx": "^0.8",
+    "kornrunner/keccak": "^1.1",
+    "kornrunner/secp256k1": "^0.3",
+    "laravel/framework": "^11.0",
+    "laravel/reverb": "^1.5",
+    "laravel/sanctum": "^4.0",
+    "laravel/socialite": "^5.5",
+    "laravel/tinker": "^2.9",
+    "laravel/ui": "^4.5",
+    "league/omnipay": "^3.1",
+    "mercadopago/dx-php": "^3.0",
+    "omnipay/paypal": "^3.0",
+    "omnipay/stripe": "^3.1",
+    "paytm/paytmchecksum": "^1.1",
+    "pragmarx/google2fa": "^8.0",
+    "predis/predis": "^2.2",
+    "propaganistas/laravel-phone": "^6.0",
+    "pusher/pusher-php-server": "^7.2",
+    "simplito/elliptic-php": "^1.0",
+    "socialiteproviders/coinbase": "^4.0",
+    "socialiteproviders/telegram": "^4.1",
+    "socialiteproviders/yahoo": "^4.0",
+    "stephenhill/base58": "^1.1",
+    "symfony/yaml": "^7.0"
+  },
+  "require-dev": {
+    "fakerphp/faker": "^1.23",
+    "mockery/mockery": "^1.6",
+    "nunomaduro/collision": "^8.1",
+    "pestphp/pest": "^2.34",
+    "phpunit/phpunit": "^10.5",
+    "spatie/laravel-ignition": "^2.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "App\\": "app/",
+      "Database\\Factories\\": "database/factories/",
+      "Database\\Seeders\\": "database/seeders/"
+    },
+    "classmap": [
+      "app/Helpers/Api/PostAffiliatePro"
+    ],
+    "files": [
+      "app/Helpers/constants.php"
+    ],
+    "exclude-from-classmap": [
+      "vendor/attestto/solana-php-sdk/src/Accounts/Sns/NtfRecordAccount.php"
+    ]
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Tests\\": "tests/"
+    }
+  },
+  "scripts": {
+    "post-autoload-dump": [
+      "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
+      "@php artisan package:discover --ansi"
+    ],
+    "post-update-cmd": [
+      "@php artisan vendor:publish --tag=laravel-assets --ansi --force"
+    ],
+    "post-root-package-install": [
+      "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""
+    ],
+    "post-create-project-cmd": [
+      "@php artisan key:generate --ansi"
+    ]
+  },
+  "extra": {
+    "laravel": {
+      "dont-discover": []
+    }
+  },
+  "config": {
+    "optimize-autoloader": true,
+    "preferred-install": "dist",
+    "sort-packages": true,
+    "allow-plugins": {
+      "pestphp/pest-plugin": true,
+      "php-http/discovery": true
+    }
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true
+}
