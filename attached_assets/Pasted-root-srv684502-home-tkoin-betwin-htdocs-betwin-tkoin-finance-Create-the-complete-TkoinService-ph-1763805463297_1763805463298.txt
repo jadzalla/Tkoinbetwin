@@ -1,0 +1,139 @@
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# # Create the complete TkoinService.php file from scratch
+cat > app/Services/TkoinService.php << 'NEWSERVICE'
+<?php
+
+namespace App\Services;
+
+use App\Models\User;
+use App\Models\Account;
+use App\Models\TkoinSettlement;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\RequestException;
+use Illuminate\Support\Facades\Log;
+
+class TkoinService
+{
+    protected string $baseUrl;
+    protected string $platformId;
+    protected string $apiToken;
+    protected string $apiSecret;
+    protected string $webhookSecret;
+    protected Client $client;
+
+    public function __construct()
+    {
+        // Initialize all properties from environment
+        $this->baseUrl = env('TKOIN_API_URL', 'https://tkoin.replit.dev/api/');
+        $this->platformId = env('TKOIN_PLATFORM_ID', 'platform_betwin');
+        $this->apiToken = env('TKOIN_API_TOKEN');
+        $this->apiSecret = env('TKOIN_API_SECRET');
+        $this->webhookSecret = env('TKOIN_WEBHOOK_SECRET');
+        
+        // Create Guzzle client with base URI
+        $this->client = new Client(['base_uri' => $this->baseUrl]);
+    }
+
+    /**
+     * Core request method with authentication and signatures
+     */
+    protected function makeRequest(string $method, string $endpoint, array $body = []): array
+    {
+        try {
+            $timestamp = time();
+            $nonce = bin2hex(random_bytes(16));
+            
+            // Build canonical payload for signature
+            $payload = $method === 'GET' ? '{}' : json_encode($body);
+php test-deposit-withdrawal.php=============================\n"=> $settlement->id]);ionId'])->first();ess = null): TkoinSettlement
+Checking PHP syntax...
+No syntax errors detected in app/Services/TkoinService.php
+
+Verifying all methods:
+    public function __construct()
+    public function getUserBalance(User $user): ?float
+    public function getUserTransactions($user, int $limit = 10): array
+    public function initiateDeposit(User $user, Account $account, float $amount): TkoinSettlement
+    public function initiateWithdrawal(User $user, Account $account, float $amount, string $solanaAddress = null): TkoinSettlement
+    public function getSettlementStatus(TkoinSettlement $settlement): ?string
+    public function verifyWebhookSignature(string $payload, string $signature): bool
+    public function handleSettlementCompleted(array $data): void
+    public function handleSettlementFailed(array $data): void
+
+=================================================
+
+
+=================================================
+BetWin ↔ Tkoin Deposit/Withdrawal Flow Test
+=================================================
+
+Test User: darkeningtracery759 (ID: 3)
+Email: jadzalla@venmyglobal.com
+BetWin Balance: 12,971.80 credits
+
+=================================================
+STEP 1: Check Initial Balance
+=================================================
+Tkoin Balance: null (user not in Tkoin yet) credits
+✓ Balance API working
+
+=================================================
+STEP 2: Test Deposit Flow (User Buys TKOIN)
+=================================================
+Initiating deposit: 50.00 TKOIN (5000.00 credits) via P2P marketplace...
+
+✗ Deposit Error: Tkoin API error (401): {"error":"Missing required headers","required":["X-Platform-Token","X-Timestamp","X-Signature","X-Nonce"]}
+
+=================================================
+STEP 3: Check Updated Balance
+=================================================
+New Tkoin Balance: null credits
+✓ Balance check completed
+
+=================================================
+STEP 4: Test Withdrawal Flow (User Sells TKOIN)
+=================================================
+Initiating withdrawal: 25.00 TKOIN (2500.00 credits) to P2P marketplace...
+
+✗ Withdrawal Error: Tkoin API error (401): {"error":"Missing required headers","required":["X-Platform-Token","X-Timestamp","X-Signature","X-Nonce"]}
+Details: Tkoin API error (401): {"error":"Missing required headers","required":["X-Platform-Token","X-Timestamp","X-Signature","X-Nonce"]}
+
+=================================================
+STEP 5: Check Final Balance
+=================================================
+Final Tkoin Balance: null credits
+✓ Balance check completed
+
+=================================================
+STEP 6: Check Transaction History
+=================================================
+✗ Error: Failed to get user transactions: Tkoin API error (401): {"error":"Missing required headers","required":["X-Platform-Token","X-Timestamp","X-Signature","X-Nonce"]}
+
+=================================================
+STEP 7: Check BetWin Local Database
+=================================================
+Local Settlements Count: 5
+
+Local Settlements:
+1. ID: 15, Type: withdrawal, Amount: 2500 credits, Status: processing
+2. ID: 14, Type: deposit, Amount: 5000 credits, Status: processing
+3. ID: 13, Type: withdrawal, Amount: 2500 credits, Status: processing
+4. ID: 12, Type: deposit, Amount: 5000 credits, Status: processing
+5. ID: 11, Type: withdrawal, Amount: 2500 credits, Status: processing
+
+✓ Local database check completed
+
+=================================================
+Test Complete!
+=================================================
+
+Summary:
+✓ Balance API tested
+✓ Deposit API tested
+✓ Withdrawal API tested
+✓ Transaction history API tested
+✓ Local database checked
+
+Next: Monitor webhook callbacks in BetWin logs
+Webhook URL: https://betwin.tkoin.finance/api/webhooks/tkoin
+
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# 
