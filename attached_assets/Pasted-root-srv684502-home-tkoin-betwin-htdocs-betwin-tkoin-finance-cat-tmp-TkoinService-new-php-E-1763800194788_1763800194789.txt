@@ -1,0 +1,81 @@
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# cat > /tmp/TkoinService_new.php << 'ENDPHP'
+<?php
+/**
+ *   BetWin - Tkoin Protocol Integration
+ *   ------------------------------------
+ *   TkoinService.php (Secure Platform API)
+ * 
+ *   @copyright  Copyright (c) BetWin, All rights reserved
+ *   @author     BetWin <dev@betwin.tkoin.finance>
+ *   @see        https://betwin.tkoin.finance
+*/
+
+namespace App\Services;
+
+use App\Models\Account;
+use App\Models\TkoinSettlement;
+use App\Models\User;
+use App\Repositories\TkoinSettlementRepository;
+use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+
+class TkoinService
+{
+    protected Client $client;
+    protected string $baseUrl;
+    protected string $platformId;
+    protected string $apiToken;
+    protected string $apiSecret;
+    protected string $webhookSecret;
+
+    public function __construct()
+    {
+        $this->baseUrl = rtrim(env('TKOIN_API_URL', 'https://tkoin.replit.dev/api'), '/');
+        $this->platformId = env('TKOIN_PLATFORM_ID', 'platform_betwin');
+        $this->apiToken = env('TKOIN_API_TOKEN');
+        $this->apiSecret = env('TKOIN_API_SECRET');
+        $this->webhookSecret = env('TKOIN_WEBHOOK_SECRET');
+        
+        $this->client = new Client([
+            'base_uri' => $this->baseUrl,
+            'timeout' => 30,
+        ]);
+    }
+
+    /**
+ENDPHP  }   ]); 'error' => $e->getMessage(),nt->id,s failed', [ok', $data);_id']);ent->id]);ture): boolss = null): TkoinSettlement
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# wc -l /tmp/TkoinService_new.php && echo "---" && head -30 /tmp/TkoinService_new.php
+357 /tmp/TkoinService_new.php
+---
+<?php
+/**
+ *   BetWin - Tkoin Protocol Integration
+ *   ------------------------------------
+ *   TkoinService.php (Secure Platform API)
+ * 
+ *   @copyright  Copyright (c) BetWin, All rights reserved
+ *   @author     BetWin <dev@betwin.tkoin.finance>
+ *   @see        https://betwin.tkoin.finance
+*/
+
+namespace App\Services;
+
+use App\Models\Account;
+use App\Models\TkoinSettlement;
+use App\Models\User;
+use App\Repositories\TkoinSettlementRepository;
+use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+
+class TkoinService
+{
+    protected Client $client;
+    protected string $baseUrl;
+    protected string $platformId;
+    protected string $apiToken;
+    protected string $apiSecret;
+    protected string $webhookSecret;
+
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# 
