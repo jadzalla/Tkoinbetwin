@@ -1,0 +1,124 @@
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# cat > test-deposit-withdrawal.php << 'TESTFLOW'
+<?php
+/**
+ * Complete Deposit/Withdrawal Flow Test
+ */
+
+require __DIR__ . '/vendor/autoload.php';
+
+$app = require_once __DIR__ . '/bootstrap/app.php';
+$kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
+$kernel->bootstrap();
+
+echo "\n";
+echo "=================================================\n";
+echo "BetWin ↔ Tkoin Deposit/Withdrawal Flow Test\n";
+echo "=================================================\n\n";
+
+$tkoinService = new App\Services\TkoinService();
+
+// Use real user from database
+$userId = 3; // darkeningtracery759
+
+// Get real user and account from database
+$user = App\Models\User::find($userId);
+
+if (!$user) {
+    echo "Error: User not found with ID {$userId}\n";
+    exit(1);
+}
+
+// Get or create account for user
+$account = App\Models\Account::where('user_id', $userId)->first();
+
+if (!$account) {
+    echo "Creating account for user...\n";
+    $account = App\Models\Account::create([
+        'user_id' => $userId,
+        'balance' => 10000.00,
+        'currency' => 'CREDITS'
+    ]);
+}
+
+echo "Test User: {$user->name} (ID: {$userId})\n";
+echo "Email: {$user->email}\n";
+echo "BetWin Balance: " . number_format($account->balance, 2) . " credits\n\n";
+
+php test-deposit-withdrawal.phpin.tkoin.finance/api/webhooks/tkoin\n\n";->type}, Amount: {$settlement->amount} credits, Status: {$settlement->status}
+
+=================================================
+BetWin ↔ Tkoin Deposit/Withdrawal Flow Test
+=================================================
+
+Test User: darkeningtracery759 (ID: 3)
+Email: jadzalla@venmyglobal.com
+BetWin Balance: 12,971.80 credits
+
+=================================================
+STEP 1: Check Initial Balance
+=================================================
+Tkoin Balance: null (user not in Tkoin yet) credits
+✓ Balance API working
+
+=================================================
+STEP 2: Test Deposit Flow (User Buys TKOIN)
+=================================================
+Initiating deposit: 50.00 TKOIN (5000.00 credits) via P2P marketplace...
+
+✗ Deposit Error: cURL error 6: Could not resolve host: tkoin.replit.dev (see https://curl.haxx.se/libcurl/c/libcurl-errors.html) for https://tkoin.replit.dev/platforms/platform_betwin/deposits
+
+=================================================
+STEP 3: Check Updated Balance
+=================================================
+New Tkoin Balance: null credits
+✓ Balance check completed
+
+=================================================
+STEP 4: Test Withdrawal Flow (User Sells TKOIN)
+=================================================
+Initiating withdrawal: 25.00 TKOIN (2500.00 credits) to P2P marketplace...
+
+✗ Withdrawal Error: cURL error 6: Could not resolve host: tkoin.replit.dev (see https://curl.haxx.se/libcurl/c/libcurl-errors.html) for https://tkoin.replit.dev/platforms/platform_betwin/withdrawals
+Details: cURL error 6: Could not resolve host: tkoin.replit.dev (see https://curl.haxx.se/libcurl/c/libcurl-errors.html) for https://tkoin.replit.dev/platforms/platform_betwin/withdrawals
+
+=================================================
+STEP 5: Check Final Balance
+=================================================
+Final Tkoin Balance: null credits
+✓ Balance check completed
+
+=================================================
+STEP 6: Check Transaction History
+=================================================
+Transaction Count: 0
+
+No transactions found (expected if Platform API creates settlements locally)
+
+✓ Transaction history API working
+
+=================================================
+STEP 7: Check BetWin Local Database
+=================================================
+Local Settlements Count: 2
+
+Local Settlements:
+1. ID: 5, Type: withdrawal, Amount: 2500 credits, Status: failed
+2. ID: 4, Type: deposit, Amount: 5000 credits, Status: failed
+
+✓ Local database check completed
+
+=================================================
+Test Complete!
+=================================================
+
+Summary:
+✓ Balance API tested
+✓ Deposit API tested
+✓ Withdrawal API tested
+✓ Transaction history API tested
+✓ Local database checked
+
+Next: Monitor webhook callbacks in BetWin logs
+Webhook URL: https://betwin.tkoin.finance/api/webhooks/tkoin
+
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# 
