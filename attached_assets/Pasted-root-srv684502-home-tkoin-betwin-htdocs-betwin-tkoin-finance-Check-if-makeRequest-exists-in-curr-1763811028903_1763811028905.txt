@@ -1,0 +1,243 @@
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# # Check if makeRequest exists in current file
+grep -n "function makeRequest" app/Services/TkoinService.php
+
+# Check if it exists in backup
+grep -n "function makeRequest" app/Services/TkoinService.php.backup
+
+# Show the full structure of methods in the file
+grep -n "public function" app/Services/TkoinService.php
+
+# If makeRequest is missing, we need to add it
+# First, let's see what the file looks like
+head -100 app/Services/TkoinService.php
+27:    public function __construct()
+45:    public function initiateDeposit(User $user, Account $account, float $amount): TkoinSettlement
+81:    public function initiateWithdrawal(User $user, Account $account, float $amount, string $solanaAddress = null): TkoinSettlement
+117:    public function getUserBalance(User $user): ?float
+141:    public function getSettlementStatus(TkoinSettlement $settlement): ?string
+159:    public function verifyWebhookSignature(string $payload, string $signature): bool
+168:    public function handleSettlementCompleted(array $data): void
+206:    public function handleSettlementFailed(array $data): void
+232:    public function getUserTransactions($user, int $limit = 10): array
+<?php
+/**
+ *   BetWin - Tkoin Protocol Integration
+ *   ------------------------------------
+ *   TkoinService.php
+ * 
+ *   @copyright  Copyright (c) BetWin, All rights reserved
+ *   @author     BetWin <dev@betwin.tkoin.finance>
+ *   @see        https://betwin.tkoin.finance
+*/
+
+namespace App\Services;
+
+use App\Models\Account;
+use App\Models\TkoinSettlement;
+use App\Models\User;
+use App\Repositories\TkoinSettlementRepository;
+use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Log;
+
+class TkoinService
+{
+    protected Client $client;
+    protected string $baseUrl;
+    protected string $webhookSecret;
+
+    public function __construct()
+    {
+        $this->baseUrl = rtrim(env('TKOIN_API_URL', 'https://tkoin.replit.dev/api'), '/');
+        $this->platformId = env('TKOIN_PLATFORM_ID', 'platform_betwin');
+        $this->apiToken = env('TKOIN_API_TOKEN');
+        $this->apiSecret = env('TKOIN_API_SECRET');
+        $this->webhookSecret = env('TKOIN_WEBHOOK_SECRET');
+        $this->client = new Client(['base_uri' => $this->baseUrl]);
+    }
+
+    /**
+     * Initiate a deposit request to Tkoin
+     * 
+     * @param User $user
+     * @param Account $account
+     * @param float $amount Amount in Credits
+     * @return TkoinSettlement
+     */
+    public function initiateDeposit(User $user, Account $account, float $amount): TkoinSettlement
+    {
+        // Create settlement record
+        $settlement = TkoinSettlementRepository::createDeposit(
+            $user,
+            $account,
+            $amount,
+            [
+                'platform' => 'betwin',
+                'user_name' => $user->name,
+                'initiated_at' => now()->toIso8601String(),
+            ]
+        );
+
+        // Mark as processing
+        TkoinSettlementRepository::markProcessing($settlement);
+
+        // Log the request
+        Log::info('Tkoin deposit initiated', [
+            'settlement_id' => $settlement->id,
+            'user_id' => $user->id,
+            'amount' => $amount,
+        ]);
+
+        return $settlement;
+    }
+
+    /**
+     * Initiate a withdrawal request to Tkoin
+     * 
+     * @param User $user
+     * @param Account $account
+     * @param float $amount Amount in Credits
+     * @param string $solanaAddress Optional: target Solana address
+     * @return TkoinSettlement
+     */
+    public function initiateWithdrawal(User $user, Account $account, float $amount, string $solanaAddress = null): TkoinSettlement
+    {
+        // Check balance
+        if ($account->balance < $amount) {
+            throw new \Exception('Insufficient balance for withdrawal');
+        }
+
+        // Create settlement record
+        $settlement = TkoinSettlementRepository::createWithdrawal(
+            $user,
+            $account,
+            $amount,
+            [
+                'platform' => 'betwin',
+                'user_name' => $user->name,
+                'solana_address' => $solanaAddress,
+                'initiated_at' => now()->toIso8601String(),
+            ]
+        );
+
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# # Check if makeRequest exists in current file
+grep -n "function makeRequest" app/Services/TkoinService.php
+
+# Check if it exists in backup
+grep -n "function makeRequest" app/Services/TkoinService.php.backup
+
+# Show the full structure of methods in the file
+grep -n "public function" app/Services/TkoinService.php
+
+# If makeRequest is missing, we need to add it
+# First, let's see what the file looks like
+head -100 app/Services/TkoinService.php
+27:    public function __construct()
+45:    public function initiateDeposit(User $user, Account $account, float $amount): TkoinSettlement
+81:    public function initiateWithdrawal(User $user, Account $account, float $amount, string $solanaAddress = null): TkoinSettlement
+117:    public function getUserBalance(User $user): ?float
+141:    public function getSettlementStatus(TkoinSettlement $settlement): ?string
+159:    public function verifyWebhookSignature(string $payload, string $signature): bool
+168:    public function handleSettlementCompleted(array $data): void
+206:    public function handleSettlementFailed(array $data): void
+232:    public function getUserTransactions($user, int $limit = 10): array
+<?php
+/**
+ *   BetWin - Tkoin Protocol Integration
+ *   ------------------------------------
+ *   TkoinService.php
+ * 
+ *   @copyright  Copyright (c) BetWin, All rights reserved
+ *   @author     BetWin <dev@betwin.tkoin.finance>
+ *   @see        https://betwin.tkoin.finance
+*/
+
+namespace App\Services;
+
+use App\Models\Account;
+use App\Models\TkoinSettlement;
+use App\Models\User;
+use App\Repositories\TkoinSettlementRepository;
+use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Log;
+
+class TkoinService
+{
+    protected Client $client;
+    protected string $baseUrl;
+    protected string $webhookSecret;
+
+    public function __construct()
+    {
+        $this->baseUrl = rtrim(env('TKOIN_API_URL', 'https://tkoin.replit.dev/api'), '/');
+        $this->platformId = env('TKOIN_PLATFORM_ID', 'platform_betwin');
+        $this->apiToken = env('TKOIN_API_TOKEN');
+        $this->apiSecret = env('TKOIN_API_SECRET');
+        $this->webhookSecret = env('TKOIN_WEBHOOK_SECRET');
+        $this->client = new Client(['base_uri' => $this->baseUrl]);
+    }
+
+    /**
+     * Initiate a deposit request to Tkoin
+     * 
+     * @param User $user
+     * @param Account $account
+     * @param float $amount Amount in Credits
+     * @return TkoinSettlement
+     */
+    public function initiateDeposit(User $user, Account $account, float $amount): TkoinSettlement
+    {
+        // Create settlement record
+        $settlement = TkoinSettlementRepository::createDeposit(
+            $user,
+            $account,
+            $amount,
+            [
+                'platform' => 'betwin',
+                'user_name' => $user->name,
+                'initiated_at' => now()->toIso8601String(),
+            ]
+        );
+
+        // Mark as processing
+        TkoinSettlementRepository::markProcessing($settlement);
+
+        // Log the request
+        Log::info('Tkoin deposit initiated', [
+            'settlement_id' => $settlement->id,
+            'user_id' => $user->id,
+            'amount' => $amount,
+        ]);
+
+        return $settlement;
+    }
+
+    /**
+     * Initiate a withdrawal request to Tkoin
+     * 
+     * @param User $user
+     * @param Account $account
+     * @param float $amount Amount in Credits
+     * @param string $solanaAddress Optional: target Solana address
+     * @return TkoinSettlement
+     */
+    public function initiateWithdrawal(User $user, Account $account, float $amount, string $solanaAddress = null): TkoinSettlement
+    {
+        // Check balance
+        if ($account->balance < $amount) {
+            throw new \Exception('Insufficient balance for withdrawal');
+        }
+
+        // Create settlement record
+        $settlement = TkoinSettlementRepository::createWithdrawal(
+            $user,
+            $account,
+            $amount,
+            [
+                'platform' => 'betwin',
+                'user_name' => $user->name,
+                'solana_address' => $solanaAddress,
+                'initiated_at' => now()->toIso8601String(),
+            ]
+        );
+
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# 
