@@ -814,6 +814,63 @@ export const platformApiTokens = pgTable("platform_api_tokens", {
   tokenHashIdx: uniqueIndex("platform_api_tokens_token_hash_idx").on(table.tokenHash),
 }));
 
+// Platform User Balances (Track user balances per platform)
+export const platformUserBalances = pgTable("platform_user_balances", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  
+  // Platform & User
+  platformId: text("platform_id").notNull().references(() => sovereignPlatforms.id, { onDelete: 'cascade' }),
+  platformUserId: text("platform_user_id").notNull(), // User ID in the platform's system
+  
+  // Balance (in credits)
+  creditsBalance: decimal("credits_balance", { precision: 20, scale: 2 }).notNull().default("0"),
+  
+  // Metadata
+  lastTransactionAt: timestamp("last_transaction_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => ({
+  platformUserUniqueIdx: uniqueIndex("platform_user_balances_unique_idx").on(table.platformId, table.platformUserId),
+  platformIdIdx: index("platform_user_balances_platform_id_idx").on(table.platformId),
+  userIdIdx: index("platform_user_balances_user_id_idx").on(table.platformUserId),
+}));
+
+// Platform Transactions (Platform-initiated deposits/withdrawals)
+export const platformTransactions = pgTable("platform_transactions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  
+  // Platform & User
+  platformId: text("platform_id").notNull().references(() => sovereignPlatforms.id),
+  platformUserId: text("platform_user_id").notNull(),
+  
+  // Transaction Details
+  type: text("type").notNull(), // deposit, withdrawal
+  creditsAmount: decimal("credits_amount", { precision: 20, scale: 2 }).notNull(),
+  tkoinAmount: decimal("tkoin_amount", { precision: 20, scale: 8 }).notNull(),
+  
+  // Status
+  status: text("status").notNull().default("pending"), // pending, processing, completed, failed
+  
+  // Platform Settlement Reference
+  platformSettlementId: text("platform_settlement_id"), // Settlement ID in platform's database
+  
+  // Webhook
+  webhookDelivered: boolean("webhook_delivered").default(false),
+  webhookAttempts: integer("webhook_attempts").default(0),
+  webhookLastError: text("webhook_last_error"),
+  
+  // Metadata
+  metadata: jsonb("metadata"),
+  errorMessage: text("error_message"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  completedAt: timestamp("completed_at"),
+}, (table) => ({
+  platformIdIdx: index("platform_transactions_platform_id_idx").on(table.platformId),
+  userIdIdx: index("platform_transactions_user_id_idx").on(table.platformUserId),
+  statusIdx: index("platform_transactions_status_idx").on(table.status),
+  createdAtIdx: index("platform_transactions_created_at_idx").on(table.createdAt),
+}));
+
 // Token Configuration (Solana Token-2022 - TKOIN)
 export const tokenConfig = pgTable("token_config", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -1031,6 +1088,25 @@ export const insertSovereignPlatformSchema = createInsertSchema(sovereignPlatfor
 });
 export type InsertSovereignPlatform = z.infer<typeof insertSovereignPlatformSchema>;
 export type SovereignPlatform = typeof sovereignPlatforms.$inferSelect;
+
+// Platform User Balances
+export const insertPlatformUserBalanceSchema = createInsertSchema(platformUserBalances).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  lastTransactionAt: true,
+});
+export type InsertPlatformUserBalance = z.infer<typeof insertPlatformUserBalanceSchema>;
+export type PlatformUserBalance = typeof platformUserBalances.$inferSelect;
+
+// Platform Transactions
+export const insertPlatformTransactionSchema = createInsertSchema(platformTransactions).omit({
+  id: true,
+  createdAt: true,
+  completedAt: true,
+});
+export type InsertPlatformTransaction = z.infer<typeof insertPlatformTransactionSchema>;
+export type PlatformTransaction = typeof platformTransactions.$inferSelect;
 
 // Token Configuration
 export const insertTokenConfigSchema = createInsertSchema(tokenConfig).omit({ 

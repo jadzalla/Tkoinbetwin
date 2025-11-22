@@ -9,6 +9,7 @@ import { PricingService } from "./services/pricing-service";
 import { StakingService } from "./services/staking-service";
 import { applicationService } from "./services/application-service";
 import { BurnProposalService } from "./services/burn-proposal-service";
+import { platformAPIService } from "./services/platform-api-service";
 import { TOKEN_DECIMALS, TOKEN_MAX_SUPPLY_TOKENS } from "@shared/token-constants";
 import { db } from "./db";
 import { tokenConfig, type Transaction, type UserSettlement } from "@shared/schema";
