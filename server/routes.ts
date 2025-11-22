@@ -11,10 +11,11 @@ import { applicationService } from "./services/application-service";
 import { BurnProposalService } from "./services/burn-proposal-service";
 import { TOKEN_DECIMALS, TOKEN_MAX_SUPPLY_TOKENS } from "@shared/token-constants";
 import { db } from "./db";
-import { tokenConfig, type Transaction } from "@shared/schema";
+import { tokenConfig, type Transaction, type UserSettlement } from "@shared/schema";
 import { eq } from "drizzle-orm";
 import { Connection } from "@solana/web3.js";
 import { logger } from "./utils/logger";
+import { verifyPlatformSignature, getPlatformFromRequest } from "./utils/platform-auth";
 
 const SERVER_START_TIME = Date.now();
 
@@ -4499,6 +4500,281 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching deposit:", error);
       res.status(500).json({ message: "Failed to fetch deposit" });
+    }
+  });
+
+  // ========================================
+  // Platform API Endpoints (Server-to-Server)
+  // ========================================
+
+  // Get user balance (Platform API)
+  app.get('/api/platforms/:platformId/users/:userId/balance', verifyPlatformSignature, async (req: any, res) => {
+    try {
+      const { platformId, userId } = req.params;
+      const platform = getPlatformFromRequest(req);
+      
+      // Verify platform ID matches authenticated platform
+      if (platform.id !== platformId) {
+        return res.status(403).json({ error: 'Platform ID mismatch' });
+      }
+      
+      // Get user's settlements for this platform
+      const settlements = await storage.getUserSettlements(userId, platformId);
+      
+      // Calculate balance from settlements
+      let tkoinBalance = 0;
+      let creditsBalance = 0;
+      
+      settlements.forEach((settlement: UserSettlement) => {
+        const amount = parseFloat(settlement.tkoinAmount || '0');
+        if (settlement.type === 'deposit') {
+          tkoinBalance += amount;
+          creditsBalance += amount * 100; // 1 TKOIN = 100 CREDITS
+        } else if (settlement.type === 'withdrawal') {
+          tkoinBalance -= amount;
+          creditsBalance -= amount * 100;
+        }
+      });
+      
+      logger.info('Platform balance request', {
+        platformId,
+        userId,
+        tkoinBalance,
+        creditsBalance,
+      });
+      
+      res.json({
+        userId,
+        platformId,
+        tkoinBalance: tkoinBalance.toFixed(8),
+        creditsBalance: creditsBalance.toFixed(2),
+        exchangeRate: "100.00",
+        lastUpdated: new Date().toISOString(),
+      });
+    } catch (error) {
+      logger.error('Platform balance request error', {
+        platformId: req.params.platformId,
+        userId: req.params.userId,
+        error,
+      });
+      res.status(500).json({ error: "Failed to fetch balance" });
+    }
+  });
+
+  // Initiate deposit (Platform API)
+  app.post('/api/platforms/:platformId/deposits', verifyPlatformSignature, async (req: any, res) => {
+    try {
+      const { platformId } = req.params;
+      const { userId, amount, method } = req.body;
+      const platform = getPlatformFromRequest(req);
+      
+      // Verify platform ID matches authenticated platform
+      if (platform.id !== platformId) {
+        return res.status(403).json({ error: 'Platform ID mismatch' });
+      }
+      
+      // Validate input
+      if (!userId || !amount || !method) {
+        return res.status(400).json({ 
+          error: 'Missing required fields',
+          required: ['userId', 'amount', 'method']
+        });
+      }
+      
+      const depositAmount = parseFloat(amount);
+      if (isNaN(depositAmount) || depositAmount <= 0) {
+        return res.status(400).json({ error: 'Invalid deposit amount' });
+      }
+      
+      // Create transaction record for tracking
+      const transaction = await storage.createTransaction({
+        type: 'deposit',
+        userId,
+        tkoinAmount: depositAmount.toString(),
+        creditsAmount: (depositAmount * 100).toString(),
+        conversionRate: '100',
+        status: 'pending',
+        metadata: {
+          platformId,
+          method,
+          initiatedAt: new Date().toISOString(),
+        },
+      });
+      
+      // Return deposit initiation response
+      const redirectUrl = method === 'p2p_marketplace' 
+        ? `https://${req.headers.host}/marketplace`
+        : null;
+      
+      const expiresAt = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
+      
+      logger.info('Platform deposit initiated', {
+        platformId,
+        userId,
+        amount: depositAmount,
+        method,
+        transactionId: transaction.id,
+      });
+      
+      res.json({
+        depositId: transaction.id,
+        status: 'pending',
+        tkoinAmount: depositAmount.toFixed(8),
+        creditsAmount: (depositAmount * 100).toFixed(2),
+        method,
+        redirectUrl,
+        expiresAt: expiresAt.toISOString(),
+      });
+    } catch (error) {
+      logger.error('Platform deposit initiation error', {
+        platformId: req.params.platformId,
+        userId: req.body.userId,
+        error,
+      });
+      res.status(500).json({ error: "Failed to initiate deposit" });
+    }
+  });
+
+  // Initiate withdrawal (Platform API)
+  app.post('/api/platforms/:platformId/withdrawals', verifyPlatformSignature, async (req: any, res) => {
+    try {
+      const { platformId } = req.params;
+      const { userId, amount, solanaWallet } = req.body;
+      const platform = getPlatformFromRequest(req);
+      
+      // Verify platform ID matches authenticated platform
+      if (platform.id !== platformId) {
+        return res.status(403).json({ error: 'Platform ID mismatch' });
+      }
+      
+      // Validate input
+      if (!userId || !amount) {
+        return res.status(400).json({ 
+          error: 'Missing required fields',
+          required: ['userId', 'amount']
+        });
+      }
+      
+      const withdrawalAmount = parseFloat(amount);
+      if (isNaN(withdrawalAmount) || withdrawalAmount <= 0) {
+        return res.status(400).json({ error: 'Invalid withdrawal amount' });
+      }
+      
+      // Check user balance
+      const settlements = await storage.getUserSettlements(userId, platformId);
+      let balance = 0;
+      settlements.forEach((settlement: UserSettlement) => {
+        const settleAmount = parseFloat(settlement.tkoinAmount || '0');
+        if (settlement.type === 'deposit') {
+          balance += settleAmount;
+        } else if (settlement.type === 'withdrawal') {
+          balance -= settleAmount;
+        }
+      });
+      
+      if (balance < withdrawalAmount) {
+        return res.status(400).json({
+          error: 'Insufficient balance',
+          availableBalance: balance.toFixed(8),
+          requestedAmount: withdrawalAmount.toFixed(8),
+        });
+      }
+      
+      // Create withdrawal transaction
+      const transaction = await storage.createTransaction({
+        type: 'withdrawal',
+        userId,
+        userWallet: solanaWallet,
+        tkoinAmount: withdrawalAmount.toString(),
+        creditsAmount: (withdrawalAmount * 100).toString(),
+        conversionRate: '100',
+        status: 'pending',
+        metadata: {
+          platformId,
+          initiatedAt: new Date().toISOString(),
+        },
+      });
+      
+      logger.info('Platform withdrawal initiated', {
+        platformId,
+        userId,
+        amount: withdrawalAmount,
+        destination: solanaWallet || 'p2p_marketplace',
+        transactionId: transaction.id,
+      });
+      
+      res.json({
+        withdrawalId: transaction.id,
+        status: 'pending',
+        tkoinAmount: withdrawalAmount.toFixed(8),
+        creditsDeducted: (withdrawalAmount * 100).toFixed(2),
+        destination: solanaWallet || 'p2p_marketplace',
+        estimatedCompletion: new Date(Date.now() + 15 * 60 * 1000).toISOString(), // 15 minutes
+      });
+    } catch (error) {
+      logger.error('Platform withdrawal initiation error', {
+        platformId: req.params.platformId,
+        userId: req.body.userId,
+        error,
+      });
+      res.status(500).json({ error: "Failed to initiate withdrawal" });
+    }
+  });
+
+  // Get user transaction history (Platform API)
+  app.get('/api/platforms/:platformId/users/:userId/transactions', verifyPlatformSignature, async (req: any, res) => {
+    try {
+      const { platformId, userId } = req.params;
+      const platform = getPlatformFromRequest(req);
+      const limit = parseInt(req.query.limit as string) || 50;
+      const offset = parseInt(req.query.offset as string) || 0;
+      
+      // Verify platform ID matches authenticated platform
+      if (platform.id !== platformId) {
+        return res.status(403).json({ error: 'Platform ID mismatch' });
+      }
+      
+      // Get user transactions
+      const allTransactions = await storage.getTransactionsByUser(userId);
+      
+      // Filter and format
+      const filtered = allTransactions
+        .filter((tx: Transaction) => ['deposit', 'withdrawal', 'agent_transfer'].includes(tx.type))
+        .map((tx: Transaction) => ({
+          id: tx.id,
+          type: tx.type === 'agent_transfer' ? 'deposit' : tx.type,
+          tkoinAmount: parseFloat(tx.tkoinAmount || '0').toFixed(8),
+          creditsAmount: parseFloat(tx.creditsAmount || '0').toFixed(2),
+          status: tx.status || 'completed',
+          timestamp: tx.createdAt.toISOString(),
+        }));
+      
+      const paginated = filtered.slice(offset, offset + limit);
+      
+      logger.info('Platform transaction history request', {
+        platformId,
+        userId,
+        limit,
+        offset,
+        total: filtered.length,
+      });
+      
+      res.json({
+        transactions: paginated,
+        pagination: {
+          total: filtered.length,
+          limit,
+          offset,
+          hasMore: offset + limit < filtered.length,
+        },
+      });
+    } catch (error) {
+      logger.error('Platform transaction history error', {
+        platformId: req.params.platformId,
+        userId: req.params.userId,
+        error,
+      });
+      res.status(500).json({ error: "Failed to fetch transactions" });
     }
   });
   
