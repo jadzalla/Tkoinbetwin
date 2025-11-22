@@ -1,0 +1,75 @@
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# php test-deposit-withdrawal.php
+
+=================================================
+BetWin ↔ Tkoin Deposit/Withdrawal Flow Test
+=================================================
+
+Test User: darkeningtracery759 (ID: 3)
+Email: jadzalla@venmyglobal.com
+BetWin Balance: 12,971.80 credits
+
+=================================================
+STEP 1: Check Initial Balance
+=================================================
+Tkoin Balance: null (user not in Tkoin yet) credits
+✓ Balance API working
+
+=================================================
+STEP 2: Test Deposit Flow (User Buys TKOIN)
+=================================================
+Initiating deposit: 50.00 TKOIN (5000.00 credits) via P2P marketplace...
+
+✓ Deposit initiated successfully!
+Settlement ID: 26
+Type: deposit
+Amount: 5000 credits
+TKOIN Amount:  TKOIN
+Status: processing
+
+=================================================
+STEP 3: Check Updated Balance
+=================================================
+New Tkoin Balance: null credits
+✓ Balance check completed
+
+=================================================
+STEP 4: Test Withdrawal Flow (User Sells TKOIN)
+=================================================
+Initiating withdrawal: 25.00 TKOIN (2500.00 credits) to P2P marketplace...
+
+✓ Withdrawal initiated successfully!
+Settlement ID: 27
+Type: withdrawal
+Amount: 2500 credits
+TKOIN Amount:  TKOIN
+Status: processing
+
+=================================================
+STEP 5: Check Final Balance
+=================================================
+Final Tkoin Balance: null credits
+✓ Balance check completed
+
+=================================================
+STEP 6: Check Transaction History
+=================================================
+
+   Error 
+
+  Call to undefined method App\Services\TkoinService::makeRequest()
+
+  at app/Services/TkoinService.php:236
+    232▕     public function getUserTransactions($user, int $limit = 10): array
+    233▕     {
+    234▕         try {
+    235▕             $endpoint = "platforms/{$this->platformId}/users/{$user->id}/transactions?limit={$limit}";
+  ➜ 236▕             return $this->makeRequest('GET', $endpoint);
+    237▕         } catch (\Exception $e) {
+    238▕             throw new \Exception("Failed to get user transactions: " . $e->getMessage());
+    239▕         }
+    240▕     }
+
+  1   test-deposit-withdrawal.php:131
+      App\Services\TkoinService::getUserTransactions()
+
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# 
