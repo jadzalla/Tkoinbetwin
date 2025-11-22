@@ -3,6 +3,7 @@ import { platformUserBalances, platformTransactions, sovereignPlatforms, type In
 import { eq, and, desc } from "drizzle-orm";
 import { logger } from "../utils/logger";
 import crypto from "crypto";
+import Decimal from "decimal.js";
 
 const TKOIN_CREDIT_RATE = 100; // 1 TKOIN = 100 Credits
 
@@ -21,9 +22,9 @@ export interface WithdrawalRequest {
   metadata?: Record<string, any>;
 }
 
-export class PlatformAPIService {
+class PlatformAPIService {
   /**
-   * Create deposit transaction and update balance
+   * Create deposit transaction and update balance (ATOMIC)
    */
   async createDeposit(platformId: string, request: DepositRequest): Promise<PlatformTransaction> {
     const { platformUserId, creditsAmount, platformSettlementId, metadata } = request;
@@ -35,89 +36,85 @@ export class PlatformAPIService {
       platformSettlementId,
     });
 
-    // Calculate TKOIN amount
-    const tkoinAmount = creditsAmount / TKOIN_CREDIT_RATE;
+    // Use Decimal.js for precision-safe calculations
+    const creditsDecimal = new Decimal(creditsAmount);
+    const tkoinDecimal = creditsDecimal.dividedBy(TKOIN_CREDIT_RATE);
 
-    // Create transaction
-    const [transaction] = await db.insert(platformTransactions).values({
-      platformId,
-      platformUserId,
-      type: 'deposit',
-      creditsAmount: creditsAmount.toString(),
-      tkoinAmount: tkoinAmount.toString(),
-      status: 'processing',
-      platformSettlementId,
-      metadata: metadata || {},
-    }).returning();
+    // Execute entire deposit flow in atomic transaction
+    return await db.transaction(async (tx) => {
+      // 1. Create transaction record
+      const [transaction] = await tx.insert(platformTransactions).values({
+        platformId,
+        platformUserId,
+        type: 'deposit',
+        creditsAmount: creditsDecimal.toFixed(2),
+        tkoinAmount: tkoinDecimal.toFixed(8),
+        status: 'processing',
+        platformSettlementId,
+        metadata: metadata || {},
+      }).returning();
 
-    // Process deposit (simulate instant completion for now)
-    await this.completeDeposit(transaction.id);
-
-    return transaction;
-  }
-
-  /**
-   * Complete deposit - Update balance and send webhook
-   */
-  private async completeDeposit(transactionId: string): Promise<void> {
-    const transaction = await db.query.platformTransactions.findFirst({
-      where: eq(platformTransactions.id, transactionId),
-    });
-
-    if (!transaction || transaction.status !== 'processing') {
-      throw new Error('Transaction not found or not in processing state');
-    }
-
-    // Update or create user balance
-    const existingBalance = await db.query.platformUserBalances.findFirst({
-      where: and(
-        eq(platformUserBalances.platformId, transaction.platformId),
-        eq(platformUserBalances.platformUserId, transaction.platformUserId)
-      ),
-    });
-
-    const newBalance = existingBalance
-      ? (parseFloat(existingBalance.creditsBalance) + parseFloat(transaction.creditsAmount)).toFixed(2)
-      : parseFloat(transaction.creditsAmount).toFixed(2);
-
-    if (existingBalance) {
-      await db.update(platformUserBalances)
-        .set({
-          creditsBalance: newBalance,
-          lastTransactionAt: new Date(),
-          updatedAt: new Date(),
-        })
-        .where(eq(platformUserBalances.id, existingBalance.id));
-    } else {
-      await db.insert(platformUserBalances).values({
-        platformId: transaction.platformId,
-        platformUserId: transaction.platformUserId,
-        creditsBalance: newBalance,
-        lastTransactionAt: new Date(),
+      // 2. Update or create user balance
+      const existingBalance = await tx.query.platformUserBalances.findFirst({
+        where: and(
+          eq(platformUserBalances.platformId, platformId),
+          eq(platformUserBalances.platformUserId, platformUserId)
+        ),
       });
-    }
 
-    // Mark transaction as completed
-    await db.update(platformTransactions)
-      .set({
-        status: 'completed',
-        completedAt: new Date(),
-      })
-      .where(eq(platformTransactions.id, transactionId));
+      const newBalanceDecimal = existingBalance
+        ? new Decimal(existingBalance.creditsBalance).plus(creditsDecimal)
+        : creditsDecimal;
 
-    logger.info('Platform deposit completed', {
-      transactionId,
-      platformId: transaction.platformId,
-      platformUserId: transaction.platformUserId,
-      newBalance,
+      if (existingBalance) {
+        await tx.update(platformUserBalances)
+          .set({
+            creditsBalance: newBalanceDecimal.toFixed(2),
+            lastTransactionAt: new Date(),
+            updatedAt: new Date(),
+          })
+          .where(eq(platformUserBalances.id, existingBalance.id));
+      } else {
+        await tx.insert(platformUserBalances).values({
+          platformId,
+          platformUserId,
+          creditsBalance: newBalanceDecimal.toFixed(2),
+          lastTransactionAt: new Date(),
+        });
+      }
+
+      // 3. Mark transaction as completed
+      const [completedTransaction] = await tx.update(platformTransactions)
+        .set({
+          status: 'completed',
+          completedAt: new Date(),
+        })
+        .where(eq(platformTransactions.id, transaction.id))
+        .returning();
+
+      logger.info('Platform deposit completed (atomic)', {
+        transactionId: transaction.id,
+        platformId,
+        platformUserId,
+        newBalance: newBalanceDecimal.toFixed(2),
+      });
+
+      // 4. Send webhook (after transaction commits)
+      setImmediate(() => {
+        this.sendWebhook(platformId, transaction.id).catch((error) => {
+          logger.error('Webhook send failed after deposit', {
+            transactionId: transaction.id,
+            error: error instanceof Error ? error.message : 'Unknown error',
+          });
+        });
+      });
+
+      return completedTransaction;
     });
-
-    // Send webhook to platform
-    await this.sendWebhook(transaction.platformId, transactionId);
   }
 
   /**
-   * Create withdrawal transaction and update balance
+   * Create withdrawal transaction and update balance (ATOMIC)
    */
   async createWithdrawal(platformId: string, request: WithdrawalRequest): Promise<PlatformTransaction> {
     const { platformUserId, creditsAmount, solanaAddress, platformSettlementId, metadata } = request;
@@ -129,88 +126,84 @@ export class PlatformAPIService {
       platformSettlementId,
     });
 
-    // Check balance
-    const balance = await this.getUserBalance(platformId, platformUserId);
-    if (balance < creditsAmount) {
-      throw new Error('Insufficient balance for withdrawal');
-    }
+    // Use Decimal.js for precision-safe calculations
+    const creditsDecimal = new Decimal(creditsAmount);
+    const tkoinDecimal = creditsDecimal.dividedBy(TKOIN_CREDIT_RATE);
 
-    // Calculate TKOIN amount
-    const tkoinAmount = creditsAmount / TKOIN_CREDIT_RATE;
+    // Execute entire withdrawal flow in atomic transaction
+    return await db.transaction(async (tx) => {
+      // 1. Check balance first
+      const existingBalance = await tx.query.platformUserBalances.findFirst({
+        where: and(
+          eq(platformUserBalances.platformId, platformId),
+          eq(platformUserBalances.platformUserId, platformUserId)
+        ),
+      });
 
-    // Create transaction
-    const [transaction] = await db.insert(platformTransactions).values({
-      platformId,
-      platformUserId,
-      type: 'withdrawal',
-      creditsAmount: creditsAmount.toString(),
-      tkoinAmount: tkoinAmount.toString(),
-      status: 'processing',
-      platformSettlementId,
-      metadata: { ...metadata, solanaAddress },
-    }).returning();
+      if (!existingBalance) {
+        throw new Error('User balance not found');
+      }
 
-    // Process withdrawal (simulate instant completion for now)
-    await this.completeWithdrawal(transaction.id);
+      const currentBalanceDecimal = new Decimal(existingBalance.creditsBalance);
+      if (currentBalanceDecimal.lessThan(creditsDecimal)) {
+        throw new Error(`Insufficient balance: have ${currentBalanceDecimal.toFixed(2)}, need ${creditsDecimal.toFixed(2)}`);
+      }
 
-    return transaction;
+      // 2. Create transaction record
+      const [transaction] = await tx.insert(platformTransactions).values({
+        platformId,
+        platformUserId,
+        type: 'withdrawal',
+        creditsAmount: creditsDecimal.toFixed(2),
+        tkoinAmount: tkoinDecimal.toFixed(8),
+        status: 'processing',
+        platformSettlementId,
+        metadata: metadata ? { ...metadata, solanaAddress } : { solanaAddress },
+      }).returning();
+
+      // 3. Deduct from user balance
+      const newBalanceDecimal = currentBalanceDecimal.minus(creditsDecimal);
+
+      await tx.update(platformUserBalances)
+        .set({
+          creditsBalance: newBalanceDecimal.toFixed(2),
+          lastTransactionAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(platformUserBalances.id, existingBalance.id));
+
+      // 4. Mark transaction as completed
+      const [completedTransaction] = await tx.update(platformTransactions)
+        .set({
+          status: 'completed',
+          completedAt: new Date(),
+        })
+        .where(eq(platformTransactions.id, transaction.id))
+        .returning();
+
+      logger.info('Platform withdrawal completed (atomic)', {
+        transactionId: transaction.id,
+        platformId,
+        platformUserId,
+        newBalance: newBalanceDecimal.toFixed(2),
+      });
+
+      // 5. Send webhook (after transaction commits)
+      setImmediate(() => {
+        this.sendWebhook(platformId, transaction.id).catch((error) => {
+          logger.error('Webhook send failed after withdrawal', {
+            transactionId: transaction.id,
+            error: error instanceof Error ? error.message : 'Unknown error',
+          });
+        });
+      });
+
+      return completedTransaction;
+    });
   }
 
   /**
-   * Complete withdrawal - Update balance and send webhook
-   */
-  private async completeWithdrawal(transactionId: string): Promise<void> {
-    const transaction = await db.query.platformTransactions.findFirst({
-      where: eq(platformTransactions.id, transactionId),
-    });
-
-    if (!transaction || transaction.status !== 'processing') {
-      throw new Error('Transaction not found or not in processing state');
-    }
-
-    // Update user balance (deduct)
-    const existingBalance = await db.query.platformUserBalances.findFirst({
-      where: and(
-        eq(platformUserBalances.platformId, transaction.platformId),
-        eq(platformUserBalances.platformUserId, transaction.platformUserId)
-      ),
-    });
-
-    if (!existingBalance) {
-      throw new Error('User balance not found');
-    }
-
-    const newBalance = (parseFloat(existingBalance.creditsBalance) - parseFloat(transaction.creditsAmount)).toFixed(2);
-
-    await db.update(platformUserBalances)
-      .set({
-        creditsBalance: newBalance,
-        lastTransactionAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .where(eq(platformUserBalances.id, existingBalance.id));
-
-    // Mark transaction as completed
-    await db.update(platformTransactions)
-      .set({
-        status: 'completed',
-        completedAt: new Date(),
-      })
-      .where(eq(platformTransactions.id, transactionId));
-
-    logger.info('Platform withdrawal completed', {
-      transactionId,
-      platformId: transaction.platformId,
-      platformUserId: transaction.platformUserId,
-      newBalance,
-    });
-
-    // Send webhook to platform
-    await this.sendWebhook(transaction.platformId, transactionId);
-  }
-
-  /**
-   * Get user balance
+   * Get user balance (precision-safe)
    */
   async getUserBalance(platformId: string, platformUserId: string): Promise<number> {
     const balance = await db.query.platformUserBalances.findFirst({
@@ -220,7 +213,8 @@ export class PlatformAPIService {
       ),
     });
 
-    return balance ? parseFloat(balance.creditsBalance) : 0;
+    // Use Decimal.js for precision, then convert to number for API compatibility
+    return balance ? new Decimal(balance.creditsBalance).toNumber() : 0;
   }
 
   /**
@@ -355,4 +349,6 @@ export class PlatformAPIService {
   }
 }
 
+// Export singleton instance
 export const platformAPIService = new PlatformAPIService();
+export { PlatformAPIService };
