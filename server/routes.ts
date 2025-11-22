@@ -4519,24 +4519,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ error: 'Platform ID mismatch' });
       }
       
-      // Get user's COMPLETED settlements for this platform (ledger of record)
-      const allSettlements = await storage.getUserSettlements(userId, platformId);
-      const completedSettlements = allSettlements.filter(s => s.status === 'completed');
-      
-      // Calculate balance from completed settlements only
-      let tkoinBalance = 0;
-      let creditsBalance = 0;
-      
-      completedSettlements.forEach((settlement: UserSettlement) => {
-        const amount = parseFloat(settlement.tkoinAmount || '0');
-        if (settlement.type === 'deposit') {
-          tkoinBalance += amount;
-          creditsBalance += amount * 100; // 1 TKOIN = 100 CREDITS
-        } else if (settlement.type === 'withdrawal') {
-          tkoinBalance -= amount;
-          creditsBalance -= amount * 100;
-        }
-      });
+      // Get balance from platform API service
+      const creditsBalance = await platformAPIService.getUserBalance(platformId, userId);
+      const tkoinBalance = creditsBalance / 100; // 1 TKOIN = 100 CREDITS
       
       logger.info('Platform balance request', {
         platformId,
@@ -4588,27 +4573,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Invalid deposit amount' });
       }
       
-      // Create transaction record for tracking
-      const transaction = await storage.createTransaction({
-        type: 'deposit',
-        userId,
-        tkoinAmount: depositAmount.toString(),
-        creditsAmount: (depositAmount * 100).toString(),
-        conversionRate: '100',
-        status: 'pending',
+      // Create deposit via platform API service
+      const creditsAmount = depositAmount * 100; // 1 TKOIN = 100 CREDITS
+      const transaction = await platformAPIService.createDeposit(platformId, {
+        platformUserId: userId,
+        creditsAmount,
+        platformSettlementId: req.body.settlementId,
         metadata: {
-          platformId,
           method,
           initiatedAt: new Date().toISOString(),
         },
       });
-      
-      // Return deposit initiation response
-      const redirectUrl = method === 'p2p_marketplace' 
-        ? `https://${req.headers.host}/marketplace`
-        : null;
-      
-      const expiresAt = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
       
       logger.info('Platform deposit initiated', {
         platformId,
@@ -4620,12 +4595,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({
         depositId: transaction.id,
-        status: 'pending',
-        tkoinAmount: depositAmount.toFixed(8),
-        creditsAmount: (depositAmount * 100).toFixed(2),
+        status: transaction.status,
+        tkoinAmount: parseFloat(transaction.tkoinAmount).toFixed(8),
+        creditsAmount: parseFloat(transaction.creditsAmount).toFixed(2),
         method,
-        redirectUrl,
-        expiresAt: expiresAt.toISOString(),
+        completedAt: transaction.completedAt?.toISOString(),
       });
     } catch (error) {
       logger.error('Platform deposit initiation error', {
@@ -4662,38 +4636,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Invalid withdrawal amount' });
       }
       
-      // Check user balance (only count COMPLETED settlements)
-      const allSettlements = await storage.getUserSettlements(userId, platformId);
-      const completedSettlements = allSettlements.filter(s => s.status === 'completed');
-      let balance = 0;
-      completedSettlements.forEach((settlement: UserSettlement) => {
-        const settleAmount = parseFloat(settlement.tkoinAmount || '0');
-        if (settlement.type === 'deposit') {
-          balance += settleAmount;
-        } else if (settlement.type === 'withdrawal') {
-          balance -= settleAmount;
-        }
-      });
-      
-      if (balance < withdrawalAmount) {
-        return res.status(400).json({
-          error: 'Insufficient balance',
-          availableBalance: balance.toFixed(8),
-          requestedAmount: withdrawalAmount.toFixed(8),
-        });
-      }
-      
-      // Create withdrawal transaction
-      const transaction = await storage.createTransaction({
-        type: 'withdrawal',
-        userId,
-        userWallet: solanaWallet,
-        tkoinAmount: withdrawalAmount.toString(),
-        creditsAmount: (withdrawalAmount * 100).toString(),
-        conversionRate: '100',
-        status: 'pending',
+      // Create withdrawal via platform API service
+      const creditsAmount = withdrawalAmount * 100; // 1 TKOIN = 100 CREDITS
+      const transaction = await platformAPIService.createWithdrawal(platformId, {
+        platformUserId: userId,
+        creditsAmount,
+        solanaAddress: solanaWallet,
+        platformSettlementId: req.body.settlementId,
         metadata: {
-          platformId,
           initiatedAt: new Date().toISOString(),
         },
       });
@@ -4708,11 +4658,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({
         withdrawalId: transaction.id,
-        status: 'pending',
-        tkoinAmount: withdrawalAmount.toFixed(8),
-        creditsDeducted: (withdrawalAmount * 100).toFixed(2),
+        status: transaction.status,
+        tkoinAmount: parseFloat(transaction.tkoinAmount).toFixed(8),
+        creditsDeducted: parseFloat(transaction.creditsAmount).toFixed(2),
         destination: solanaWallet || 'p2p_marketplace',
-        estimatedCompletion: new Date(Date.now() + 15 * 60 * 1000).toISOString(), // 15 minutes
+        completedAt: transaction.completedAt?.toISOString(),
       });
     } catch (error) {
       logger.error('Platform withdrawal initiation error', {
@@ -4737,22 +4687,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ error: 'Platform ID mismatch' });
       }
       
-      // Get user transactions
-      const allTransactions = await storage.getTransactionsByUser(userId);
+      // Get user transactions from platform API service
+      const allTransactions = await platformAPIService.getUserTransactions(platformId, userId, 100);
       
-      // Filter and format
-      const filtered = allTransactions
-        .filter((tx: Transaction) => ['deposit', 'withdrawal', 'agent_transfer'].includes(tx.type))
-        .map((tx: Transaction) => ({
-          id: tx.id,
-          type: tx.type === 'agent_transfer' ? 'deposit' : tx.type,
-          tkoinAmount: parseFloat(tx.tkoinAmount || '0').toFixed(8),
-          creditsAmount: parseFloat(tx.creditsAmount || '0').toFixed(2),
-          status: tx.status || 'completed',
-          timestamp: tx.createdAt.toISOString(),
-        }));
+      // Format transactions
+      const formatted = allTransactions.map((tx) => ({
+        id: tx.id,
+        type: tx.type,
+        tkoinAmount: parseFloat(tx.tkoinAmount).toFixed(8),
+        creditsAmount: parseFloat(tx.creditsAmount).toFixed(2),
+        status: tx.status,
+        timestamp: tx.createdAt.toISOString(),
+      }));
       
-      const paginated = filtered.slice(offset, offset + limit);
+      const paginated = formatted.slice(offset, offset + limit);
       
       logger.info('Platform transaction history request', {
         platformId,
