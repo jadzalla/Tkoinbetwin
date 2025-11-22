@@ -39,41 +39,57 @@ This document defines the API contract between BetWin Casino (Laravel backend) a
 
 ### Platform API Credentials
 
-Tkoin issues platform-specific API credentials:
+Tkoin issues platform-specific API tokens:
 
 ```json
 {
   "platformId": "platform_betwin",
-  "apiKey": "pk_betwin_live_abc123...",
-  "apiSecret": "sk_betwin_live_xyz789..."
+  "apiToken": "ptk_ABC123...",
+  "apiSecret": "secret_for_signing_requests_to_tkoin",
+  "webhookSecret": "secret_for_verifying_webhooks_from_tkoin"
 }
 ```
 
-**Storage:**
-- `apiKey`: Include in `X-Platform-Key` header (public identifier)
-- `apiSecret`: Use to sign requests with HMAC-SHA256 (never expose)
+**Security Model:**
+- **API Token (`ptk_...`)**: Include in `X-Platform-Token` header (identifies the platform)
+- **API Secret**: Use to sign requests **Platform → Tkoin** with HMAC-SHA256 (never expose)
+- **Webhook Secret**: Use to verify webhooks **Tkoin → Platform** with HMAC-SHA256 (never expose)
+
+**⚠️ CRITICAL:** API Secret ≠ Webhook Secret
+- Different secrets for different traffic directions prevents privilege escalation
+- If webhook secret is compromised, attacker cannot make API requests
+- Rotate secrets independently via admin endpoints
 
 ### HMAC Request Signature
 
-All requests from BetWin → Tkoin must include HMAC-SHA256 signature:
+All requests from BetWin → Tkoin must include HMAC-SHA256 signature and nonce:
 
-**Headers:**
+**Required Headers:**
 ```
-X-Platform-Key: pk_betwin_live_abc123...
+X-Platform-Token: ptk_ABC123...
 X-Timestamp: 1700000000
+X-Nonce: 550e8400-e29b-41d4-a716-446655440000
 X-Signature: sha256=a1b2c3d4e5f6...
 ```
 
 **Signature Generation (PHP):**
 ```php
 $timestamp = time();
+$nonce = sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+    mt_rand(0, 0xffff), mt_rand(0, 0xffff),
+    mt_rand(0, 0xffff),
+    mt_rand(0, 0x0fff) | 0x4000,
+    mt_rand(0, 0x3fff) | 0x8000,
+    mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
+); // UUID v4
 $body = json_encode($requestData);
 $payload = $timestamp . '.' . $body;
-$signature = hash_hmac('sha256', $payload, $apiSecret);
+$signature = hash_hmac('sha256', $payload, $apiSecret); // Use API Secret here
 
 $headers = [
-    'X-Platform-Key' => $apiKey,
+    'X-Platform-Token' => $apiToken,
     'X-Timestamp' => $timestamp,
+    'X-Nonce' => $nonce,
     'X-Signature' => 'sha256=' . $signature,
     'Content-Type' => 'application/json'
 ];
@@ -82,11 +98,12 @@ $headers = [
 **Signature Verification (Node.js):**
 ```typescript
 const timestamp = req.headers['x-timestamp'];
+const nonce = req.headers['x-nonce'];
 const signature = req.headers['x-signature']?.replace('sha256=', '');
 const body = JSON.stringify(req.body);
 const payload = `${timestamp}.${body}`;
 const expectedSignature = crypto
-  .createHmac('sha256', apiSecret)
+  .createHmac('sha256', platform.apiSecret) // Use API Secret here
   .update(payload)
   .digest('hex');
 
@@ -95,10 +112,12 @@ if (signature !== expectedSignature) {
 }
 ```
 
-**Security:**
-- Timestamp must be within 5 minutes of server time (prevents replay attacks)
-- Nonce tracking prevents duplicate requests
-- HTTPS required in production
+**Security Measures:**
+- ✅ Timestamp must be within 5 minutes of server time (prevents old request replay)
+- ✅ Nonce tracking prevents duplicate requests (prevents immediate replay attacks)
+- ✅ Separate secrets for API vs webhooks (prevents privilege escalation)
+- ✅ HTTPS required in production (prevents man-in-the-middle attacks)
+- ✅ Token-based authentication with rotation support (no hardcoded secrets)
 
 ---
 
@@ -120,8 +139,9 @@ if (signature !== expectedSignature) {
 ```http
 GET /api/platforms/platform_betwin/users/user_12345/balance HTTP/1.1
 Host: localhost:5000
-X-Platform-Key: pk_betwin_live_abc123...
+X-Platform-Token: ptk_ABC123...
 X-Timestamp: 1700000000
+X-Nonce: 550e8400-e29b-41d4-a716-446655440000
 X-Signature: sha256=a1b2c3d4e5f6...
 ```
 
@@ -157,8 +177,9 @@ X-Signature: sha256=a1b2c3d4e5f6...
 ```http
 POST /api/platforms/platform_betwin/deposits HTTP/1.1
 Host: localhost:5000
-X-Platform-Key: pk_betwin_live_abc123...
+X-Platform-Token: ptk_ABC123...
 X-Timestamp: 1700000000
+X-Nonce: 550e8400-e29b-41d4-a716-446655440001
 X-Signature: sha256=a1b2c3d4e5f6...
 Content-Type: application/json
 
@@ -208,8 +229,9 @@ Content-Type: application/json
 ```http
 POST /api/platforms/platform_betwin/withdrawals HTTP/1.1
 Host: localhost:5000
-X-Platform-Key: pk_betwin_live_abc123...
+X-Platform-Token: ptk_ABC123...
 X-Timestamp: 1700000000
+X-Nonce: 550e8400-e29b-41d4-a716-446655440002
 X-Signature: sha256=a1b2c3d4e5f6...
 Content-Type: application/json
 
@@ -258,8 +280,9 @@ Content-Type: application/json
 ```http
 GET /api/platforms/platform_betwin/users/user_12345/transactions?limit=20 HTTP/1.1
 Host: localhost:5000
-X-Platform-Key: pk_betwin_live_abc123...
+X-Platform-Token: ptk_ABC123...
 X-Timestamp: 1700000000
+X-Nonce: 550e8400-e29b-41d4-a716-446655440003
 X-Signature: sha256=a1b2c3d4e5f6...
 ```
 
