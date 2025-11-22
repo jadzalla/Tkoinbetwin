@@ -1,0 +1,147 @@
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# # Check current .env
+echo "Current TKOIN_API_URL:"
+grep TKOIN_API_URL .env
+
+# The URL should NOT have /api in it because Guzzle's base_uri treats it differently
+# Update to just the domain
+sed -i 's|TKOIN_API_URL=.*|TKOIN_API_URL=https://1f1f76cb-d6d6-4e8e-b41b-5cb7e3d7fc0f-00-1icgdawm3o9xv.picard.replit.dev/api/|g' .env
+
+# Verify
+grep TKOIN_API_URL .env
+
+# Clear config cache
+php artisan config:clear
+
+# Add the missing getUserTransactions method to TkoinService
+cat >> fix-add-transactions-method.php << 'ADDMETHOD'
+<?php
+$file = 'app/Services/TkoinService.php';
+$content = file_get_contents($file);
+
+// Find the position right before the closing brace of the class
+$methodToAdd = '
+    /**
+     * Get user transaction history from Tkoin Protocol
+     */
+    public function getUserTransactions($user, int $limit = 10): array
+    {
+        try {
+            $endpoint = "platforms/{$this->platformId}/users/{$user->id}/transactions?limit={$limit}";
+            return $this->makeRequest(\'GET\', $endpoint);
+        } catch (\Exception $e) {
+            throw new \Exception("Failed to get user transactions: " . $e->getMessage());
+        }
+    }
+';
+
+// Insert before the last closing brace
+$content = preg_replace('/(\n}\s*)$/', $methodToAdd . '$1', $content);
+
+file_put_contents($file, $content);
+echo "Added getUserTransactions method\n";
+ADDMETHOD
+
+php fix-add-transactions-method.php
+
+# Verify
+php test-deposit-withdrawal.php app/Services/TkoinService.php
+Current TKOIN_API_URL:
+TKOIN_API_URL=https://1f1f76cb-d6d6-4e8e-b41b-5cb7e3d7fc0f-00-1icgdawm3o9xv.picard.replit.dev/api/
+TKOIN_API_URL=https://1f1f76cb-d6d6-4e8e-b41b-5cb7e3d7fc0f-00-1icgdawm3o9xv.picard.replit.dev/api/
+
+   INFO  Configuration cache cleared successfully.  
+
+Added getUserTransactions method
+
+Verifying getUserTransactions method added:
+    public function getUserTransactions($user, int $limit = 10): array
+    {
+        try {
+            $endpoint = "platforms/{$this->platformId}/users/{$user->id}/transactions?limit={$limit}";
+            return $this->makeRequest('GET', $endpoint);
+        } catch (\Exception $e) {
+
+=================================================
+BetWin ↔ Tkoin Deposit/Withdrawal Flow Test
+=================================================
+
+Test User: darkeningtracery759 (ID: 3)
+Email: jadzalla@venmyglobal.com
+BetWin Balance: 12,971.80 credits
+
+=================================================
+STEP 1: Check Initial Balance
+=================================================
+Tkoin Balance: null (user not in Tkoin yet) credits
+✓ Balance API working
+
+=================================================
+STEP 2: Test Deposit Flow (User Buys TKOIN)
+=================================================
+Initiating deposit: 50.00 TKOIN (5000.00 credits) via P2P marketplace...
+
+✓ Deposit initiated successfully!
+Settlement ID: 10
+Type: deposit
+Amount: 5000 credits
+TKOIN Amount:  TKOIN
+Status: processing
+
+=================================================
+STEP 3: Check Updated Balance
+=================================================
+New Tkoin Balance: null credits
+✓ Balance check completed
+
+=================================================
+STEP 4: Test Withdrawal Flow (User Sells TKOIN)
+=================================================
+Initiating withdrawal: 25.00 TKOIN (2500.00 credits) to P2P marketplace...
+
+✓ Withdrawal initiated successfully!
+Settlement ID: 11
+Type: withdrawal
+Amount: 2500 credits
+TKOIN Amount:  TKOIN
+Status: processing
+
+=================================================
+STEP 5: Check Final Balance
+=================================================
+Final Tkoin Balance: null credits
+✓ Balance check completed
+
+=================================================
+STEP 6: Check Transaction History
+=================================================
+✗ Error: Failed to get user transactions: Undefined property: App\Services\TkoinService::$platformId
+
+=================================================
+STEP 7: Check BetWin Local Database
+=================================================
+Local Settlements Count: 5
+
+Local Settlements:
+1. ID: 11, Type: withdrawal, Amount: 2500 credits, Status: processing
+2. ID: 10, Type: deposit, Amount: 5000 credits, Status: processing
+3. ID: 9, Type: withdrawal, Amount: 2500 credits, Status: processing
+4. ID: 8, Type: deposit, Amount: 5000 credits, Status: processing
+5. ID: 7, Type: withdrawal, Amount: 2500 credits, Status: failed
+
+✓ Local database check completed
+
+=================================================
+Test Complete!
+=================================================
+
+Summary:
+✓ Balance API tested
+✓ Deposit API tested
+✓ Withdrawal API tested
+✓ Transaction history API tested
+✓ Local database checked
+
+Next: Monitor webhook callbacks in BetWin logs
+Webhook URL: https://betwin.tkoin.finance/api/webhooks/tkoin
+
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# 
