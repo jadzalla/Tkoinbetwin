@@ -1,0 +1,66 @@
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# sed -i '/^}$/i\    public function getUserTransactions($user, int $limit = 10): array\n    {\n        try {\n            $endpoint = "platforms/{$this->platformId}/users/{$user->id}/transactions?limit={$limit}";\n            return $this->makeRequest('"'"'GET'"'"', $endpoint);\n        } catch (\Exception $e) {\n            throw new \Exception("Failed to get user transactions: " . $e->getMessage());\n        }\n    }\n' app/Services/TkoinService.php
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# grep -A 8 "getUserTransactions" app/Services/TkoinService.php
+    public function getUserTransactions($user, int $limit = 10): array
+    {
+        try {
+            $endpoint = "platforms/{$this->platformId}/users/{$user->id}/transactions?limit={$limit}";
+            return $this->makeRequest('GET', $endpoint);
+        } catch (Exception $e) {
+            throw new Exception("Failed to get user transactions: " . $e->getMessage());
+        }
+    }
+--
+    public function getUserTransactions($user, int $limit = 10): array
+    {
+        try {
+            $endpoint = "platforms/{$this->platformId}/users/{$user->id}/transactions?limit={$limit}";
+            return $this->makeRequest('GET', $endpoint);
+        } catch (Exception $e) {
+            throw new Exception("Failed to get user transactions: " . $e->getMessage());
+        }
+    }
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# php test-deposit-withdrawal.php
+
+=================================================
+BetWin ↔ Tkoin Deposit/Withdrawal Flow Test
+=================================================
+
+PHP Fatal error:  Cannot redeclare App\Services\TkoinService::getUserTransactions() in /home/tkoin-betwin/htdocs/betwin.tkoin.finance/app/Services/TkoinService.php on line 242
+
+   Symfony\Component\ErrorHandler\Error\FatalError 
+
+  Cannot redeclare App\Services\TkoinService::getUserTransactions()
+
+  at app/Services/TkoinService.php:242
+    238▕             throw new Exception("Failed to get user transactions: " . $e->getMessage());
+    239▕         }
+    240▕     }
+    241▕ 
+  ➜ 242▕     public function getUserTransactions($user, int $limit = 10): array
+    243▕     {
+    244▕         try {
+    245▕             $endpoint = "platforms/{$this->platformId}/users/{$user->id}/transactions?limit={$limit}";
+    246▕             return $this->makeRequest('GET', $endpoint);
+
+
+   Whoops\Exception\ErrorException 
+
+  Cannot redeclare App\Services\TkoinService::getUserTransactions()
+
+  at app/Services/TkoinService.php:242
+    238▕             throw new Exception("Failed to get user transactions: " . $e->getMessage());
+    239▕         }
+    240▕     }
+    241▕ 
+  ➜ 242▕     public function getUserTransactions($user, int $limit = 10): array
+    243▕     {
+    244▕         try {
+    245▕             $endpoint = "platforms/{$this->platformId}/users/{$user->id}/transactions?limit={$limit}";
+    246▕             return $this->makeRequest('GET', $endpoint);
+
+      +1 vendor frames 
+
+  2   [internal]:0
+      Whoops\Run::handleShutdown()
+
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# 
