@@ -1,0 +1,123 @@
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# # Create a comprehensive fix for TkoinService.php
+cat > fix-tkoin-service-complete.php << 'COMPLETFIX'
+<?php
+
+$file = 'app/Services/TkoinService.php';
+$content = file_get_contents($file);
+
+// Fix the constructor to properly initialize all properties
+$newConstructor = '    public function __construct()
+    {
+        $this->baseUrl = env(\'TKOIN_API_URL\', \'https://tkoin.replit.dev/api\');
+        $this->platformId = env(\'TKOIN_PLATFORM_ID\', \'platform_betwin\');
+        $this->apiToken = env(\'TKOIN_API_TOKEN\');
+        $this->apiSecret = env(\'TKOIN_API_SECRET\');
+        $this->webhookSecret = env(\'TKOIN_WEBHOOK_SECRET\');
+        $this->client = new Client([\'base_uri\' => $this->baseUrl]);
+    }';
+
+// Replace the entire constructor
+$content = preg_replace(
+    '/public function __construct\(\)\s*\{[^}]+\}/',
+    $newConstructor,
+    $content
+);
+
+file_put_contents($file, $content);
+echo "Fixed TkoinService constructor\n";
+COMPLETFIX
+
+php fix-tkoin-service-complete.php
+
+# Verify the constructor
+echo -e "\nVerifying constructor:"
+grep -A 8 "public function __construct" app/Services/TkoinService.php
+
+# Re-run the test
+php test-deposit-withdrawal.php
+Fixed TkoinService constructor
+
+Verifying constructor:
+        public function __construct()
+    {
+        $this->baseUrl = env('TKOIN_API_URL', 'https://tkoin.replit.dev/api');
+        $this->platformId = env('TKOIN_PLATFORM_ID', 'platform_betwin');
+        $this->apiToken = env('TKOIN_API_TOKEN');
+        $this->apiSecret = env('TKOIN_API_SECRET');
+        $this->webhookSecret = env('TKOIN_WEBHOOK_SECRET');
+        $this->client = new Client(['base_uri' => $this->baseUrl]);
+    }
+
+=================================================
+BetWin ↔ Tkoin Deposit/Withdrawal Flow Test
+=================================================
+
+Test User: darkeningtracery759 (ID: 3)
+Email: jadzalla@venmyglobal.com
+BetWin Balance: 12,971.80 credits
+
+=================================================
+STEP 1: Check Initial Balance
+=================================================
+Tkoin Balance: null (user not in Tkoin yet) credits
+✓ Balance API working
+
+=================================================
+STEP 2: Test Deposit Flow (User Buys TKOIN)
+=================================================
+Initiating deposit: 50.00 TKOIN (5000.00 credits) via P2P marketplace...
+
+✓ Deposit initiated successfully!
+Settlement ID: 12
+Type: deposit
+Amount: 5000 credits
+TKOIN Amount:  TKOIN
+Status: processing
+
+=================================================
+STEP 3: Check Updated Balance
+=================================================
+New Tkoin Balance: null credits
+✓ Balance check completed
+
+=================================================
+STEP 4: Test Withdrawal Flow (User Sells TKOIN)
+=================================================
+Initiating withdrawal: 25.00 TKOIN (2500.00 credits) to P2P marketplace...
+
+✓ Withdrawal initiated successfully!
+Settlement ID: 13
+Type: withdrawal
+Amount: 2500 credits
+TKOIN Amount:  TKOIN
+Status: processing
+
+=================================================
+STEP 5: Check Final Balance
+=================================================
+Final Tkoin Balance: null credits
+✓ Balance check completed
+
+=================================================
+STEP 6: Check Transaction History
+=================================================
+
+   Error 
+
+  Call to undefined method App\Services\TkoinService::makeRequest()
+
+  at app/Services/TkoinService.php:239
+    235▕     public function getUserTransactions($user, int $limit = 10): array
+    236▕     {
+    237▕         try {
+    238▕             $endpoint = "platforms/{$this->platformId}/users/{$user->id}/transactions?limit={$limit}";
+  ➜ 239▕             return $this->makeRequest('GET', $endpoint);
+    240▕         } catch (\Exception $e) {
+    241▕             throw new \Exception("Failed to get user transactions: " . $e->getMessage());
+    242▕         }
+    243▕     }
+
+  1   test-deposit-withdrawal.php:131
+      App\Services\TkoinService::getUserTransactions()
+
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# 
