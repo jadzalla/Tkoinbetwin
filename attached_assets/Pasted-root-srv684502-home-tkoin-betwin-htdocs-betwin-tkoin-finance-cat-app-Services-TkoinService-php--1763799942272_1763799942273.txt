@@ -1,0 +1,332 @@
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# cat app/Services/TkoinService.php
+<?php
+/**
+ *   BetWin - Tkoin Protocol Integration
+ *   ------------------------------------
+ *   TkoinService.php
+ * 
+ *   @copyright  Copyright (c) BetWin, All rights reserved
+ *   @author     BetWin <dev@betwin.tkoin.finance>
+ *   @see        https://betwin.tkoin.finance
+*/
+
+namespace App\Services;
+
+use App\Models\Account;
+use App\Models\TkoinSettlement;
+use App\Models\User;
+use App\Repositories\TkoinSettlementRepository;
+use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Log;
+
+class TkoinService
+{
+    protected Client $client;
+    protected string $baseUrl;
+    protected string $webhookSecret;
+
+    public function __construct()
+    {
+        $this->baseUrl = rtrim(env('TKOIN_API_URL', 'https://tkoin.replit.dev/api'), '/');
+        $this->webhookSecret = env('TKOIN_WEBHOOK_SECRET');        $this->client = new Client(['base_uri' => $this->baseUrl]);
+    }
+
+    /**
+     * Initiate a deposit request to Tkoin
+     * 
+     * @param User $user
+     * @param Account $account
+     * @param float $amount Amount in Credits
+     * @return TkoinSettlement
+     */
+    public function initiateDeposit(User $user, Account $account, float $amount): TkoinSettlement
+    {
+        // Create settlement record
+        $settlement = TkoinSettlementRepository::createDeposit(
+            $user,
+            $account,
+            $amount,
+            [
+                'platform' => 'betwin',
+                'user_name' => $user->name,
+                'initiated_at' => now()->toIso8601String(),
+            ]
+        );
+
+        // Mark as processing
+        TkoinSettlementRepository::markProcessing($settlement);
+
+        // Log the request
+        Log::info('Tkoin deposit initiated', [
+            'settlement_id' => $settlement->id,
+            'user_id' => $user->id,
+            'amount' => $amount,
+        ]);
+
+        return $settlement;
+    }
+
+    /**
+     * Initiate a withdrawal request to Tkoin
+     * 
+     * @param User $user
+     * @param Account $account
+     * @param float $amount Amount in Credits
+     * @param string $solanaAddress Optional: target Solana address
+     * @return TkoinSettlement
+     */
+    public function initiateWithdrawal(User $user, Account $account, float $amount, string $solanaAddress = null): TkoinSettlement
+    {
+        // Check balance
+        if ($account->balance < $amount) {
+            throw new \Exception('Insufficient balance for withdrawal');
+        }
+
+        // Create settlement record
+        $settlement = TkoinSettlementRepository::createWithdrawal(
+            $user,
+            $account,
+            $amount,
+            [
+                'platform' => 'betwin',
+                'user_name' => $user->name,
+                'solana_address' => $solanaAddress,
+                'initiated_at' => now()->toIso8601String(),
+            ]
+        );
+
+        // Mark as processing
+        TkoinSettlementRepository::markProcessing($settlement);
+
+        // Log the request
+        Log::info('Tkoin withdrawal initiated', [
+            'settlement_id' => $settlement->id,
+            'user_id' => $user->id,
+            'amount' => $amount,
+        ]);
+
+        return $settlement;
+    }
+
+    /**
+     * Check user balance from Tkoin
+     */
+    public function getUserBalance(User $user): ?float
+    {
+        try {
+            $response = $this->client->get('/settlements/balance', [
+                'query' => [
+                    'user_id' => $user->id,
+                    'platform_id' => 'betwin',
+                ]
+            ]);
+
+            $data = json_decode($response->getBody(), true);
+            return $data['balance'] ?? null;
+        } catch (\Exception $e) {
+            Log::error('Failed to fetch Tkoin balance', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+            ]);
+            return null;
+        }
+    }
+
+    /**
+     * Get settlement status from Tkoin
+     */
+    public function getSettlementStatus(TkoinSettlement $settlement): ?string
+    {
+        try {
+            $response = $this->client->get("/settlements/{$settlement->id}");
+            $data = json_decode($response->getBody(), true);
+            return $data['status'] ?? null;
+        } catch (\Exception $e) {
+            Log::error('Failed to fetch settlement status', [
+                'settlement_id' => $settlement->id,
+                'error' => $e->getMessage(),
+            ]);
+            return null;
+        }
+    }
+
+    /**
+     * Verify webhook signature from Tkoin
+     */
+    public function verifyWebhookSignature(string $payload, string $signature): bool
+    {
+        $expectedSignature = hash_hmac('sha256', $payload, $this->webhookSecret);
+        return hash_equals($expectedSignature, $signature);
+    }
+
+    /**
+     * Handle settlement completed webhook
+     */
+    public function handleSettlementCompleted(array $data): void
+    {
+        $settlement = TkoinSettlementRepository::findById($data['settlement_id']);
+
+        if (!$settlement) {
+            Log::warning('Settlement not found for webhook', $data);
+            return;
+        }
+
+        if ($settlement->isCompleted()) {
+            Log::info('Settlement already completed', ['settlement_id' => $settlement->id]);
+            return;
+        }
+
+        try {
+            // Complete the settlement and apply to balance
+            TkoinSettlementRepository::completeSettlement(
+                $settlement,
+                $data['solana_signature'] ?? null,
+                true
+            );
+
+            Log::info('Settlement completed via webhook', [
+                'settlement_id' => $settlement->id,
+                'type' => $settlement->type,
+                'amount' => $settlement->amount,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to complete settlement', [
+                'settlement_id' => $settlement->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Handle settlement failed webhook
+     */
+    public function handleSettlementFailed(array $data): void
+    {
+        $settlement = TkoinSettlementRepository::findById($data['settlement_id']);
+
+        if (!$settlement) {
+            Log::warning('Settlement not found for failed webhook', $data);
+            return;
+        }
+
+        try {
+            TkoinSettlementRepository::failSettlement(
+                $settlement,
+                $data['failure_reason'] ?? 'Unknown error'
+            );
+
+            Log::info('Settlement failed via webhook', [
+                'settlement_id' => $settlement->id,
+                'reason' => $data['failure_reason'] ?? null,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to mark settlement as failed', [
+                'settlement_id' => $settlement->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+}
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# ^C
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# grep TKOIN .env
+TKOIN_API_URL=https://tkoin.replit.dev/api
+TKOIN_WEBHOOK_SECRET=cb650dc316eeb4c5ccb1aa4614da70f52144fbb794695320adf4d31b5a38d820
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# cat >> .env << 'EOF'
+
+# Tkoin Platform API Credentials
+TKOIN_PLATFORM_ID=platform_betwin
+TKOIN_API_TOKEN=ptk_fDMazAGQ6wwYkjSxnbqMzn5Z_HqEgmGZ07iKcCtlW
+TKOIN_API_SECRET=ab0d6715b594c415d4e354c03024ef6e
+EOF
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# grep -E "TKOIN_(PLATFORM_ID|API_TOKEN|API_SECRET)" .env
+TKOIN_PLATFORM_ID=platform_betwin
+TKOIN_API_TOKEN=ptk_fDMazAGQ6wwYkjSxnbqMzn5Z_HqEgmGZ07iKcCtlW
+TKOIN_API_SECRET=ab0d6715b594c415d4e354c03024ef6e
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# cp app/Services/TkoinService.php app/Services/TkoinService.php.backup
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# cat > app/Services/TkoinService.php << 'PHPEOF'
+<?php
+/**
+ *   BetWin - Tkoin Protocol Integration
+ *   ------------------------------------
+ *   TkoinService.php (Secure Platform API)
+ * 
+ *   @copyright  Copyright (c) BetWin, All rights reserved
+ *   @author     BetWin <dev@betwin.tkoin.finance>
+ *   @see        https://betwin.tkoin.finance
+*/
+
+namespace App\Services;
+
+use App\Models\Account;
+use App\Models\TkoinSettlement;
+use App\Models\User;
+use App\Repositories\TkoinSettlementRepository;
+use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+
+class TkoinService
+{
+    protected Client $client;
+    protected string $baseUrl;
+    protected string $platformId;
+    protected string $apiToken;
+    protected string $apiSecret;
+    protected string $webhookSecret;
+
+    public function __construct()
+    {
+        $this->baseUrl = rtrim(env('TKOIN_API_URL', 'https://tkoin.replit.dev/api'), '/');
+        $this->platformId = env('TKOIN_PLATFORM_ID', 'platform_betwin');
+        $this->apiToken = env('TKOIN_API_TOKEN');
+        $this->apiSecret = env('TKOIN_API_SECRET');
+        $this->webhookSecret = env('TKOIN_WEBHOOK_SECRET');
+        
+        $this->client = new Client([
+            'base_uri' => $this->baseUrl,
+            'timeout' => 30,
+        ]);
+    }
+
+    /**
+PHPEOF  }   ]); 'error' => $e->getMessage(),nt->id,s failed', [ok', $data);_id']);ent->id]);ture): boolss = null): TkoinSettlement
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# head -20 app/Services/TkoinService.php && echo "..." && tail -10 app/Services/TkoinService.php
+<?php
+/**
+ *   BetWin - Tkoin Protocol Integration
+ *   ------------------------------------
+ *   TkoinService.php (Secure Platform API)
+ * 
+ *   @copyright  Copyright (c) BetWin, All rights reserved
+ *   @author     BetWin <dev@betwin.tkoin.finance>
+ *   @see        https://betwin.tkoin.finance
+*/
+
+namespace App\Services;
+
+use App\Models\Account;
+use App\Models\TkoinSettlement;
+use App\Models\User;
+use App\Repositories\TkoinSettlementRepository;
+use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+...
+                'reason' => $data['failure_reason'] ?? null,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to mark settlement as failed', [
+                'settlement_id' => $settlement->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+}
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# php artisan config:clear && php artisan cache:clear
+
+   INFO  Configuration cache cleared successfully.  
+
+
+   INFO  Application cache cleared successfully.  
+
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# 
