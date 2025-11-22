@@ -4707,16 +4707,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId,
         limit,
         offset,
-        total: filtered.length,
+        total: formatted.length,
       });
       
       res.json({
         transactions: paginated,
         pagination: {
-          total: filtered.length,
+          total: formatted.length,
           limit,
           offset,
-          hasMore: offset + limit < filtered.length,
+          hasMore: offset + limit < formatted.length,
         },
       });
     } catch (error) {
