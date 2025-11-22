@@ -102,6 +102,15 @@ export async function verifyPlatformSignature(
       return;
     }
     
+    // Validate apiSecret is configured
+    if (!platform.apiSecret) {
+      res.status(500).json({ 
+        error: 'Platform misconfigured - missing API secret',
+        hint: 'Contact admin to regenerate platform credentials'
+      });
+      return;
+    }
+    
     // Check nonce to prevent replay attacks
     try {
       const existingNonce = await db.select()

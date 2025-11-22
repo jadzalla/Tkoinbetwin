@@ -4661,10 +4661,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Invalid withdrawal amount' });
       }
       
-      // Check user balance
-      const settlements = await storage.getUserSettlements(userId, platformId);
+      // Check user balance (only count COMPLETED settlements)
+      const allSettlements = await storage.getUserSettlements(userId, platformId);
+      const completedSettlements = allSettlements.filter(s => s.status === 'completed');
       let balance = 0;
-      settlements.forEach((settlement: UserSettlement) => {
+      completedSettlements.forEach((settlement: UserSettlement) => {
         const settleAmount = parseFloat(settlement.tkoinAmount || '0');
         if (settlement.type === 'deposit') {
           balance += settleAmount;
