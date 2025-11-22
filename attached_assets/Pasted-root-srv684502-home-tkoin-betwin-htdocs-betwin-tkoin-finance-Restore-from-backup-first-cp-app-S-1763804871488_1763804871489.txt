@@ -1,0 +1,107 @@
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# # Restore from backup first
+cp app/Services/TkoinService.php.backup app/Services/TkoinService.php
+
+# Now make the correct fix - just remove the rtrim wrapper
+sed -i "s/rtrim(env('TKOIN_API_URL'[^)]*), '\/')/ env('TKOIN_API_URL', 'https:\/\/tkoin.replit.dev\/api')/g" app/Services/TkoinService.php
+
+# Actually, let's do this more carefully with a targeted replacement
+cat > fix-baseurl.php << 'FIXBASEURL'
+<?php
+$file = 'app/Services/TkoinService.php';
+$content = file_get_contents($file);
+
+// Replace the rtrim line with simple env() call
+$content = preg_replace(
+    "/\\\$this->baseUrl = rtrim\(env\('TKOIN_API_URL'[^\)]+\), '\/'\);/",
+    "\$this->baseUrl = env('TKOIN_API_URL', 'https://tkoin.replit.dev/api');",
+    $content
+);
+
+file_put_contents($file, $content);
+echo "Fixed baseUrl assignment\n";
+FIXBASEURL
+
+php fix-baseurl.php
+
+# Verify the fix
+echo "Checking constructor:"
+grep -A 2 "this->baseUrl =" app/Services/TkoinService.php
+
+# Re-run the test
+php test-deposit-withdrawal.php
+Fixed baseUrl assignment
+Checking constructor:
+        $this->baseUrl =  env('TKOIN_API_URL', 'https://tkoin.replit.dev/api');
+        $this->webhookSecret = env('TKOIN_WEBHOOK_SECRET');
+        $this->client = new Client(['base_uri' => $this->baseUrl]);
+
+=================================================
+BetWin ↔ Tkoin Deposit/Withdrawal Flow Test
+=================================================
+
+Test User: darkeningtracery759 (ID: 3)
+Email: jadzalla@venmyglobal.com
+BetWin Balance: 12,971.80 credits
+
+=================================================
+STEP 1: Check Initial Balance
+=================================================
+Tkoin Balance: null (user not in Tkoin yet) credits
+✓ Balance API working
+
+=================================================
+STEP 2: Test Deposit Flow (User Buys TKOIN)
+=================================================
+Initiating deposit: 50.00 TKOIN (5000.00 credits) via P2P marketplace...
+
+✓ Deposit initiated successfully!
+Settlement ID: 8
+Type: deposit
+Amount: 5000 credits
+TKOIN Amount:  TKOIN
+Status: processing
+
+=================================================
+STEP 3: Check Updated Balance
+=================================================
+New Tkoin Balance: null credits
+✓ Balance check completed
+
+=================================================
+STEP 4: Test Withdrawal Flow (User Sells TKOIN)
+=================================================
+Initiating withdrawal: 25.00 TKOIN (2500.00 credits) to P2P marketplace...
+
+✓ Withdrawal initiated successfully!
+Settlement ID: 9
+Type: withdrawal
+Amount: 2500 credits
+TKOIN Amount:  TKOIN
+Status: processing
+
+=================================================
+STEP 5: Check Final Balance
+=================================================
+Final Tkoin Balance: null credits
+✓ Balance check completed
+
+=================================================
+STEP 6: Check Transaction History
+=================================================
+
+   Error 
+
+  Call to undefined method App\Services\TkoinService::getUserTransactions()
+
+  at test-deposit-withdrawal.php:131
+    127▕ echo "STEP 6: Check Transaction History\n";
+    128▕ echo "=================================================\n";
+    129▕ 
+    130▕ try {
+  ➜ 131▕     $transactions = $tkoinService->getUserTransactions($user, 10);
+    132▕     echo "Transaction Count: " . count($transactions) . "\n\n";
+    133▕     
+    134▕     if (count($transactions) > 0) {
+    135▕         echo "Recent Transactions:\n";
+
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# 
