@@ -1,0 +1,78 @@
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# cp app/Services/TkoinService.php.backup app/Services/TkoinService.php
+# Use a proper multi-line sed to add the 3 lines INSIDE the constructor (before line 31 which has webhookSecret)
+sed -i '/\$this->baseUrl = rtrim/a\        $this->platformId = env('"'"'TKOIN_PLATFORM_ID'"'"', '"'"'platform_betwin'"'"');\n        $this->apiToken = env('"'"'TKOIN_API_TOKEN'"'"');\n        $this->apiSecret = env('"'"'TKOIN_API_SECRET'"'"');' app/Services/TkoinService.php
+# Check syntax
+php -l app/Services/TkoinService.php
+No syntax errors detected in app/Services/TkoinService.php
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# php test-deposit-withdrawal.php
+
+=================================================
+BetWin ↔ Tkoin Deposit/Withdrawal Flow Test
+=================================================
+
+Test User: darkeningtracery759 (ID: 3)
+Email: jadzalla@venmyglobal.com
+BetWin Balance: 12,971.80 credits
+
+=================================================
+STEP 1: Check Initial Balance
+=================================================
+Tkoin Balance: null (user not in Tkoin yet) credits
+✓ Balance API working
+
+=================================================
+STEP 2: Test Deposit Flow (User Buys TKOIN)
+=================================================
+Initiating deposit: 50.00 TKOIN (5000.00 credits) via P2P marketplace...
+
+✓ Deposit initiated successfully!
+Settlement ID: 22
+Type: deposit
+Amount: 5000 credits
+TKOIN Amount:  TKOIN
+Status: processing
+
+=================================================
+STEP 3: Check Updated Balance
+=================================================
+New Tkoin Balance: null credits
+✓ Balance check completed
+
+=================================================
+STEP 4: Test Withdrawal Flow (User Sells TKOIN)
+=================================================
+Initiating withdrawal: 25.00 TKOIN (2500.00 credits) to P2P marketplace...
+
+✓ Withdrawal initiated successfully!
+Settlement ID: 23
+Type: withdrawal
+Amount: 2500 credits
+TKOIN Amount:  TKOIN
+Status: processing
+
+=================================================
+STEP 5: Check Final Balance
+=================================================
+Final Tkoin Balance: null credits
+✓ Balance check completed
+
+=================================================
+STEP 6: Check Transaction History
+=================================================
+
+   Error 
+
+  Call to undefined method App\Services\TkoinService::getUserTransactions()
+
+  at test-deposit-withdrawal.php:131
+    127▕ echo "STEP 6: Check Transaction History\n";
+    128▕ echo "=================================================\n";
+    129▕ 
+    130▕ try {
+  ➜ 131▕     $transactions = $tkoinService->getUserTransactions($user, 10);
+    132▕     echo "Transaction Count: " . count($transactions) . "\n\n";
+    133▕     
+    134▕     if (count($transactions) > 0) {
+    135▕         echo "Recent Transactions:\n";
+
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# 
