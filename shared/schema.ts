@@ -758,9 +758,12 @@ export const sovereignPlatforms = pgTable("sovereign_platforms", {
   displayName: text("display_name"), // Optional display name
   description: text("description"),
   
-  // Webhook Configuration
+  // Webhook Configuration (Tkoin → Platform)
   webhookUrl: text("webhook_url"), // Platform's webhook endpoint
-  webhookSecret: text("webhook_secret").notNull(), // HMAC secret for signature verification
+  webhookSecret: text("webhook_secret").notNull(), // HMAC secret for signing outbound webhooks (Tkoin → Platform)
+  
+  // API Authentication (Platform → Tkoin)
+  apiSecret: text("api_secret").notNull(), // HMAC secret for verifying inbound API requests (Platform → Tkoin)
   
   // Status & Visibility
   isActive: boolean("is_active").notNull().default(true),
