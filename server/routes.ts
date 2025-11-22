@@ -4518,14 +4518,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ error: 'Platform ID mismatch' });
       }
       
-      // Get user's settlements for this platform
-      const settlements = await storage.getUserSettlements(userId, platformId);
+      // Get user's COMPLETED settlements for this platform (ledger of record)
+      const allSettlements = await storage.getUserSettlements(userId, platformId);
+      const completedSettlements = allSettlements.filter(s => s.status === 'completed');
       
-      // Calculate balance from settlements
+      // Calculate balance from completed settlements only
       let tkoinBalance = 0;
       let creditsBalance = 0;
       
-      settlements.forEach((settlement: UserSettlement) => {
+      completedSettlements.forEach((settlement: UserSettlement) => {
         const amount = parseFloat(settlement.tkoinAmount || '0');
         if (settlement.type === 'deposit') {
           tkoinBalance += amount;
