@@ -1,0 +1,83 @@
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# tail -n +23 resources/views/user/tkoin-wallet.blade.php | head -50
+    Connect Solana Wallet
+  </button>
+  
+  <div id="wallet-connected" style="display: none; padding: 12px; background: #e0e7ff; border-radius: 6px; margin-top: 10px;">
+    <p style="margin: 0 0 8px 0; font-size: 12px;">
+      <strong>Connected:</strong> <span id="wallet-address" style="font-family: monospace; font-size: 11px; word-break: break-all;"></span>
+    </p>
+    <p style="margin: 0 0 10px 0; font-size: 12px;">
+      <strong>TKOIN Balance:</strong> <span id="tkoin-balance">Loading...</span>
+    </p>
+    <button id="direct-deposit-btn" style="width: 100%; padding: 8px; background: #7c3aed; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold;">
+      Direct Deposit TKOIN
+    </button>
+  </div>
+</div>
+
+<script>
+(function() {
+  const connectBtn = document.getElementById('connect-wallet-btn');
+  const walletDisplay = document.getElementById('wallet-connected');
+  const addressSpan = document.getElementById('wallet-address');
+  const balanceSpan = document.getElementById('tkoin-balance');
+  const depositBtn = document.getElementById('direct-deposit-btn');
+
+  connectBtn.addEventListener('click', async function() {
+    if (!window.solana?.isPhantom) {
+      alert('Please install Phantom wallet: https://phantom.app');
+      return;
+    }
+
+    try {
+      const response = await window.solana.connect();
+      const publicKey = response.publicKey.toString();
+      
+      addressSpan.textContent = publicKey;
+      connectBtn.style.display = 'none';
+      walletDisplay.style.display = 'block';
+
+      // Fetch TKOIN balance from Devnet
+      const tokenMint = '9XPD1ZcAtNZgc1pGYYL3Z4W3mNqHKmqKDsUtsKKzAJE5';
+      const rpcUrl = 'https://api.devnet.solana.com';
+      
+      const rpcResponse = await fetch(rpcUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'getTokenAccountsByOwner',
+          params: [publicKey, { mint: tokenMint }, { encoding: 'jsonParsed' }]
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# sed -i '23,$d' resources/views/user/tkoin-wallet.blade.php
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# tail -20 resources/views/user/tkoin-wallet.blade.php
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tkoin Wallet</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body style="background: #1a1a2e;">
+    <div class="container" style="max-width: 600px; margin: 40px auto;">
+        @include('components.tkoin-wallet')
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ asset('js/tkoin-wallet.js') }}"></script>
+</body>
+</html>
+
+<!-- Solana Wallet Direct Deposit -->
+<div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; border: 1px solid #dee2e6;">
+  <h5 style="margin: 0 0 15px 0; font-size: 14px; font-weight: bold;">Deposit from Solana Wallet</h5>
+  
+  <button id="connect-wallet-btn" style="width: 100%; padding: 10px; background: #7c3aed; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: background 0.2s;">
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# php artisan view:clear && php artisan config:clear
+
+   INFO  Compiled views cleared successfully.  
+
+
+   INFO  Configuration cache cleared successfully.  
+
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance#curl -s https://betwin.tkoin.finance/user/tkoin-wallet | grep -o "Available Balance\|Available balance" | head -1 && echo "✅ Wallet loads successfully!" || echo "⚠️ Still loading...""
+✅ Wallet loads successfully!
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# 
