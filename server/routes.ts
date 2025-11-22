@@ -4228,6 +4228,122 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to fetch burn statistics" });
     }
   });
+
+  // ========================================
+  // Direct Deposit (Solana Wallet -> BetWin)
+  // ========================================
+
+  // Direct deposit - User sends TKOIN from Solana wallet to treasury
+  app.post('/api/user/direct-deposit', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { solanaSignature, userWallet, tkoinAmount } = req.body;
+
+      // Validate required fields
+      if (!solanaSignature || !userWallet || !tkoinAmount) {
+        return res.status(400).json({ 
+          message: "Missing required fields: solanaSignature, userWallet, tkoinAmount" 
+        });
+      }
+
+      // Validate Solana signature format (44 char base58)
+      if (!/^[1-9A-HJ-NP-Za-km-z]{87,88}$/.test(solanaSignature)) {
+        return res.status(400).json({ message: "Invalid Solana signature format" });
+      }
+
+      // Validate wallet address
+      if (!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(userWallet)) {
+        return res.status(400).json({ message: "Invalid Solana wallet address" });
+      }
+
+      const amount = parseFloat(tkoinAmount);
+      if (isNaN(amount) || amount <= 0) {
+        return res.status(400).json({ message: "Invalid TKOIN amount" });
+      }
+
+      // Check if deposit already exists (prevent duplicates)
+      const existingDeposit = await storage.getDepositBySignature(solanaSignature);
+      if (existingDeposit) {
+        return res.status(400).json({ 
+          message: "Deposit already processed",
+          depositId: existingDeposit.id 
+        });
+      }
+
+      // Create deposit record (status: detected)
+      const deposit = await storage.createDeposit({
+        solanaSignature,
+        fromWallet: userWallet,
+        toWallet: process.env.SOLANA_TREASURY_WALLET || 'unknown',
+        tkoinAmount: tkoinAmount,
+        burnAmount: '0', // No burn on direct deposits
+        creditsAmount: (amount * 100).toString(), // 1 TKOIN = 100 CREDIT
+        userId,
+        memo: `Direct deposit from ${userWallet}`,
+        status: 'processing',
+      });
+
+      // Create transaction record for tracking
+      await storage.createTransaction({
+        type: 'deposit',
+        userId,
+        userWallet,
+        tkoinAmount: tkoinAmount,
+        creditsAmount: (amount * 100).toString(),
+        conversionRate: '100', // 1 TKOIN = 100 CREDIT
+        status: 'completed',
+        solanaSignature,
+        metadata: {
+          depositId: deposit.id,
+          depositType: 'direct_solana',
+          timestamp: new Date().toISOString(),
+        },
+      });
+
+      logger.info('Direct deposit processed', {
+        userId,
+        depositId: deposit.id,
+        tkoinAmount,
+        signature: solanaSignature,
+      });
+
+      res.status(201).json({
+        success: true,
+        deposit,
+        creditsAmount: (amount * 100).toFixed(2),
+        message: `${tkoinAmount} TKOIN deposited successfully. You received ${(amount * 100).toFixed(0)} CREDIT.`,
+      });
+    } catch (error) {
+      console.error("Error processing direct deposit:", error);
+      res.status(500).json({ 
+        message: "Failed to process deposit",
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // Get direct deposit status
+  app.get('/api/user/direct-deposit/:signature', isAuthenticated, async (req: any, res) => {
+    try {
+      const { signature } = req.params;
+      const userId = req.user.claims.sub;
+
+      const deposit = await storage.getDepositBySignature(signature);
+      if (!deposit) {
+        return res.status(404).json({ message: "Deposit not found" });
+      }
+
+      // Verify user owns this deposit
+      if (deposit.userId !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      res.json(deposit);
+    } catch (error) {
+      console.error("Error fetching deposit:", error);
+      res.status(500).json({ message: "Failed to fetch deposit" });
+    }
+  });
   
   // Warm cache on server startup
   console.log("[FX] Initializing FX rate service...");
