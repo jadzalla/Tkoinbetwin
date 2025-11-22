@@ -11,7 +11,7 @@ import { applicationService } from "./services/application-service";
 import { BurnProposalService } from "./services/burn-proposal-service";
 import { TOKEN_DECIMALS, TOKEN_MAX_SUPPLY_TOKENS } from "@shared/token-constants";
 import { db } from "./db";
-import { tokenConfig } from "@shared/schema";
+import { tokenConfig, type Transaction } from "@shared/schema";
 import { eq } from "drizzle-orm";
 import { Connection } from "@solana/web3.js";
 import { logger } from "./utils/logger";
@@ -3886,6 +3886,163 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error creating withdrawal request:", error);
       res.status(500).json({ message: "Failed to create withdrawal request" });
+    }
+  });
+
+  // ========================================
+  // BetWin Wallet Integration Endpoints
+  // ========================================
+
+  // Get user's TKOIN/CREDIT balance (for BetWin wallet widget)
+  app.get('/api/user/tkoin/balance', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      // Get user's total TKOIN and CREDIT balances from transactions
+      const transactions = await storage.getTransactionsByUser(userId);
+      
+      let totalTkoin = 0;
+      let totalCredits = 0;
+      
+      transactions.forEach((tx: Transaction) => {
+        if (tx.type === 'deposit' || tx.type === 'agent_transfer') {
+          totalTkoin += parseFloat(tx.tkoinAmount?.toString() || '0');
+          totalCredits += parseFloat(tx.creditsAmount?.toString() || '0');
+        } else if (tx.type === 'withdrawal') {
+          totalTkoin -= parseFloat(tx.tkoinAmount?.toString() || '0');
+          totalCredits -= parseFloat(tx.creditsAmount?.toString() || '0');
+        }
+      });
+
+      res.json({
+        userId,
+        tkoin_balance: parseFloat(totalTkoin.toFixed(8)),
+        credit_balance: parseFloat(totalCredits.toFixed(2)),
+        total_transactions: transactions.length,
+      });
+    } catch (error) {
+      console.error("Error fetching TKOIN balance:", error);
+      res.status(500).json({ message: "Failed to fetch balance" });
+    }
+  });
+
+  // Get user's TKOIN transaction history (for BetWin wallet widget)
+  app.get('/api/user/tkoin/history', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const limit = parseInt(req.query.limit as string) || 10;
+      
+      const transactions = await storage.getTransactionsByUser(userId);
+      
+      // Format for BetWin wallet
+      const history = transactions
+        .filter((tx: Transaction) => ['deposit', 'withdrawal', 'agent_transfer'].includes(tx.type))
+        .map((tx: Transaction) => ({
+          id: tx.id,
+          type: tx.type === 'agent_transfer' ? 'deposit' : tx.type,
+          amount: parseFloat(tx.creditsAmount || tx.tkoinAmount || '0'),
+          status: tx.status || 'completed',
+          date: tx.createdAt,
+          description: `${tx.type === 'agent_transfer' ? 'Deposit' : tx.type === 'deposit' ? 'Direct Deposit' : 'Withdrawal'} of ${parseFloat(tx.tkoinAmount || '0').toFixed(4)} TKOIN`,
+        }))
+        .slice(0, limit);
+
+      res.json(history);
+    } catch (error) {
+      console.error("Error fetching TKOIN history:", error);
+      res.status(500).json({ message: "Failed to fetch history" });
+    }
+  });
+
+  // Initiate TKOIN deposit from P2P marketplace (BetWin endpoint)
+  app.post('/api/user/tkoin/deposit', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { amount, method } = req.body;
+
+      if (!amount || parseFloat(amount) <= 0) {
+        return res.status(400).json({ message: "Invalid deposit amount" });
+      }
+
+      // Create transaction record for tracking
+      const transaction = await storage.createTransaction({
+        type: 'deposit',
+        userId,
+        tkoinAmount: amount.toString(),
+        creditsAmount: (parseFloat(amount) * 100).toString(),
+        conversionRate: '100',
+        status: 'pending',
+        metadata: {
+          method: method || 'marketplace',
+          initiatedAt: new Date().toISOString(),
+        },
+      });
+
+      res.status(201).json({
+        success: true,
+        transaction_id: transaction.id,
+        amount: parseFloat(amount),
+        credits: parseFloat(amount) * 100,
+        status: 'pending',
+        message: 'Deposit initiated. Complete via P2P marketplace.',
+      });
+    } catch (error) {
+      console.error("Error initiating deposit:", error);
+      res.status(500).json({ message: "Failed to initiate deposit" });
+    }
+  });
+
+  // Initiate TKOIN withdrawal (BetWin endpoint)
+  app.post('/api/user/tkoin/withdrawal', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { amount, destination_wallet } = req.body;
+
+      if (!amount || parseFloat(amount) <= 0) {
+        return res.status(400).json({ message: "Invalid withdrawal amount" });
+      }
+
+      // Verify user has sufficient balance
+      const transactions = await storage.getTransactionsByUser(userId);
+      let balance = 0;
+      transactions.forEach((tx: Transaction) => {
+        if (tx.type === 'deposit' || tx.type === 'agent_transfer') {
+          balance += parseFloat(tx.creditsAmount || '0');
+        } else if (tx.type === 'withdrawal') {
+          balance -= parseFloat(tx.creditsAmount || '0');
+        }
+      });
+
+      const withdrawalAmount = parseFloat(amount);
+      if (balance < withdrawalAmount) {
+        return res.status(400).json({
+          message: "Insufficient balance",
+          balance: balance,
+          requested: withdrawalAmount,
+        });
+      }
+
+      // Create withdrawal record
+      const withdrawal = await storage.createWithdrawal({
+        userId,
+        userWallet: destination_wallet || '',
+        creditsAmount: amount.toString(),
+        tkoinAmount: (withdrawalAmount / 100).toString(),
+        feeAmount: '0',
+        status: 'pending',
+      });
+
+      res.status(201).json({
+        success: true,
+        withdrawal_id: withdrawal.id,
+        amount: parseFloat(amount),
+        tkoin_amount: withdrawalAmount / 100,
+        status: 'pending',
+        message: 'Withdrawal initiated. Processing will take 24 hours.',
+      });
+    } catch (error) {
+      console.error("Error initiating withdrawal:", error);
+      res.status(500).json({ message: "Failed to initiate withdrawal" });
     }
   });
 

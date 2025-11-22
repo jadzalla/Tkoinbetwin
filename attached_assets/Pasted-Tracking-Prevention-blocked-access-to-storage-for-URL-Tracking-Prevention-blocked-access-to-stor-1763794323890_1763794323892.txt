@@ -1,0 +1,75 @@
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+tkoin-wallet.js:1  Uncaught SyntaxError: Identifier 'TkoinWallet' has already been declared (at tkoin-wallet.js:1:1)
+inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "3416058296"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "3416058296"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "3416058296"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "3416058297"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "3416058297"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "3416058297"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "3416058298"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "2501506889"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "3416058298"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "3416058298"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "2501506890"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "2501506889"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "2501506889"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "2501506890"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "2501506890"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "2501506891"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "2501506891"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "2501506891"
+(anonymous) @ inpage.js:1
+tkoin-wallet.js:1  Uncaught (in promise) TypeError: Cannot read properties of null (reading 'style')
+    at TkoinWallet.handleDeposit (tkoin-wallet.js:1:1739)
+    at HTMLFormElement.<anonymous> (tkoin-wallet.js:1:641)
+/api/user/tkoin/balance:1   Failed to load resource: net::ERR_CONNECTION_CLOSED
+tkoin-wallet.js:1  Error fetching balance: TypeError: Failed to fetch
+    at TkoinWallet.fetchBalance (tkoin-wallet.js:1:816)
+    at tkoin-wallet.js:1:257
+fetchBalance @ tkoin-wallet.js:1
+/api/user/tkoin/history?limit=10:1   Failed to load resource: net::ERR_CONNECTION_CLOSED
+tkoin-wallet.js:1  Error fetching history: TypeError: Failed to fetch
+    at TkoinWallet.fetchHistory (tkoin-wallet.js:1:3616)
+    at tkoin-wallet.js:1:277
+fetchHistory @ tkoin-wallet.js:1
+[NEW] Explain Console errors by using Copilot in Edge: click
+         
+         to explain an error. 
+        Learn more
+        Don't show again
