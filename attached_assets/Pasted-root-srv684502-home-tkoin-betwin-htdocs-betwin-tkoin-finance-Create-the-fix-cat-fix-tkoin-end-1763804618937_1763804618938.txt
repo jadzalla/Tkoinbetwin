@@ -1,0 +1,68 @@
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# # Create the fix
+cat > fix-tkoin-endpoints.php << 'FIXSCRIPT'
+<?php
+
+$file = 'app/Services/TkoinService.php';
+$content = file_get_contents($file);
+
+// Fix all endpoint definitions - remove leading slash
+$replacements = [
+    '"/platforms/' => '"platforms/',
+];
+
+foreach ($replacements as $search => $replace) {
+    $content = str_replace($search, $replace, $content);
+}
+
+file_put_contents($file, $content);
+echo "Fixed TkoinService.php - removed leading slashes from endpoints\n";
+FIXSCRIPT
+
+php fix-tkoin-endpoints.php
+
+# Verify the changes
+echo -e "\nVerifying changes:"
+grep -n 'endpoint = "' app/Services/TkoinService.php | head -10
+Fixed TkoinService.php - removed leading slashes from endpoints
+
+Verifying changes:
+122:            $endpoint = "platforms/{$this->platformId}/users/{$user->id}/balance";
+159:            $endpoint = "platforms/{$this->platformId}/deposits";
+219:            $endpoint = "platforms/{$this->platformId}/withdrawals";
+260:            $endpoint = "platforms/{$this->platformId}/users/{$user->id}/transactions?limit={$limit}";
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# php test-deposit-withdrawal.php
+
+=================================================
+BetWin ↔ Tkoin Deposit/Withdrawal Flow Test
+=================================================
+
+Test User: darkeningtracery759 (ID: 3)
+Email: jadzalla@venmyglobal.com
+BetWin Balance: 12,971.80 credits
+
+=================================================
+STEP 1: Check Initial Balance
+=================================================
+
+   TypeError 
+
+  App\Services\TkoinService::makeRequest(): Return value must be of type array, null returned
+
+  at app/Services/TkoinService.php:94
+     90▕             }
+     91▕ 
+     92▕             $response = $this->client->request($method, $endpoint, $options);
+     93▕             
+  ➜  94▕             return json_decode($response->getBody()->getContents(), true);
+     95▕         } catch (\GuzzleHttp\Exception\ClientException $e) {
+     96▕             $statusCode = $e->getResponse()->getStatusCode();
+     97▕             $body = $e->getResponse()->getBody()->getContents();
+     98▕             
+
+  1   app/Services/TkoinService.php:123
+      App\Services\TkoinService::makeRequest()
+
+  2   test-deposit-withdrawal.php:51
+      App\Services\TkoinService::getUserBalance()
+
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# 
