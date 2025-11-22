@@ -1,0 +1,127 @@
+root@srv684502:~# cd /home/tkoin-betwin/htdocs/betwin.tkoin.finance
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# # Surgical fix: add 3 missing property initializations to constructor
+cat > fix-constructor.php << 'FIXCON'
+<?php
+$file = 'app/Services/TkoinService.php';
+$content = file_get_contents($file);
+
+// Find the line with $this->baseUrl and add the 3 missing properties after it
+$search = '$this->baseUrl = env(\'TKOIN_API_URL\', \'https://tkoin.replit.dev/api\');';
+$replace = '$this->baseUrl = env(\'TKOIN_API_URL\', \'https://tkoin.replit.dev/api\');
+        $this->platformId = env(\'TKOIN_PLATFORM_ID\', \'platform_betwin\');
+        $this->apiToken = env(\'TKOIN_API_TOKEN\');
+        $this->apiSecret = env(\'TKOIN_API_SECRET\');';
+
+$content = str_replace($search, $replace, $content);
+file_put_contents($file, $content);
+echo "Added 3 missing property initializations to constructor\n";
+FIXCON
+
+php fix-constructor.php
+
+# Syntax check
+php -l app/Services/TkoinService.php
+
+# Verify constructor
+echo -e "\nVerifying constructor:"
+grep -A 7 "public function __construct" app/Services/TkoinService.php | head -10
+
+# Run full test
+php test-deposit-withdrawal.php
+Added 3 missing property initializations to constructor
+No syntax errors detected in app/Services/TkoinService.php
+
+Verifying constructor:
+    public function __construct()
+    {
+        $this->baseUrl = rtrim(env('TKOIN_API_URL', 'https://tkoin.replit.dev/api'), '/');
+        $this->webhookSecret = env('TKOIN_WEBHOOK_SECRET');
+        $this->client = new Client(['base_uri' => $this->baseUrl]);
+    }
+
+    /**
+
+=================================================
+BetWin ↔ Tkoin Deposit/Withdrawal Flow Test
+=================================================
+
+Test User: darkeningtracery759 (ID: 3)
+Email: jadzalla@venmyglobal.com
+BetWin Balance: 12,971.80 credits
+
+=================================================
+STEP 1: Check Initial Balance
+=================================================
+Tkoin Balance: null (user not in Tkoin yet) credits
+✓ Balance API working
+
+=================================================
+STEP 2: Test Deposit Flow (User Buys TKOIN)
+=================================================
+Initiating deposit: 50.00 TKOIN (5000.00 credits) via P2P marketplace...
+
+✓ Deposit initiated successfully!
+Settlement ID: 20
+Type: deposit
+Amount: 5000 credits
+TKOIN Amount:  TKOIN
+Status: processing
+
+=================================================
+STEP 3: Check Updated Balance
+=================================================
+New Tkoin Balance: null credits
+✓ Balance check completed
+
+=================================================
+STEP 4: Test Withdrawal Flow (User Sells TKOIN)
+=================================================
+Initiating withdrawal: 25.00 TKOIN (2500.00 credits) to P2P marketplace...
+
+✓ Withdrawal initiated successfully!
+Settlement ID: 21
+Type: withdrawal
+Amount: 2500 credits
+TKOIN Amount:  TKOIN
+Status: processing
+
+=================================================
+STEP 5: Check Final Balance
+=================================================
+Final Tkoin Balance: null credits
+✓ Balance check completed
+
+=================================================
+STEP 6: Check Transaction History
+=================================================
+✗ Error: Failed to get user transactions: Undefined property: App\Services\TkoinService::$platformId
+
+=================================================
+STEP 7: Check BetWin Local Database
+=================================================
+Local Settlements Count: 5
+
+Local Settlements:
+1. ID: 21, Type: withdrawal, Amount: 2500 credits, Status: processing
+2. ID: 20, Type: deposit, Amount: 5000 credits, Status: processing
+3. ID: 19, Type: withdrawal, Amount: 2500 credits, Status: processing
+4. ID: 18, Type: deposit, Amount: 5000 credits, Status: processing
+5. ID: 17, Type: withdrawal, Amount: 2500 credits, Status: processing
+
+✓ Local database check completed
+
+=================================================
+Test Complete!
+=================================================
+
+Summary:
+✓ Balance API tested
+✓ Deposit API tested
+✓ Withdrawal API tested
+✓ Transaction history API tested
+✓ Local database checked
+
+Next: Monitor webhook callbacks in BetWin logs
+Webhook URL: https://betwin.tkoin.finance/api/webhooks/tkoin
+
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# 
