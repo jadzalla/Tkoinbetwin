@@ -1,0 +1,87 @@
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# cat > test-deposit-withdrawal.php << 'TESTFLOW'
+<?php
+/**
+ * Complete Deposit/Withdrawal Flow Test
+ */
+
+require __DIR__ . '/vendor/autoload.php';
+
+$app = require_once __DIR__ . '/bootstrap/app.php';
+$kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
+$kernel->bootstrap();
+
+echo "\n";
+echo "=================================================\n";
+echo "BetWin ↔ Tkoin Deposit/Withdrawal Flow Test\n";
+echo "=================================================\n\n";
+
+$tkoinService = new App\Services\TkoinService();
+
+// Use real user from database
+$userId = '3'; // darkeningtracery759
+
+// Mock user and account objects
+$mockUser = new App\Models\User();
+$mockUser->id = $userId;
+$mockUser->name = 'darkeningtracery759';
+$mockUser->email = 'jadzalla@venmyglobal.com';
+
+$mockAccount = new App\Models\Account();
+$mockAccount->id = 1;
+$mockAccount->user_id = $userId;
+$mockAccount->balance = 10000.00; // 10,000 credits
+
+echo "Test User: {$mockUser->name} (ID: {$userId})\n";
+echo "Email: {$mockUser->email}\n";
+echo "BetWin Balance: " . number_format($mockAccount->balance, 2) . " credits\n\n";
+
+echo "=================================================\n";
+echo "STEP 1: Check Initial Balance\n";
+echo "=================================================\n";
+
+try {
+    $balance = $tkoinService->getUserBalance($mockUser);
+    echo "Tkoin Balance: " . ($balance ?? 'null (user not in Tkoin yet)') . " credits\n";
+    echo "✓ Balance API working\n\n";
+} catch (\Exception $e) {
+php test-deposit-withdrawal.phpl.phpoin.finance/api/webhooks/tkoin\n\n";)\n";']} TKOIN, Status: {$tx['status']}\n";
+
+=================================================
+BetWin ↔ Tkoin Deposit/Withdrawal Flow Test
+=================================================
+
+Test User: darkeningtracery759 (ID: 3)
+Email: jadzalla@venmyglobal.com
+BetWin Balance: 10,000.00 credits
+
+=================================================
+STEP 1: Check Initial Balance
+=================================================
+Tkoin Balance: null (user not in Tkoin yet) credits
+✓ Balance API working
+
+=================================================
+STEP 2: Test Deposit Flow (User Buys TKOIN)
+=================================================
+Initiating deposit: 50.00 TKOIN via P2P marketplace...
+
+
+   TypeError 
+
+  App\Services\TkoinService::initiateDeposit(): Argument #2 ($account) must be of type App\Models\Account, string given, called in /home/tkoin-betwin/htdocs/betwin.tkoin.finance/test-deposit-withdrawal.php on line 56
+
+  at app/Services/TkoinService.php:143
+    139▕      * @param Account $account
+    140▕      * @param float $amount Amount in Credits
+    141▕      * @return TkoinSettlement
+    142▕      */
+  ➜ 143▕     public function initiateDeposit(User $user, Account $account, float $amount): TkoinSettlement
+    144▕     {
+    145▕         // Create settlement record
+    146▕         $settlement = TkoinSettlementRepository::createDeposit(
+    147▕             $user,
+
+  1   test-deposit-withdrawal.php:56
+      App\Services\TkoinService::initiateDeposit()
+
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# 
