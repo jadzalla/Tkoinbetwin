@@ -1,0 +1,77 @@
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# cp resources/views/user/tkoin-wallet.blade.php resources/views/user/tkoin-wallet.blade.php.backup
+cp resources/views/components/tkoin-wallet.blade.php resources/views/components/tkoin-wallet.blade.php.backup
+cp public/js/tkoin-wallet.js public/js/tkoin-wallet.js.backup
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# cat resources/views/user/tkoin-wallet.blade.php | tail -100
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tkoin Wallet</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body style="background: #1a1a2e;">
+    <div class="container" style="max-width: 600px; margin: 40px auto;">
+        @include('components.tkoin-wallet')
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ asset('js/tkoin-wallet.js') }}"></script>
+</body>
+</html>
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# grep -n "class TkoinWallet" public/js/tkoin-wallet.js
+wc -l public/js/tkoin-wallet.js
+1:class TkoinWallet{constructor(){this.apiBaseUrl='/api/user/tkoin';this.authToken=this.getAuthToken();this.refreshInterval=null;this.init()}init(){this.setupEventListeners();this.fetchBalance();this.fetchHistory();this.refreshInterval=setInterval(()=>{this.fetchBalance();this.fetchHistory()},30000)}getAuthToken(){const e=document.querySelector('meta[name="csrf-token"]');return e?e.getAttribute('content'):null}setupEventListeners(){document.getElementById('btn-refresh')?.addEventListener('click',()=>{this.fetchBalance();this.fetchHistory()}),document.getElementById('depositForm')?.addEventListener('submit',e=>{e.preventDefault();this.handleDeposit()}),document.getElementById('withdrawalForm')?.addEventListener('submit',e=>{e.preventDefault();this.handleWithdrawal()})}async fetchBalance(){try{const e=await fetch(`${this.apiBaseUrl}/balance`,{method:'GET',headers:this.getHeaders()}),t=await e.json();e.ok&&this.updateBalanceDisplay(t)}catch(e){console.error('Error fetching balance:',e)}}updateBalanceDisplay(e){const t=parseFloat(e.balance).toFixed(2),a=e.currency||'CREDIT';document.getElementById('balance-amount').textContent=`${t} ${a}`,document.getElementById('balance-account').textContent=`Account ID: ${e.account_id||'---'}`;const s=document.getElementById('wallet-status');s&&(s.innerHTML='<span class="badge badge-success">Connected</span>')}async handleDeposit(){const e=document.getElementById('depositAmount').value,t=document.getElementById('depositError'),a=document.getElementById('depositSubmit'),s=document.getElementById('depositSpinner'),i=document.getElementById('depositSubmitText');if(t.style.display='none',!e||parseFloat(e)<=0)return void this.showError('Please enter a valid amount',t);a.disabled=!0,s.style.display='inline-block',i.textContent='Processing...';try{const o=await fetch(`${this.apiBaseUrl}/deposit`,{method:'POST',headers:this.getHeaders(),body:JSON.stringify({amount:parseFloat(e)})});if(!(await o.json()).ok)throw new Error('Deposit failed');this.showSuccess(`Deposit of ${e} CREDIT initiated successfully!`),document.getElementById('depositForm').reset();const n=bootstrap.Modal.getInstance(document.getElementById('depositModal'));n?.hide(),setTimeout(()=>{this.fetchBalance();this.fetchHistory()},1e3)}catch(e){this.showError(e.message||'Failed to initiate deposit',t)}finally{a.disabled=!1,s.style.display='none',i.textContent='Initiate Deposit'}}async handleWithdrawal(){const e=document.getElementById('withdrawalAmount').value,t=document.getElementById('solanaAddress').value,a=document.getElementById('withdrawalError'),s=document.getElementById('withdrawalSubmit'),i=document.getElementById('withdrawalSpinner'),o=document.getElementById('withdrawalSubmitText');if(a.style.display='none',!e||parseFloat(e)<=0)return void this.showError('Please enter a valid amount',a);s.disabled=!0,i.style.display='inline-block',o.textContent='Processing...';try{const n={amount:parseFloat(e)};t&&(n.solana_address=t);const r=await fetch(`${this.apiBaseUrl}/withdrawal`,{method:'POST',headers:this.getHeaders(),body:JSON.stringify(n)});if(!(await r.json()).ok)throw new Error('Withdrawal failed');this.showSuccess(`Withdrawal of ${e} CREDIT initiated! Processing: 5-30 min`),document.getElementById('withdrawalForm').reset();const l=bootstrap.Modal.getInstance(document.getElementById('withdrawalModal'));l?.hide(),setTimeout(()=>{this.fetchBalance();this.fetchHistory()},1e3)}catch(e){this.showError(e.message||'Failed to initiate withdrawal',a)}finally{s.disabled=!1,i.style.display='none',o.textContent='Initiate Withdrawal'}}async fetchHistory(){try{const e=await fetch(`${this.apiBaseUrl}/history?limit=10`,{method:'GET',headers:this.getHeaders()}),t=await e.json();e.ok&&this.updateHistoryDisplay(t.settlements)}catch(e){console.error('Error fetching history:',e)}}updateHistoryDisplay(e){const t=document.getElementById('transaction-body');e&&e.length>0?t.innerHTML=e.map(e=>{const a='deposit'===e.type?'type-deposit':'type-withdrawal',s=`status-${e.status}`,i='deposit'===e.type?'Deposit':'Withdrawal',o=parseFloat(e.amount).toFixed(2),n=new Date(e.created_at).toLocaleDateString(),r=e.status.charAt(0).toUpperCase()+e.status.slice(1);return`<tr><td><span class="${a}">${i}</span></td><td>${o} CREDIT</td><td><span class="badge ${s}">${r}</span></td><td>${n}</td></tr>`}).join(''):t.innerHTML='<tr><td colspan="4" class="text-center text-muted">No transactions yet</td></tr>'}showSuccess(e){const t=document.createElement('div');t.className='alert alert-success alert-dismissible fade show',t.innerHTML=`${e}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;const a=document.getElementById('tkoin-wallet');a.insertBefore(t,a.firstChild),setTimeout(()=>t.remove(),5e3)}showError(e,t=null){t&&(t.textContent=e,t.style.display='block')}getHeaders(){return{'Content-Type':'application/json','Accept':'application/json','X-CSRF-TOKEN':this.authToken||''}}destroy(){this.refreshInterval&&clearInterval(this.refreshInterval)}}document.addEventListener('DOMContentLoaded',()=>{window.tkoinWallet=new TkoinWallet()}),window.addEventListener('beforeunload',()=>{window.tkoinWallet?.destroy()});
+1 public/js/tkoin-wallet.js
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# grep -n "class TkoinWallet\|new TkoinWallet" resources/views/components/tkoin-wallet.blade.php
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# tail -50 resources/views/components/tkoin-wallet.blade.php
+</div>
+
+<script>
+// Phantom wallet connection logic
+document.getElementById('connect-wallet-btn').addEventListener('click', async () => {
+  if (!window.solana) {
+    alert('Please install Phantom wallet');
+    return;
+  }
+  
+  try {
+    const response = await window.solana.connect();
+    const publicKey = response.publicKey.toString();
+    
+    document.getElementById('connected-address').textContent = publicKey.slice(0, 8) + '...' + publicKey.slice(-8);
+    document.getElementById('wallet-info').style.display = 'block';
+    document.getElementById('connect-wallet-btn').style.display = 'none';
+    
+    // Fetch balance
+    const balanceResponse = await fetch('https://api.devnet.solana.com', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'getTokenAccountsByOwner',
+        params: [publicKey, { mint: '9XPD1ZcAtNZgc1pGYYL3Z4W3mNqHKmqKDsUtsKKzAJE5' }]
+      })
+    });
+    
+    const balanceData = await balanceResponse.json();
+    if (balanceData.result?.value?.length > 0) {
+      const tokenAmount = balanceData.result.value[0].account.data.parsed.info.tokenAmount.uiAmount;
+      document.getElementById('wallet-balance').textContent = tokenAmount.toFixed(2);
+    }
+  } catch (error) {
+    console.error('Connection failed:', error);
+    alert('Failed to connect wallet');
+  }
+});
+
+// Direct deposit handler
+document.getElementById('direct-deposit-btn')?.addEventListener('click', async () => {
+  const amount = prompt('Enter TKOIN amount to deposit:');
+  if (!amount || isNaN(amount)) return;
+  
+  alert('Direct deposit flow: 1) Approve SPL token transfer 2) Confirm transaction 3) Wait for processing');
+  // Full implementation would include SPL token transfer via Phantom
+});
+</script>
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# 
