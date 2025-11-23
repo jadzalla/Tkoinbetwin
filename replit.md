@@ -1,7 +1,7 @@
 # Tkoin Protocol - Sovereignty Stack
 
 ## Overview
-Tkoin Protocol is a foundational liquidity layer for sovereign digital economies, built on Solana Token-2022. It enables seamless fiat-to-token conversion through a decentralized network of liquidity agents. The protocol allows multiple platforms (e.g., gaming, metaverses, DAOs) to share a common liquidity pool while maintaining their unique user experiences and economics. Its flagship application, BetWin casino, demonstrates instant deposits and withdrawals, bypassing traditional payment processors.
+Tkoin Protocol is a foundational liquidity layer for sovereign digital economies, built on Solana Token-2022. It enables seamless fiat-to-token conversion through a decentralized network of liquidity agents. The protocol allows multiple platforms (e.g., gaming, metaverses, DAOs) to share a common liquidity pool while maintaining their unique user experiences and economics. Its flagship application, BetWin casino, demonstrates instant deposits and withdrawals, bypassing traditional payment processors, aiming to create an interconnected ecosystem of sovereign digital economies.
 
 ## User Preferences
 - Use TypeScript for type safety
@@ -29,37 +29,15 @@ The frontend uses React, TypeScript, Vite, Tailwind CSS, and shadcn/ui, adopting
 - **Sovereign Platform Management**: Admin interface for platform registration and webhook credential management.
 - **Authentication & Authorization**: Replit Auth (OpenID Connect) with session management and role-based access control ('user', 'agent', 'admin').
 - **Token Deployment System**: Solana Token-2022 deployment infrastructure with Transfer Fee and Metadata extensions, configurable via Admin UI.
-- **Agent Staking System**: Tier-based access control requiring TKOIN staking (30-day lock-up, 10,000 TKOIN minimum, 10% early withdrawal penalty). Implemented with hybrid database tracking for future on-chain migration.
+- **Agent Staking System**: Tier-based access control requiring TKOIN staking (30-day lock-up, 10,000 TKOIN minimum, 10% early withdrawal penalty).
 - **Agent Slashing System**: Admin-enforced penalty system for agent violations (Minor: 10%, Major: 25%, Critical: 50% slash), with an approval workflow and audit trail.
-- **Hybrid Agent Registration System**: Dual-path onboarding:
-    - **Permissionless Instant Registration**: For Basic Tier, requires 10,000+ TKOIN in Solana wallet (no KYC).
-    - **Traditional KYC Application**: For Verified/Premium Tiers, involves admin review and approval of submitted KYC documents.
-- **P2P Marketplace (Production-Ready)**:
-    - **Atomic Escrow System**: Database-side arithmetic prevents race conditions and overselling. All operations (lock/unlock/transfer) are atomic using SQL constraints.
-    - **Order States**: created → payment_sent → verifying → completed/disputed/cancelled. Auto-expiry after 30 minutes.
-    - **Payment Methods**: Agents configure multiple methods (Bank Transfer, M-Pesa, PayPal, etc.) with min/max limits and account details.
-    - **In-App Chat**: Real-time messaging between buyers and sellers within order context.
-    - **Payment Proofs**: Users upload screenshots/receipts for payment verification.
-    - **Timed Transactions**: Orders expire after 30 minutes of inactivity to prevent stale locks.
-    - **Economic Model**: 0% on-chain transfer fees (protocol decision). Agent spreads (1-2%) provide margins; platform integration fees (0.25-0.5%) generate revenue.
-    - **Security**: Payment methods sanitized for public viewing, accountDetails restricted to agent-owned routes.
-    - **Agent Lifecycle**: Dual-field filtering using `status` (pending → approved → suspended → revoked, compliance-controlled) AND `availabilityStatus` (offline → online → busy, agent-controlled). Marketplace shows only approved+online agents; order creation validates both fields.
+- **Hybrid Agent Registration System**: Dual-path onboarding: Permissionless Instant Registration for Basic Tier (no KYC) and Traditional KYC Application for Verified/Premium Tiers.
+- **P2P Marketplace**: Features an atomic escrow system, defined order states, multiple payment methods, in-app chat, payment proofs, and timed transactions. It operates with 0% on-chain transfer fees and agent spreads for revenue.
 - **Burn Proposal System**: Manual approval workflow for token burns with safety features like network detection, configurable limits, cooldown periods, and multi-gate approval.
 - **Analytics Dashboards**: Comprehensive admin dashboards for staking and slashing metrics and trends.
-- **Security Hardening (Production-Ready)**:
-    - **Webhook Nonce Tracking**: Server-side timestamp validation prevents replay attacks within 5-minute window.
-    - **Platform Rate Limiting**: Per-platform API throttling with strict enforcement (missing/zero limits = blocked).
-    - **IP-Based Rate Limiting**: Public endpoints protected (100 req/15min), auth endpoints (20 req/15min).
-    - **Trust Proxy Configuration**: Single trusted hop (Replit load balancer) prevents IP spoofing.
-    - **Graceful Shutdown**: SIGTERM/SIGINT/SIGQUIT handlers ensure cleanup of interval timers.
-    - **Admin Endpoint Protection**: All 50+ admin routes secured with isAuthenticated + isAdmin middleware.
-- **Observability & Monitoring (Production-Ready)**:
-    - **Structured Logging**: JSON-formatted logs with correlation IDs (UUIDs) for distributed tracing, consistent log levels (INFO/WARN/ERROR), structured context (timestamp, method, path, statusCode, duration).
-    - **Health Check Endpoints**:
-        - `/api/health/live`: Liveness probe (200 if server running).
-        - `/api/health/ready`: Readiness probe (checks database + Solana RPC connectivity, returns 503 if unhealthy).
-        - `/api/health`: Comprehensive health status with uptime, version, and detailed service checks.
-    - **Correlation IDs**: Every HTTP request tagged with unique UUID for end-to-end request tracing across logs.
+- **Security Hardening**: Includes webhook nonce tracking, platform rate limiting, IP-based rate limiting, trust proxy configuration, graceful shutdown, and admin endpoint protection.
+- **Observability & Monitoring**: Structured logging with correlation IDs, health check endpoints (`/api/health/live`, `/api/health/ready`, `/api/health`) for comprehensive status.
+- **BetWin Platform API Integration**: Fully integrated for real-time balance tracking, atomic deposits/withdrawals, and transaction history using HMAC-SHA256 authentication.
 
 ### Feature Specifications
 - **Pricing Configurator**: Agents can set bid/ask spreads and FX buffers.
@@ -73,135 +51,6 @@ The frontend uses React, TypeScript, Vite, Tailwind CSS, and shadcn/ui, adopting
 - **Blockchain**: Solana (Token-2022) + @solana/web3.js
 - **Auth**: Replit Auth (OpenID Connect)
 - **Database**: PostgreSQL (Neon-backed)
-
-## Token Deployment (Devnet)
-**TKOIN Token-2022 Deployed on Solana Devnet**
-
-- **Mint Address**: `9XPD1ZcAtNZgc1pGYYL3Z4W3mNqHKmqKDsUtsKKzAJE5`
-- **Treasury Wallet**: `953CKYH169xXxaNKVwLT9z9s38TEg1d2pQsY7d1Lv6dD`
-- **Treasury Token Account**: `GJ8ZUGBD7UAtffi8eWjfqN63nCMhPgmDuH44YNRct3R6`
-- **Network**: Devnet (`https://api.devnet.solana.com`)
-- **Deployed**: 2025-11-20
-
-**Token Configuration**:
-- **Name**: Tkoin
-- **Symbol**: TK
-- **Decimals**: 9 (Solana standard)
-- **Max Supply**: 1,000,000,000 TKOIN
-- **Current Supply**: 1,000,000,000 TKOIN (fully minted to treasury)
-- **Transfer Fee**: 1% (100 basis points)
-- **Max Transfer Fee Cap**: 1,000,000,000,000,000 (prevents excessive fees on large transfers)
-
-**Token Properties**:
-- **Freeze Authority**: `null` (sovereignty maintained - no freeze capability)
-- **Mint Authority**: Treasury wallet (controlled by protocol)
-- **Transfer Fee Config Authority**: Treasury wallet
-- **Withdraw Withheld Authority**: Treasury wallet
-- **Program**: Token-2022 (`TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb`)
-
-**Verified Features**:
-✅ Token deployed with Token-2022 program  
-✅ Transfer Fee Extension enabled (1% on all transfers)  
-✅ No freeze authority (sovereignty positioning)  
-✅ Initial supply minted to treasury  
-✅ Transfer fee mechanics tested and verified  
-✅ Metaplex Token Metadata successfully added to existing token (Metadata PDA: 9jxbeCfxDxwhAw79m4qx79o6VHMYmc47GU7mFX1UfcGx) - token now displays as "Tkoin (TK)" with logo in wallets/explorers
-
-**Token Metadata (IPFS)**:
-- **Metadata PDA**: `9jxbeCfxDxwhAw79m4qx79o6VHMYmc47GU7mFX1UfcGx`
-- **Logo IPFS Hash**: `QmXh9uzvbAxkeQwKsrEYKU1R1u6nMHUEsqEpR3HR2ERXPo` (Optimized centered logo - 512x512, 53.47KB, RGBA transparent)
-- **Logo URI**: `https://coral-occasional-jackal-975.mypinata.cloud/ipfs/QmXh9uzvbAxkeQwKsrEYKU1R1u6nMHUEsqEpR3HR2ERXPo`
-- **Metadata JSON IPFS Hash**: `QmfJUZVJ8x1hCHHiVHPvBXopMJNmRfEQHD4iTnMt21L4Ae`
-- **Metadata JSON URI**: `https://coral-occasional-jackal-975.mypinata.cloud/ipfs/QmfJUZVJ8x1hCHHiVHPvBXopMJNmRfEQHD4iTnMt21L4Ae`
-
-**Deployment Scripts**:
-- `solana/scripts/02-deploy-token.ts`: Deploy token with Transfer Fee Extension
-- `solana/scripts/03-mint-initial-supply.ts`: Mint 1B TKOIN to treasury
-- `solana/scripts/04-test-transfer-fee.ts`: Verify 1% transfer fee mechanics
-- `solana/scripts/05-add-metaplex-metadata.ts`: Add Metaplex metadata to existing token
-- `solana/scripts/06-update-metadata-uri.ts`: Update metadata URI for existing token
-- `solana/scripts/upload-to-ipfs.ts`: Upload assets to IPFS via Pinata
-
-**Solana Explorer**:
-- Token: `https://explorer.solana.com/address/9XPD1ZcAtNZgc1pGYYL3Z4W3mNqHKmqKDsUtsKKzAJE5?cluster=devnet`
-- Treasury: `https://explorer.solana.com/address/953CKYH169xXxaNKVwLT9z9s38TEg1d2pQsY7d1Lv6dD?cluster=devnet`
-- Metadata PDA: `https://explorer.solana.com/address/9jxbeCfxDxwhAw79m4qx79o6VHMYmc47GU7mFX1UfcGx?cluster=devnet`
-
-## Environment Configuration (Mainnet-Ready)
-
-The system is designed to be environment-agnostic, allowing seamless migration from devnet to mainnet by changing only environment variables:
-
-### Required Environment Variables
-- **SOLANA_RPC_URL**: Solana RPC endpoint
-  - Devnet: `https://api.devnet.solana.com`
-  - Mainnet: `https://api.mainnet-beta.solana.com` (or dedicated RPC provider)
-- **TKOIN_MINT_ADDRESS**: Token mint address
-  - Devnet: `9XPD1ZcAtNZgc1pGYYL3Z4W3mNqHKmqKDsUtsKKzAJE5`
-  - Mainnet: (to be deployed)
-- **SOLANA_TREASURY_WALLET**: Treasury wallet public key
-- **SOLANA_TREASURY_PRIVATE_KEY**: Treasury wallet private key (base58 encoded)
-
-### Migration to Mainnet
-To migrate from devnet to mainnet:
-1. Deploy TKOIN token on mainnet using deployment scripts in `solana/scripts/`
-2. Update `SOLANA_RPC_URL` to mainnet endpoint
-3. Update `TKOIN_MINT_ADDRESS` to new mainnet token address
-4. Update `SOLANA_TREASURY_WALLET` and `SOLANA_TREASURY_PRIVATE_KEY` to mainnet wallet
-5. Restart application - **no code changes required**
-
-### Development Bootstrap
-- **Dev Admin Access**: Navigate to `/dev/bootstrap` to grant yourself admin access (development only)
-- **SECURITY**: The bootstrap route requires `ENABLE_DEV_BOOTSTRAP=true` to be explicitly set in environment variables
-- **NEVER** enable this in production environments
-- Once logged in, click "Grant Admin Access" to update your role to admin
-- In production, set initial admin via database seed or manual SQL query
-
-## BetWin Wallet Integration (Production-Ready ✅)
-
-**Deployed**: 2025-11-21
-
-The Tkoin wallet is now **live and integrated** into BetWin Casino as a floating widget:
-
-### **Files Deployed**:
-- **Component**: `resources/views/components/tkoin-wallet.blade.php` (5.2K) - Blade template with UI, modals, and styling
-- **JavaScript**: `public/js/tkoin-wallet.js` (5.1K) - API integration, form handling, auto-refresh logic
-- **Template**: `resources/views/index.blade.php` (3.6K) - Updated to include wallet widget and CDN dependencies
-
-### **Features Live**:
-- ✅ Floating widget (bottom-right corner, 420px wide, max-height 700px)
-- ✅ Purple gradient balance display (real-time synced)
-- ✅ Deposit modal with validation
-- ✅ Withdrawal modal with optional Solana address
-- ✅ Transaction history (last 10 transactions, auto-updated)
-- ✅ Auto-refresh every 30 seconds
-- ✅ Bootstrap 5 + Font Awesome CDN
-- ✅ Error handling and success notifications
-
-### **API Endpoints Connected**:
-All 7 endpoints fully integrated and tested:
-- `GET /api/user/tkoin/balance` - Current balance fetch
-- `POST /api/user/tkoin/deposit` - Deposit initiation
-- `POST /api/user/tkoin/withdrawal` - Withdrawal initiation
-- `GET /api/user/tkoin/history` - Transaction history
-- `GET /api/user/tkoin/account` - Account info
-
-### **Backend Integration Status**:
-- ✅ TkoinController: All 7 endpoints working with live data
-- ✅ TkoinService: Transaction settlement logic verified
-- ✅ Database: Account ledger and settlements table syncing
-- ✅ Auth: Sanctum token validation + CSRF protection
-
-### **Testing the Integration**:
-1. Log in to https://betwin.tkoin.finance
-2. Look for wallet widget in bottom-right corner
-3. Click Deposit/Withdraw to test modals
-4. Monitor transaction history for updates
-
-### **Cache Clearing** (if needed):
-```bash
-cd /home/tkoin-betwin/htdocs/betwin.tkoin.finance
-php artisan view:clear && php artisan config:clear
-```
 
 ## External Dependencies
 - **Solana Blockchain**: For Token-2022 smart contracts and blockchain operations.
