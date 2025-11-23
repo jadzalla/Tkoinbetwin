@@ -853,7 +853,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      const { agentId, orderType, tkoinAmount, fiatAmount, fiatCurrency, paymentMethodId } = validation.data;
+      const { agentId, orderType, tkoinAmount, fiatAmount, fiatCurrency, paymentMethodId, userWallet } = validation.data;
       
       // Validate agent exists and is available
       const agent = await storage.getAgent(agentId);
@@ -867,17 +867,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Agent is not currently available" });
       }
       
-      // Lock TKOIN in escrow (database-level inventory tracking)
+      // Lock TKOIN in escrow based on order type
       const { EscrowService } = await import('./services/escrow-service');
       const escrowService = new EscrowService(storage);
       
-      const lockResult = await escrowService.lockTkoin(agentId, tkoinAmount);
-      if (!lockResult.success) {
-        return res.status(400).json({
-          message: lockResult.error || "Failed to lock TKOIN",
-          availableBalance: lockResult.availableBalance,
-          requiredAmount: lockResult.requiredAmount,
-        });
+      let lockResult: { success: boolean; error?: string; availableBalance?: string; requiredAmount?: string };
+      
+      if (orderType === 'buy_tkoin') {
+        // User buying from agent: Lock agent's TKOIN inventory
+        lockResult = await escrowService.lockTkoin(agentId, tkoinAmount);
+        if (!lockResult.success) {
+          return res.status(400).json({
+            message: lockResult.error || "Failed to lock TKOIN",
+            availableBalance: lockResult.availableBalance,
+            requiredAmount: lockResult.requiredAmount,
+          });
+        }
+      } else if (orderType === 'sell_tkoin') {
+        // User selling to agent: Require user's Solana wallet address
+        // TKOIN will be sent from user's wallet directly (no database lock needed)
+        if (!userWallet) {
+          return res.status(400).json({
+            message: "Solana wallet address required for sell orders",
+          });
+        }
+        
+        // Validate wallet address format (basic check)
+        if (userWallet.length < 32 || userWallet.length > 44) {
+          return res.status(400).json({
+            message: "Invalid Solana wallet address",
+          });
+        }
+        
+        // No escrow lock for sell_tkoin - user sends from their wallet
+        lockResult = { success: true };
+      } else {
+        return res.status(400).json({ message: "Invalid order type" });
       }
       
       // Calculate expiry time (30 minutes from now)
@@ -887,11 +912,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const exchangeRate = parseFloat(tkoinAmount) / parseFloat(fiatAmount);
       const agentSpread = parseFloat(agent.markup || '0');
       
-      // Create order with TKOIN locked
+      // Create order with appropriate lock status
       try {
         const order = await storage.createP2pOrder({
           agentId,
           userId,
+          userWallet: userWallet || null,
           orderType,
           tkoinAmount,
           fiatAmount,
@@ -900,15 +926,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           agentSpread: agentSpread.toFixed(2),
           paymentMethodId: paymentMethodId || null,
           paymentMethodType: null,
-          tkoinLocked: true, // TKOIN is now locked in agent's inventory
+          tkoinLocked: orderType === 'buy_tkoin', // Only lock for buy_tkoin orders
           status: 'created',
           expiresAt,
         });
         
         res.status(201).json(order);
       } catch (error) {
-        // If order creation fails, unlock the TKOIN
-        await escrowService.unlockTkoin(agentId, tkoinAmount);
+        // If order creation fails and TKOIN was locked, unlock it
+        if (orderType === 'buy_tkoin') {
+          await escrowService.unlockTkoin(agentId, tkoinAmount);
+        }
         throw error;
       }
     } catch (error) {
@@ -1306,6 +1334,194 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error uploading payment proof:", error);
       res.status(500).json({ message: "Failed to upload payment proof" });
+    }
+  });
+  
+  // ========================================
+  // Solana Transaction Verification (Public)
+  // ========================================
+  
+  /**
+   * Verify a Solana transaction for Phantom wallet deposits
+   * Public endpoint for BetWin to verify on-chain deposits
+   */
+  app.post('/api/verify-deposit', async (req, res) => {
+    try {
+      const { signature, platformUserId } = req.body;
+      
+      if (!signature) {
+        return res.status(400).json({ 
+          success: false,
+          error: 'Transaction signature is required' 
+        });
+      }
+      
+      // Import Solana core utilities
+      const { solanaCore } = await import('./solana/solana-core');
+      const { PublicKey, TOKEN_2022_PROGRAM_ID } = await import('@solana/web3.js');
+      const { getAssociatedTokenAddress } = await import('@solana/spl-token');
+      
+      // Check if Solana services are configured
+      if (!solanaCore.isReady()) {
+        return res.status(503).json({
+          success: false,
+          error: 'Blockchain services not configured'
+        });
+      }
+      
+      const connection = solanaCore.getConnection();
+      const TREASURY_WALLET = process.env.SOLANA_TREASURY_WALLET;
+      const TKOIN_MINT = process.env.TKOIN_MINT_ADDRESS;
+      
+      if (!TREASURY_WALLET || !TKOIN_MINT) {
+        return res.status(503).json({
+          success: false,
+          error: 'Treasury configuration missing'
+        });
+      }
+      
+      // Fetch transaction from blockchain
+      const tx = await connection.getParsedTransaction(signature, {
+        maxSupportedTransactionVersion: 0,
+        commitment: 'confirmed',
+      });
+      
+      if (!tx) {
+        return res.status(404).json({
+          success: false,
+          error: 'Transaction not found on blockchain'
+        });
+      }
+      
+      // Check transaction was successful
+      if (tx.meta?.err) {
+        return res.status(400).json({
+          success: false,
+          error: 'Transaction failed on blockchain',
+          details: tx.meta.err
+        });
+      }
+      
+      // Extract transfer information
+      const treasuryPubkey = new PublicKey(TREASURY_WALLET);
+      const mintPubkey = new PublicKey(TKOIN_MINT);
+      
+      // Get treasury token account address
+      const treasuryTokenAccount = await getAssociatedTokenAddress(
+        mintPubkey,
+        treasuryPubkey,
+        false,
+        TOKEN_2022_PROGRAM_ID
+      );
+      
+      let transferInfo: { 
+        senderAddress: string; 
+        amount: number; 
+        memo: string | null;
+        destination: string;
+      } | null = null;
+      
+      // Check all instructions for the transfer
+      const instructions = tx.transaction.message.instructions;
+      const innerInstructions = tx.meta?.innerInstructions || [];
+      
+      // Helper to extract transfer from instructions
+      const extractTransfer = (instrs: any[]): typeof transferInfo => {
+        for (const instr of instrs) {
+          if ('parsed' in instr && 
+              (instr.program === 'spl-token' || instr.program === 'spl-token-2022')) {
+            const parsed = instr.parsed;
+            
+            if (parsed.type === 'transferChecked' || parsed.type === 'transfer') {
+              const info = parsed.info;
+              const destination = info.destination;
+              
+              // Check if transfer is to our treasury
+              if (destination === treasuryTokenAccount.toBase58()) {
+                let amount: number;
+                
+                if (parsed.type === 'transferChecked') {
+                  amount = Number(info.tokenAmount.uiAmount);
+                } else {
+                  // For regular transfer, need to parse amount with decimals
+                  amount = Number(info.amount) / Math.pow(10, 9); // TKOIN has 9 decimals
+                }
+                
+                return {
+                  senderAddress: info.authority || info.source,
+                  amount,
+                  memo: null,
+                  destination
+                };
+              }
+            }
+          }
+        }
+        return null;
+      };
+      
+      // Check top-level instructions
+      transferInfo = extractTransfer(instructions as any[]);
+      
+      // If not found, check inner instructions
+      if (!transferInfo) {
+        for (const inner of innerInstructions) {
+          transferInfo = extractTransfer(inner.instructions as any[]);
+          if (transferInfo) break;
+        }
+      }
+      
+      // Extract memo if present
+      let memo: string | null = null;
+      for (const instr of instructions as any[]) {
+        if (instr.program === 'memo' || instr.program === 'spl-memo') {
+          memo = instr.parsed || (instr.data ? Buffer.from(instr.data, 'base64').toString('utf-8') : null);
+          break;
+        }
+      }
+      
+      if (transferInfo && memo) {
+        transferInfo.memo = memo;
+      }
+      
+      if (!transferInfo) {
+        return res.status(400).json({
+          success: false,
+          error: 'No TKOIN transfer to treasury found in transaction'
+        });
+      }
+      
+      // Check if deposit was already processed
+      const existingDeposit = await storage.getDepositBySignature(signature);
+      
+      if (existingDeposit) {
+        return res.json({
+          success: true,
+          alreadyProcessed: true,
+          depositId: existingDeposit.id,
+          ...transferInfo
+        });
+      }
+      
+      // Return verification result
+      res.json({
+        success: true,
+        alreadyProcessed: false,
+        signature,
+        senderAddress: transferInfo.senderAddress,
+        amount: transferInfo.amount,
+        memo: transferInfo.memo || platformUserId || null,
+        destination: transferInfo.destination,
+        timestamp: tx.blockTime ? new Date(tx.blockTime * 1000).toISOString() : null
+      });
+      
+    } catch (error) {
+      console.error('Error verifying deposit:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to verify transaction',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
   

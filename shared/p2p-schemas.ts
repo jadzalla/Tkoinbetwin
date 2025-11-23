@@ -29,8 +29,8 @@ export const updatePaymentMethodSchema = z.object({
 // P2P Order Schemas
 export const createP2pOrderSchema = z.object({
   agentId: z.string().uuid("Invalid agent ID"),
-  orderType: z.enum(['buy', 'sell'], { 
-    errorMap: () => ({ message: "Order type must be 'buy' or 'sell'" }) 
+  orderType: z.enum(['buy_tkoin', 'sell_tkoin'], { 
+    errorMap: () => ({ message: "Order type must be 'buy_tkoin' or 'sell_tkoin'" }) 
   }),
   tkoinAmount: z.string()
     .regex(/^\d+(\.\d+)?$/, "Invalid TKOIN amount format")
@@ -42,6 +42,7 @@ export const createP2pOrderSchema = z.object({
     .length(3, "Currency code must be 3 characters")
     .regex(/^[A-Z]{3}$/, "Invalid currency code format"),
   paymentMethodId: z.string().uuid("Invalid payment method ID").optional(),
+  userWallet: z.string().min(32).max(44).optional(), // Solana wallet address for sell_tkoin orders
 });
 
 export const markPaymentSentSchema = z.object({
