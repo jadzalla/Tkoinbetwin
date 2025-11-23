@@ -1,0 +1,47 @@
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# # Check what the Tkoin button links to
+grep -r "Tkoin" /home/tkoin-betwin/htdocs/betwin.tkoin.finance/resources/views --include="*.blade.php" -A 2 -B 2 | head -30
+
+# Check if the route exists
+grep "tkoin" /home/tkoin-betwin/htdocs/betwin.tkoin.finance/routes/web.php
+
+# Check recent Laravel logs for errors
+tail -50 /home/tkoin-betwin/htdocs/betwin.tkoin.finance/storage/logs/laravel.log
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/resources/views/account-tkoin.blade.php-        </a>
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/resources/views/account-tkoin.blade.php-        <a href="{{ route('account.tkoin') }}" class="list-group-item list-group-item-action active">
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/resources/views/account-tkoin.blade.php:          <i class="fa fa-coins me-2"></i> Tkoin Wallet
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/resources/views/account-tkoin.blade.php-        </a>
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/resources/views/account-tkoin.blade.php-        <a href="{{ route('logout') }}" class="list-group-item list-group-item-action text-danger" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+--
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/resources/views/index.blade.php-  <!--END Google Tag Manager-->
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/resources/views/index.blade.php-
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/resources/views/index.blade.php:  <!-- Bootstrap CSS (required for Tkoin Wallet) -->
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/resources/views/index.blade.php-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/resources/views/index.blade.php-
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/resources/views/index.blade.php:  <!-- Font Awesome (required for Tkoin Wallet icons) -->
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/resources/views/index.blade.php-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/resources/views/index.blade.php-
+--
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/resources/views/index.blade.php-  <script src="{{ asset('js/app.js') . '?' . md5(config('app.version')) }}"></script>
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/resources/views/index.blade.php-  
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/resources/views/index.blade.php:  <!-- Bootstrap JS (required for Tkoin Wallet modals) -->
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/resources/views/index.blade.php-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/resources/views/index.blade.php-  
+--
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/resources/views/index.blade.php-
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/resources/views/index.blade.php-<a href="/user/tkoin-wallet" class="tkoin-nav-btn">
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/resources/views/index.blade.php:  <i class="fa fa-coins"></i> Tkoin
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/resources/views/index.blade.php-</a>
+--
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/resources/views/components/tkoin-wallet.blade.php-<style>
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/resources/views/components/tkoin-wallet.blade.php:/* ========== Tkoin Wallet Styles ========== */
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/resources/views/components/tkoin-wallet.blade.php-#tkoin-wallet-container {
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/resources/views/components/tkoin-wallet.blade.php-  background: #ffffff;
+Route::get('/user/tkoin-wallet', function () {
+    return view('user.tkoin-wallet');
+})->middleware('auth')->name('user.tkoin-wallet');
+Route::prefix('tkoin')->name('tkoin.')->middleware('auth')->group(function () {
+Route::prefix('tkoin')->name('tkoin.')->middleware('auth')->group(function () {
+Route::get('/user/tkoin-wallet', [App\Http\Controllers\TkoinController::class, 'showWallet'])->middleware('auth')->name('user.tkoin');
+Route::prefix('tkoin')->name('tkoin.')->middleware('auth')->group(function () {
+tail: cannot open '/home/tkoin-betwin/htdocs/betwin.tkoin.finance/storage/logs/laravel.log' for reading: No such file or directory
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# 
