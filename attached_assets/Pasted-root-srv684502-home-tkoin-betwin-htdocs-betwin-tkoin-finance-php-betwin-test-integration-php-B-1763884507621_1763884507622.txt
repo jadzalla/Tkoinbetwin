@@ -1,0 +1,132 @@
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# php betwin-test-integration.php
+🚀 BetWin - Tkoin Protocol Integration Test
+Testing from BetWin side (Laravel)
+
+Test User ID: betwin_user_1763884426
+
+
+============================================================
+Test: Check initial balance
+============================================================
+Response: {
+    "userId": "betwin_user_1763884426",
+    "platformId": "platform_betwin",
+    "tkoinBalance": "0.00000000",
+    "creditsBalance": "0.00",
+    "exchangeRate": "100.00",
+    "lastUpdated": "2025-11-23T07:53:47.510Z"
+}
+✅ PASSED
+
+============================================================
+Test: Create deposit: 1 TKOIN (100 credits)
+============================================================
+Response: {
+    "depositId": "2cd6fc0e-6164-4ea5-bd5f-ab1c46d5f5cc",
+    "status": "completed",
+    "tkoinAmount": "1.00000000",
+    "creditsAmount": "100.00",
+    "method": "bank_transfer",
+    "completedAt": "2025-11-23T07:53:48.297Z"
+}
+✅ PASSED
+
+============================================================
+Test: Check balance after deposit
+============================================================
+Response: {
+    "userId": "betwin_user_1763884426",
+    "platformId": "platform_betwin",
+    "tkoinBalance": "1.00000000",
+    "creditsBalance": "100.00",
+    "exchangeRate": "100.00",
+    "lastUpdated": "2025-11-23T07:53:49.052Z"
+}
+✅ PASSED
+
+============================================================
+Test: Create withdrawal: 0.3 TKOIN (30 credits)
+============================================================
+Response: {
+    "withdrawalId": "54b64a53-bef1-4cff-92ca-0f0900ae8758",
+    "status": "completed",
+    "tkoinAmount": "0.30000000",
+    "creditsDeducted": "30.00",
+    "destination": "GJ8ZUGBD7UAtffi8eWjfqN63nCMhPgmDuH44YNRct3R6",
+    "completedAt": "2025-11-23T07:53:49.854Z"
+}
+✅ PASSED
+
+============================================================
+Test: Check balance after withdrawal
+============================================================
+Response: {
+    "userId": "betwin_user_1763884426",
+    "platformId": "platform_betwin",
+    "tkoinBalance": "0.70000000",
+    "creditsBalance": "70.00",
+    "exchangeRate": "100.00",
+    "lastUpdated": "2025-11-23T07:53:50.609Z"
+}
+✅ PASSED
+
+============================================================
+Test: Get transaction history
+============================================================
+Response: {
+    "transactions": [
+        {
+            "id": "54b64a53-bef1-4cff-92ca-0f0900ae8758",
+            "type": "withdrawal",
+            "tkoinAmount": "0.30000000",
+            "creditsAmount": "30.00",
+            "status": "completed",
+            "timestamp": "2025-11-23T07:53:49.739Z"
+        },
+        {
+            "id": "2cd6fc0e-6164-4ea5-bd5f-ab1c46d5f5cc",
+            "type": "deposit",
+            "tkoinAmount": "1.00000000",
+            "creditsAmount": "100.00",
+            "status": "completed",
+            "timestamp": "2025-11-23T07:53:48.179Z"
+        }
+    ],
+    "pagination": {
+        "total": 2,
+        "limit": 10,
+        "offset": 0,
+        "hasMore": false
+    }
+}
+✅ PASSED
+
+============================================================
+TEST SUMMARY
+============================================================
+Total: 6 | Passed: 6 | Failed: 0
+
+🎉 All tests passed! Integration is working perfectly!
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# TIMESTAMP=$(date +%s)
+NONCE="test-$(uuidgen)-$RANDOM"
+BODY=""
+SIGNATURE="sha256=$(echo -n "${TIMESTAMP}.${BODY}" | openssl dgst -sha256 -hmac "ab0d6715b594c415d4e354c03024ef6e" | cut -d' ' -f2)"
+
+curl -X GET \
+  "https://1f1f76cb-d6d6-4e8e-b41b-5cb7e3d7fc0f-00-1icgdawm3o9xv.picard.replit.dev/api/platforms/platform_betwin/users/test_$(date +%s)/balance" \
+  -H "X-Platform-Token: ptk_xNm2aoTy8AY1QcD-F9wTwMwdzyZjA97JS1h8wa1i_8A" \
+  -H "X-Timestamp: $TIMESTAMP" \
+  -H "X-Signature: $SIGNATURE" \
+  -H "X-Nonce: $NONCE" | jq .
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   176  100   176    0     0    243      0 --:--:-- --:--:-- --:--:--   243
+{
+  "userId": "test_1763884447",
+  "platformId": "platform_betwin",
+  "tkoinBalance": "0.00000000",
+  "creditsBalance": "0.00",
+  "exchangeRate": "100.00",
+  "lastUpdated": "2025-11-23T07:54:08.319Z"
+}
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# 
