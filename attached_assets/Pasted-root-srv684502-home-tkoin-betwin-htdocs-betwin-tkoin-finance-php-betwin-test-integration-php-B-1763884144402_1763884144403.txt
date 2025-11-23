@@ -1,0 +1,121 @@
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# php betwin-test-integration.php
+🚀 BetWin - Tkoin Protocol Integration Test
+Testing from BetWin side (Laravel)
+
+Test User ID: betwin_user_1763884085
+
+
+============================================================
+Test: Check initial balance
+============================================================
+Response: {
+    "error": "Invalid signature"
+}
+❌ FAILED: Expected 200, got 401
+
+============================================================
+Test: Create deposit: 1 TKOIN (100 credits)
+============================================================
+Response: {
+    "depositId": "fb20fd11-cf44-4750-b09e-7e9e1094bdb5",
+    "status": "completed",
+    "tkoinAmount": "1.00000000",
+    "creditsAmount": "100.00",
+    "method": "bank_transfer",
+    "completedAt": "2025-11-23T07:48:06.937Z"
+}
+✅ PASSED
+
+============================================================
+Test: Check balance after deposit
+============================================================
+Response: {
+    "error": "Invalid signature"
+}
+PHP Warning:  Undefined array key "creditsBalance" in /home/tkoin-betwin/htdocs/betwin.tkoin.finance/betwin-test-integration.php on line 152
+PHP Warning:  Undefined array key "creditsBalance" in /home/tkoin-betwin/htdocs/betwin.tkoin.finance/betwin-test-integration.php on line 154
+❌ FAILED: Expected 100.00 credits, got 
+
+============================================================
+Test: Create second deposit: 0.5 TKOIN (50 credits)
+============================================================
+Response: {
+    "depositId": "43d41ec2-496c-4fd2-af27-01f0d9b4a77f",
+    "status": "completed",
+    "tkoinAmount": "0.50000000",
+    "creditsAmount": "50.00",
+    "method": "credit_card",
+    "completedAt": "2025-11-23T07:48:08.404Z"
+}
+✅ PASSED
+
+============================================================
+Test: Check balance after second deposit
+============================================================
+Response: {
+    "error": "Invalid signature"
+}
+PHP Warning:  Undefined array key "creditsBalance" in /home/tkoin-betwin/htdocs/betwin.tkoin.finance/betwin-test-integration.php on line 187
+PHP Warning:  Undefined array key "creditsBalance" in /home/tkoin-betwin/htdocs/betwin.tkoin.finance/betwin-test-integration.php on line 189
+❌ FAILED: Expected 150.00 credits, got 
+
+============================================================
+Test: Create withdrawal: 0.3 TKOIN (30 credits)
+============================================================
+Response: {
+    "withdrawalId": "34284a6c-a465-4f42-83e6-756732d5a70c",
+    "status": "completed",
+    "tkoinAmount": "0.30000000",
+    "creditsDeducted": "30.00",
+    "destination": "GJ8ZUGBD7UAtffi8eWjfqN63nCMhPgmDuH44YNRct3R6",
+    "completedAt": "2025-11-23T07:48:09.867Z"
+}
+✅ PASSED
+
+============================================================
+Test: Check balance after withdrawal
+============================================================
+Response: {
+    "error": "Invalid signature"
+}
+PHP Warning:  Undefined array key "creditsBalance" in /home/tkoin-betwin/htdocs/betwin.tkoin.finance/betwin-test-integration.php on line 222
+PHP Warning:  Undefined array key "creditsBalance" in /home/tkoin-betwin/htdocs/betwin.tkoin.finance/betwin-test-integration.php on line 224
+❌ FAILED: Expected 120.00 credits, got 
+
+============================================================
+Test: Get transaction history
+============================================================
+Response: {
+    "error": "Invalid signature"
+}
+❌ FAILED: Expected 200, got 401
+
+============================================================
+Test: Test insufficient balance withdrawal
+============================================================
+Response: {
+    "error": "Failed to initiate withdrawal"
+}
+Correctly rejected insufficient balance
+✅ PASSED
+
+============================================================
+Test: Create withdrawal without Solana wallet
+============================================================
+Response: {
+    "withdrawalId": "577e38cb-2305-412e-80b4-40a75edd3d61",
+    "status": "completed",
+    "tkoinAmount": "0.10000000",
+    "creditsDeducted": "10.00",
+    "destination": "p2p_marketplace",
+    "completedAt": "2025-11-23T07:48:12.730Z"
+}
+✅ PASSED
+
+============================================================
+TEST SUMMARY
+============================================================
+Total: 10 | Passed: 5 | Failed: 5
+
+⚠️  Some tests failed. Check the output above for details.
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# 

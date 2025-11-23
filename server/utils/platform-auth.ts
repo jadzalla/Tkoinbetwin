@@ -150,7 +150,10 @@ export async function verifyPlatformSignature(
     }
     
     // Verify HMAC signature using apiSecret (for Platform → Tkoin requests)
-    const body = JSON.stringify(req.body);
+    // For GET requests with no body, use empty string (not '{}')
+    const body = (req.body && Object.keys(req.body).length > 0) 
+      ? JSON.stringify(req.body) 
+      : '';
     const payload = `${timestamp}.${body}`;
     const expectedSignature = crypto
       .createHmac('sha256', platform.apiSecret)
