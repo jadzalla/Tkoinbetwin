@@ -46,6 +46,8 @@ import type {
   InsertPaymentProof,
   UserSettlement,
   InsertUserSettlement,
+  SolanaDeposit,
+  InsertSolanaDeposit,
 } from '@shared/schema';
 import {
   users,
@@ -70,6 +72,7 @@ import {
   orderMessages,
   paymentProofs,
   userSettlements,
+  solanaDeposits,
 } from '@shared/schema';
 
 // Storage Interface
@@ -123,6 +126,11 @@ export interface IStorage {
   createDeposit(deposit: InsertDeposit): Promise<Deposit>;
   updateDeposit(id: string, updates: Partial<Deposit>): Promise<Deposit | undefined>;
   updateDepositWebhookStatus(id: string, delivered: boolean, webhookUrl?: string, response?: any): Promise<void>;
+  
+  // Solana Deposit Operations (for Phantom wallet verification)
+  getSolanaDepositBySignature(signature: string): Promise<SolanaDeposit | undefined>;
+  createSolanaDeposit(deposit: InsertSolanaDeposit): Promise<SolanaDeposit>;
+  updateSolanaDeposit(id: string, updates: Partial<SolanaDeposit>): Promise<SolanaDeposit | undefined>;
   
   // Withdrawal Operations
   getWithdrawal(id: string): Promise<Withdrawal | undefined>;
@@ -679,6 +687,27 @@ export class PostgresStorage implements IStorage {
         webhookResponse: response || null,
       })
       .where(eq(deposits.id, id));
+  }
+
+  // Solana Deposit Operations (for Phantom wallet verification)
+  async getSolanaDepositBySignature(signature: string): Promise<SolanaDeposit | undefined> {
+    const result = await db.select().from(solanaDeposits)
+      .where(eq(solanaDeposits.signature, signature))
+      .limit(1);
+    return result[0];
+  }
+
+  async createSolanaDeposit(deposit: InsertSolanaDeposit): Promise<SolanaDeposit> {
+    const result = await db.insert(solanaDeposits).values(deposit).returning();
+    return result[0];
+  }
+
+  async updateSolanaDeposit(id: string, updates: Partial<SolanaDeposit>): Promise<SolanaDeposit | undefined> {
+    const result = await db.update(solanaDeposits)
+      .set(updates)
+      .where(eq(solanaDeposits.id, id))
+      .returning();
+    return result[0];
   }
 
   // Withdrawal Operations

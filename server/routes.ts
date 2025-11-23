@@ -1492,24 +1492,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Check if deposit was already processed
-      const existingDeposit = await storage.getDepositBySignature(signature);
+      const existingDeposit = await storage.getSolanaDepositBySignature(signature);
       
       if (existingDeposit) {
+        const amount = Number(existingDeposit.tkoinAmount);
+        const burnAmount = Number(existingDeposit.burnAmount);
+        const netTkoin = amount - burnAmount;
+        const metadata = existingDeposit.metadata as any;
+        
         return res.json({
           success: true,
           alreadyProcessed: true,
           depositId: existingDeposit.id,
-          ...transferInfo
+          signature: existingDeposit.signature,
+          senderAddress: existingDeposit.senderWallet,
+          amount,
+          creditsAmount: Number(existingDeposit.creditsAmount),
+          burnAmount,
+          netTkoin,
+          memo: metadata?.memo || existingDeposit.platformUserId || null,
+          destination: metadata?.destination || null,
+          timestamp: metadata?.blockTime ? new Date(metadata.blockTime * 1000).toISOString() : existingDeposit.verifiedAt.toISOString(),
+          platformUserId: existingDeposit.platformUserId,
         });
       }
+      
+      // Store verified deposit in database
+      const creditsAmount = transferInfo.amount * 100; // 1 TKOIN = 100 Credits
+      const burnRate = Number(process.env.TKOIN_BURN_RATE || '1') / 100; // Convert % to decimal
+      const burnAmount = transferInfo.amount * burnRate;
+      const netTkoin = transferInfo.amount - burnAmount;
+      
+      const newDeposit = await storage.createSolanaDeposit({
+        signature,
+        senderWallet: transferInfo.senderAddress,
+        tkoinAmount: transferInfo.amount.toString(),
+        creditsAmount: creditsAmount.toString(),
+        burnAmount: burnAmount.toString(),
+        platformUserId: platformUserId || transferInfo.memo || 'unknown',
+        platformName: 'betwin',
+        status: 'verified',
+        metadata: {
+          memo: transferInfo.memo,
+          destination: transferInfo.destination,
+          blockTime: tx.blockTime,
+        },
+      });
       
       // Return verification result
       res.json({
         success: true,
         alreadyProcessed: false,
+        depositId: newDeposit.id,
         signature,
         senderAddress: transferInfo.senderAddress,
         amount: transferInfo.amount,
+        creditsAmount,
+        burnAmount,
+        netTkoin,
         memo: transferInfo.memo || platformUserId || null,
         destination: transferInfo.destination,
         timestamp: tx.blockTime ? new Date(tx.blockTime * 1000).toISOString() : null
@@ -1517,6 +1557,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
     } catch (error) {
       console.error('Error verifying deposit:', error);
+      
+      // Handle Solana RPC errors with client-friendly 4xx responses
+      if (error instanceof Error) {
+        const errorMsg = error.message.toLowerCase();
+        
+        // Invalid signature format
+        if (errorMsg.includes('invalid') || errorMsg.includes('failed to get transaction')) {
+          return res.status(400).json({
+            success: false,
+            error: 'Invalid transaction signature',
+            details: 'The provided signature is not a valid Solana transaction'
+          });
+        }
+        
+        // Transaction not found
+        if (errorMsg.includes('not found')) {
+          return res.status(404).json({
+            success: false,
+            error: 'Transaction not found',
+            details: 'No transaction found with the provided signature'
+          });
+        }
+      }
+      
+      // Generic 500 for unexpected errors
       res.status(500).json({
         success: false,
         error: 'Failed to verify transaction',

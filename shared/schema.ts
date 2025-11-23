@@ -31,6 +31,48 @@ export const users = pgTable("users", {
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 
+// Solana Deposits Tracking (for duplicate prevention)
+export const solanaDeposits = pgTable("solana_deposits", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  
+  // Transaction identification
+  signature: text("signature").notNull().unique(), // Solana transaction signature
+  senderWallet: text("sender_wallet").notNull(),
+  
+  // Amount tracking
+  tkoinAmount: decimal("tkoin_amount", { precision: 20, scale: 8 }).notNull(),
+  creditsAmount: decimal("credits_amount", { precision: 20, scale: 2 }).notNull(),
+  burnAmount: decimal("burn_amount", { precision: 20, scale: 8 }).notNull().default("0"),
+  
+  // Platform association
+  platformUserId: text("platform_user_id").notNull(), // External platform's user ID
+  platformName: text("platform_name").notNull().default("betwin"), // Platform identifier
+  
+  // Status tracking
+  status: text("status").notNull().default("verified"), // verified, completed, failed
+  platformTransactionId: text("platform_transaction_id"), // ID from Platform API response
+  
+  // Metadata
+  metadata: jsonb("metadata"),
+  
+  // Timestamps
+  verifiedAt: timestamp("verified_at").notNull().defaultNow(),
+  completedAt: timestamp("completed_at"),
+}, (table) => ({
+  signatureIdx: uniqueIndex("solana_deposits_signature_idx").on(table.signature),
+  platformUserIdx: index("solana_deposits_platform_user_idx").on(table.platformUserId),
+  verifiedAtIdx: index("solana_deposits_verified_at_idx").on(table.verifiedAt),
+}));
+
+export const insertSolanaDepositSchema = createInsertSchema(solanaDeposits).omit({
+  id: true,
+  verifiedAt: true,
+  completedAt: true,
+});
+
+export type InsertSolanaDeposit = z.infer<typeof insertSolanaDepositSchema>;
+export type SolanaDeposit = typeof solanaDeposits.$inferSelect;
+
 // System Configuration
 export const systemConfig = pgTable("system_config", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
