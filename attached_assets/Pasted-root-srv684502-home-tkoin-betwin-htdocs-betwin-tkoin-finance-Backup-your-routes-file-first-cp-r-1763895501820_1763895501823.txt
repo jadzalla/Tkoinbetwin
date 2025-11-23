@@ -1,0 +1,84 @@
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# # Backup your routes file first
+cp routes/web.php routes/web.php.backup
+
+# Add the new routes at the end of the file
+cat >> routes/web.php << 'EOFROUTES'
+
+// Tkoin Wallet Widget Routes
+Route::prefix('tkoin')->name('tkoin.')->middleware('auth')->group(function () {
+    Route::get('/balance', [App\Http\Controllers\TkoinController::class, 'balance'])->name('balance');
+    Route::get('/history', [App\Http\Controllers\TkoinController::class, 'history'])->name('history');
+    Route::post('/deposit', [App\Http\Controllers\TkoinController::class, 'deposit'])->name('deposit');
+    Route::post('/withdrawal', [App\Http\Controllers\TkoinController::class, 'withdrawal'])->name('withdrawal');
+});
+EOFROUTES
+
+echo "✅ Routes added!"
+✅ Routes added!
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# # Backup the current JavaScript
+cp public/js/tkoin-wallet.js public/js/tkoin-wallet.js.backup
+
+cat > public/js/tkoin-wallet.js << 'EOFJS'
+// Tkoin Wallet Widget - Updated for Platform API Integration
+(function() {
+    let balanceData = null;
+    let refreshInterval = null;
+
+    // Initialize wallet on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        loadBalance();
+        loadTransactionHistory();
+        
+        // Auto-refresh every 30 seconds
+        refreshInterval = setInterval(function() {
+            loadBalance();
+            loadTransactionHistory();
+        }, 30000);
+
+        // Setup form handlers
+        setupDepositForm();
+        setupWithdrawalForm();
+    });
+
+    // Load balance
+    function loadBalance() {
+        fetch('/tkoin/balance')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.balance) {
+                    balanceData = data.balance;
+                    updateBalanceDisplay();
+                }
+            })
+            .catch(error => console.error('Balance fetch error:', error));
+    }
+
+    // Update balance display
+    function updateBalanceDisplay() {
+        if (!balanceData) return;
+
+        const creditsElement = document.getElementById('tkoin-credits-balance');
+        const tkoinElement = document.getElementById('tkoin-tkoin-balance');
+
+        if (creditsElement) {
+echo "✅ Wallet JavaScript updated!"o use your existing notification system'danger');d('withdrawalModal'));tus}</span></td>
+✅ Wallet JavaScript updated!
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance#php artisan route:clearr
+php artisan config:clear
+php artisan cache:clear
+php artisan view:clear
+
+echo "✅ All caches cleared! Wallet widget is now ready to test."
+
+   INFO  Route cache cleared successfully.  
+
+
+   INFO  Configuration cache cleared successfully.  
+
+
+   INFO  Application cache cleared successfully.  
+
+
+   INFO  Compiled views cleared successfully.  
+
+✅ All caches cleared! Wallet widget is now ready to test.
