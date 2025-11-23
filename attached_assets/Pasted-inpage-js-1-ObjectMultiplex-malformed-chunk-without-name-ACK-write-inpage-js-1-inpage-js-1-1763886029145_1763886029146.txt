@@ -1,0 +1,56 @@
+inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "2201245190"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "2201245190"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "2201245190"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "2201245191"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "2201245191"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "2201245191"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "848070507"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "848070507"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "848070507"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "848070508"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "848070508"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "848070508"
+(anonymous) @ inpage.js:1
+tkoin-wallet-link.html:1   Failed to load resource: the server responded with a status of 404 ()
+inpage.js:1  StreamMiddleware - Unknown response id "2201245192"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "848070509"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "2201245192"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "2201245192"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "848070509"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "848070509"
+(anonymous) @ inpage.js:1
+/lang/fr.json:1   Failed to load resource: the server responded with a status of 404 ()
+/login:1  Uncaught (in promise) Y
+[NEW] Explain Console errors by using Copilot in Edge: click
+         
+         to explain an error. 
+        Learn more
+        Don't show again
