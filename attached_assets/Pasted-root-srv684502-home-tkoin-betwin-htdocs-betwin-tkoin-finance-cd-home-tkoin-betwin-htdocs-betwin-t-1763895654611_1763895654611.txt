@@ -1,0 +1,73 @@
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# cd /home/tkoin-betwin/htdocs/betwin.tkoin.finance
+
+# Backup files first
+cp resources/views/index.blade.php resources/views/index.blade.php.backup
+cp public/js/tkoin-wallet.js public/js/tkoin-wallet.js.backup
+
+# ========== FIX 1: Remove broken script tag from index.blade.php ==========
+sed -i 's|<script src="/tkoin-wallet-link.html"></script>||g' resources/views/index.blade.php
+
+# ========== FIX 2: Create TkoinController ==========
+cat > app/Http/Controllers/TkoinController.php << 'EOFCONTROLLER'
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Services\TkoinService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+
+class TkoinController extends Controller
+{
+    protected TkoinService $tkoinService;
+
+    public function __construct(TkoinService $tkoinService)
+    {
+        $this->middleware('auth');
+        $this->tkoinService = $tkoinService;
+    }
+
+    public function showWallet()
+    {
+        return view('tkoin-wallet-page');
+    }
+
+    public function balance()
+    {
+        try {
+            $user = Auth::user();
+            $balance = $this->tkoinService->getUserBalance($user);
+
+            if ($balance === null) {
+                return response()->json(['success' => false, 'message' => 'Failed to fetch balance'], 500);
+            }
+
+            return response()->json(['success' => true, 'balance' => $balance]);
+echo "". Test deposit and withdrawal"ge with balance""n-wallet"troller::class, 'showWallet'])->middleware('auth')->name('user.tkoin');
+✅ Routes added!
+
+   INFO  Route cache cleared successfully.  
+
+
+   INFO  Configuration cache cleared successfully.  
+
+
+   INFO  Application cache cleared successfully.  
+
+
+   INFO  Compiled views cleared successfully.  
+
+
+✅✅✅ ALL FIXES COMPLETE! ✅✅✅
+
+What was fixed:
+1. ✅ Removed broken script tag (404 error gone)
+2. ✅ Created TkoinController with all wallet methods
+3. ✅ Created dedicated wallet page at /user/tkoin-wallet
+4. ✅ Updated JavaScript to call Laravel backend
+5. ✅ Added all necessary routes
+
+🧪 Test now:
+1. Log in to https://betwin.tkoin.finance
+2. Click the purple 'Tkoin' button (top right)
