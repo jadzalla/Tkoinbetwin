@@ -1,0 +1,90 @@
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "1201721559"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "1201721559"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "1201721559"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "1201721560"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "1201721560"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "1201721560"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "1859601261"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "1859601261"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "1859601261"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "1859601262"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "1859601262"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "1859601262"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "1201721561"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "1201721561"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "1201721561"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "1859601263"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "1859601263"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "1859601263"
+(anonymous) @ inpage.js:1
+/lang/fr.json:1   Failed to load resource: the server responded with a status of 404 ()
+login:1  Uncaught (in promise) Y
+tkoin-menu-injector.js:32 Tkoin: User menu not found, retrying...
+(index):1 [Intervention] Slow network is detected. See https://www.chromestatus.com/feature/5636954674692096 for more details. Fallback font will be used while loading: https://betwin.tkoin.finance/fonts/vendor/materialdesignicons-webfont.woff2
+tkoin-menu-injector.js:32 Tkoin: User menu not found, retrying...
+tkoin-menu-injector.js:32 Tkoin: User menu not found, retrying...
+tkoin-menu-injector.js:32 Tkoin: User menu not found, retrying...
+tkoin-menu-injector.js:32 Tkoin: User menu not found, retrying...
+tkoin-menu-injector.js:32 Tkoin: User menu not found, retrying...
+tkoin-menu-injector.js:32 Tkoin: User menu not found, retrying...
+tkoin-menu-injector.js:32 Tkoin: User menu not found, retrying...
+tkoin-menu-injector.js:32 Tkoin: User menu not found, retrying...
+tkoin-menu-injector.js:32 Tkoin: User menu not found, retrying...
+tkoin-menu-injector.js:32 Tkoin: User menu not found, retrying...
+tkoin-menu-injector.js:32 Tkoin: User menu not found, retrying...
+tkoin-menu-injector.js:32 Tkoin: User menu not found, retrying...
+tkoin-menu-injector.js:32 Tkoin: User menu not found, retrying...
+tkoin-menu-injector.js:32 Tkoin: User menu not found, retrying...
+tkoin-menu-injector.js:32 Tkoin: User menu not found, retrying...
+tkoin-menu-injector.js:32 Tkoin: User menu not found, retrying...
+tkoin-menu-injector.js:32 Tkoin: User menu not found, retrying...
+tkoin-menu-injector.js:32 Tkoin: User menu not found, retrying...
+tkoin-menu-injector.js:32 Tkoin: User menu not found, retrying...
+tkoin-menu-injector.js:81  Tkoin: Could not find user menu after 20 attempts
+(anonymous) @ tkoin-menu-injector.js:81
+[NEW] Explain Console errors by using Copilot in Edge: click
+         
+         to explain an error. 
+        Learn more
+        Don't show again
