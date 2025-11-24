@@ -1,0 +1,85 @@
+// Tkoin Menu Injector v7 - Only visible menus
+(function() {
+    'use strict';
+    
+    let hasRun = false;
+    
+    function isVisible(el) {
+        if (!el) return false;
+        const style = window.getComputedStyle(el);
+        return style.display !== 'none' && 
+               style.visibility !== 'hidden' && 
+               style.opacity !== '0' &&
+               el.offsetWidth > 0 && 
+               el.offsetHeight > 0;
+    }
+    
+    function injectTkoinLink() {
+        if (hasRun) return true;
+        
+        console.log('🔍 v7: Looking for VISIBLE Redeem code...');
+        
+        const allTexts = Array.from(document.querySelectorAll('*')).filter(el => {
+            return (el.textContent || '').trim() === 'Redeem code' && el.children.length === 0;
+        });
+        
+        console.log(`Found ${allTexts.length} "Redeem code" elements total`);
+        
+        const visibleOnes = allTexts.filter(el => {
+            let current = el;
+            while (current) {
+                if (!isVisible(current)) return false;
+                current = current.parentElement;
+            }
+            return true;
+        });
+        
+        console.log(`${visibleOnes.length} are actually visible`);
+        
+        if (visibleOnes.length === 0) return false;
+        
+        const redeemElement = visibleOnes[0];
+        const wrapper = redeemElement.closest('a, li, div[class*="item"]') || redeemElement.parentElement;
+        
+        const tkoinWrapper = wrapper.cloneNode(true);
+        tkoinWrapper.setAttribute('data-tkoin', 'true');
+        
+        function replaceInNode(node) {
+            if (node.nodeType === 3) {
+                node.textContent = node.textContent.replace('Redeem code', 'Tkoin Wallet');
+            } else {
+                Array.from(node.childNodes).forEach(replaceInNode);
+            }
+        }
+        replaceInNode(tkoinWrapper);
+        
+        const link = tkoinWrapper.querySelector('a, button');
+        if (link) {
+            if (link.href) link.href = '/user/tkoin-wallet';
+            link.onclick = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                window.location.href = '/user/tkoin-wallet';
+                return false;
+            };
+        }
+        
+        wrapper.parentNode.insertBefore(tkoinWrapper, wrapper.nextSibling);
+        console.log('✅ v7: Injected into FIRST VISIBLE menu only!');
+        
+        hasRun = true;
+        return true;
+    }
+    
+    let attempts = 0;
+    const interval = setInterval(() => {
+        if (injectTkoinLink() || ++attempts >= 20) {
+            clearInterval(interval);
+        }
+    }, 500);
+    
+    document.addEventListener('click', () => {
+        setTimeout(injectTkoinLink, 200);
+    });
+    
+})();
