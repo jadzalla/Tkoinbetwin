@@ -1,0 +1,50 @@
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# cd /home/tkoin-betwin/htdocs/betwin.tkoin.finance
+
+# Update ONLY the JavaScript file - don't touch controller or blade template
+cat > public/js/tkoin-wallet.js << 'JSEOF'
+// Tkoin Wallet - BetWin Integration v2
+(function() {
+    'use strict';
+    
+    console.log('🔵 Tkoin Wallet v2 initializing...');
+    
+    let walletAddress = null;
+    let isConnecting = false;
+    
+    // API Configuration - Use BetWin's /tkoin/ endpoints
+    const API_BASE = '/tkoin';
+    
+    // DOM Elements
+    const connectBtn = document.getElementById('connect-wallet-btn');
+    const balanceEl = document.getElementById('tkoin-balance');
+    const creditsEl = document.getElementById('credits-balance');
+    const accountIdEl = document.getElementById('account-id');
+    const depositBtn = document.getElementById('deposit-btn');
+    const withdrawBtn = document.getElementById('withdraw-btn');
+    const refreshBtn = document.getElementById('refresh-btn');
+    const transactionTable = document.getElementById('transaction-table');
+    const loadingSpinner = document.getElementById('loading-spinner');
+    
+    // Fetch balance and transactions
+    async function loadWalletData() {
+        try {
+            console.log('📊 Loading wallet data from /tkoin endpoints...');
+            if (loadingSpinner) loadingSpinner.style.display = 'block';
+            
+            // Fetch balance from /tkoin/balance
+            const balanceRes = await fetch(`${API_BASE}/balance`, {
+                credentials: 'same-origin'
+            });
+            
+            if (balanceRes.ok) {
+                const data = await balanceRes.json();
+                console.log('✅ Balance loaded:', data);
+                
+                if (balanceEl) balanceEl.textContent = (data.tkoinBalance || 0).toFixed(2);
+                if (creditsEl) creditsEl.textContent = (data.creditsBalance || 0).toFixed(2);
+                if (accountIdEl) accountIdEl.textContent = data.userId || '---';
+            } else {
+echo "Reload https://betwin.tkoin.finance/user/tkoin-wallet to test!"/history"istory');6ef 100%)';walletAddress.length - 4);: 'N/A'}</td>d>';
+✅ tkoin-wallet.js updated - now calls /tkoin/balance and /tkoin/history
+Reload https://betwin.tkoin.finance/user/tkoin-wallet to test!
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# 
