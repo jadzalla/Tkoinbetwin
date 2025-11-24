@@ -1,0 +1,158 @@
+cd /home/tkoin-betwin/htdocs/betwin.tkoin.finance
+
+# Create improved menu injector that inspects the DOM better
+cat > public/js/tkoin-menu-injector.js << 'EOF'
+// Tkoin Menu Injector v2 - Improved for BetWin
+(function() {
+    'use strict';
+    
+    function injectTkoinLink() {
+        console.log('🔍 Tkoin: Searching for user menu...');
+        
+        // Try to find elements that contain "Log out" (BetWin's text)
+        const allElements = document.querySelectorAll('*');
+        let menuContainer = null;
+        
+        for (const el of allElements) {
+            const text = el.textContent || '';
+            // Look for BetWin's specific menu items
+            if (text.includes('Profile') && 
+                text.includes('Redeem code') && 
+                text.includes('Log out')) {
+                
+                console.log('✓ Found element with menu text:', el);
+                console.log('  - Tag:', el.tagName);
+                console.log('  - Classes:', el.className);
+                console.log('  - ID:', el.id);
+                
+                // Find the closest list or container
+                menuContainer = el.closest('ul, div[role="menu"], nav') || el;
+                if (menuContainer) {
+                    console.log('✓ Found menu container:', menuContainer);
+                    break;
+                }
+            }
+        }
+        
+        if (!menuContainer) {
+            console.log('❌ Tkoin: User menu not found, retrying...');
+            return false;
+        }
+        
+        // Check if already injected
+        if (document.getElementById('tkoin-wallet-menu-item')) {
+            console.log('✓ Tkoin link already exists');
+            return true;
+        }
+        
+        // Find the "Redeem code" item to insert after it
+        const allLinks = menuContainer.querySelectorAll('a, button, div, span');
+        let redeemElement = null;
+        
+        for (const link of allLinks) {
+            if (link.textContent.trim() === 'Redeem code') {
+                redeemElement = link;
+                console.log('✓ Found "Redeem code" element:', redeemElement);
+                break;
+            }
+        }
+        
+        if (!redeemElement) {
+            console.warn('⚠️ Could not find "Redeem code" item');
+            return false;
+        }
+        
+        // Find the parent item (li, div, etc.)
+        let redeemParent = redeemElement.closest('li, div[class*="item"], div[class*="menu"]');
+        if (!redeemParent) {
+            redeemParent = redeemElement.parentElement;
+        }
+        
+        console.log('✓ Redeem code parent:', redeemParent);
+        
+        // Clone the structure of an existing menu item
+        const tkoinItem = redeemParent.cloneNode(true);
+        tkoinItem.id = 'tkoin-wallet-menu-item';
+        
+        // Find the link/button inside and update it
+        const tkoinLink = tkoinItem.querySelector('a, button, div') || tkoinItem;
+        
+        // Clear existing content
+        tkoinLink.innerHTML = '';
+        
+        // Add icon
+        const icon = document.createElement('i');
+        icon.className = 'fa fa-coins';
+        icon.style.marginRight = '8px';
+        tkoinLink.appendChild(icon);
+        
+        // Add text
+        tkoinLink.appendChild(document.createTextNode(' Tkoin Wallet'));
+        
+        // Set link
+        if (tkoinLink.tagName === 'A') {
+            tkoinLink.href = '/user/tkoin-wallet';
+        }
+        
+        // Bypass Vue router
+        tkoinLink.onclick = function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            window.location.href = '/user/tkoin-wallet';
+            return false;
+        };
+        
+        // Insert after "Redeem code"
+        if (redeemParent.parentNode) {
+            redeemParent.parentNode.insertBefore(tkoinItem, redeemParent.nextSibling);
+            console.log('✅ Tkoin Wallet link injected successfully!');
+            return true;
+        }
+        
+        console.warn('⚠️ Could not insert Tkoin link');
+        return false;
+    }
+    
+    // Try to inject every 500ms for up to 30 attempts (15 seconds)
+    let attempts = 0;
+    const maxAttempts = 30;
+    
+    const interval = setInterval(function() {
+        attempts++;
+        console.log(`Attempt ${attempts}/${maxAttempts}`);
+        
+        if (injectTkoinLink() || attempts >= maxAttempts) {
+            clearInterval(interval);
+            if (attempts >= maxAttempts) {
+                console.warn('⚠️ Tkoin: Gave up after ' + maxAttempts + ' attempts');
+            }
+        }
+    }, 500);
+    
+    // Also try when clicking anywhere (menu might load dynamically)
+    document.addEventListener('click', function() {
+        setTimeout(injectTkoinLink, 200);
+    });
+    
+})();
+EOF
+
+# Clear caches
+php artisan view:clear
+php artisan cache:clear
+
+echo ""
+echo "✅ Updated menu injector with better debugging!"
+echo ""
+echo "🧪 TEST NOW:"
+echo "1. Go to BetWin and hard refresh (Ctrl+F5)"
+echo "2. Open console (F12)"
+echo "3. Click your avatar"
+echo "4. You should see detailed console logs showing:"
+echo "   - 🔍 Searching for user menu..."
+echo "   - ✓ Found element with menu text"
+echo "   - ✓ Found menu container"
+echo "   - ✓ Found Redeem code element"
+echo "   - ✅ Tkoin Wallet link injected!"
+echo ""
+echo "📸 Show me the console logs!"
