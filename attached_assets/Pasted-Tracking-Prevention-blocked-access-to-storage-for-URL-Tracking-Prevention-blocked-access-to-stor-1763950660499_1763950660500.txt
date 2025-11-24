@@ -1,0 +1,68 @@
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "4139109575"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "4139109575"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "4139109575"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "4139109576"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "4139109576"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "4139109576"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "2696684989"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "2696684989"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "2696684989"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "2696684990"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "2696684990"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "2696684990"
+(anonymous) @ inpage.js:1
+tkoin-menu-injector.js?v=10:75 🔍 v10: MutationObserver watching for menu portal...
+/lang/fr.json:1   Failed to load resource: the server responded with a status of 404 ()
+/login:1  Uncaught (in promise) Y
+inpage.js:1  StreamMiddleware - Unknown response id "2696684991"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "2696684991"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "2696684991"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "4139109577"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "4139109577"
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "4139109577"
+(anonymous) @ inpage.js:1
+[NEW] Explain Console errors by using Copilot in Edge: click
+         
+         to explain an error. 
+        Learn more
+        Don't show again
