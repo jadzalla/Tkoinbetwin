@@ -1,0 +1,209 @@
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# # Run on BetWin server - Find where user menu is defined
+cd /home/tkoin-betwin/htdocs/betwin.tkoin.finance
+
+# Search for "Redeem Code" in templates
+grep -r "Redeem" resources/views --include="*.blade.php" -B 3 -A 3 | head -30
+
+# Also search for user dropdown/avatar menu
+grep -r "dropdown\|user-menu\|avatar" resources/views --include="*.blade.php" -l | head -10
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# 
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# grep -r "Redeem" resources/views --include="*.blade.php" -B 3 -A 3 | head -30
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# cd /home/tkoin-betwin/htdocs/betwin.tkoin.finance
+
+# 1. Show me the index.blade.php structure
+head -150 resources/views/index.blade.php
+
+# 2. Find where tkoin-wallet.js is being loaded (causing the duplicate error)
+grep -n "tkoin-wallet.js" resources/views/*.blade.php
+
+# 3. Check if there's a header or nav component
+ls -la resources/views/components/ 2>/dev/null || echo "No components folder"
+<!DOCTYPE html>
+<html lang="{{ app()->getLocale() }}">
+<head>
+  <title>{{ config('app.name') }}</title>
+  <!-- {{ config('app.version') }} -->
+
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="{{ __('Fair online casino games') }}" />
+  <meta name="keywords" content="casino,blackjack,poker,slots,slot machine,baccarat,dice,roulette,online games" />
+  <meta name="theme-color" content="#ffffff">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+
+  <!-- Favicon -->
+  <link rel="icon" href="{{ asset(config('settings.favicon.ico')) }}" type="image/x-icon">
+  @if(config('settings.favicon.apple_touch'))
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset(config('settings.favicon.apple_touch')) }}">
+  @endif
+  @if(config('settings.favicon.32x32'))
+    <link rel="icon" sizes="32x32" href="{{ asset(config('settings.favicon.32x32')) }}">
+  @endif
+  @if(config('settings.favicon.192x192'))
+    <link rel="icon" sizes="192x192" href="{{ asset(config('settings.favicon.192x192')) }}">
+  @endif
+  @if(config('settings.favicon.mask'))
+    <link rel="mask-icon" color="#000000" href="{{ asset(config('settings.favicon.mask')) }}">
+  @endif
+    <!-- END Favicon -->
+
+  <link rel="manifest" href="{{ asset('manifest.json') }}">
+
+  <!--Open Graph tags-->
+  <meta property="og:url" content="{{ url('/') }}" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="{{ config('app.name') }}" />
+  <meta property="og:description" content="{{ __('Fair online casino games') }}" />
+  <meta property="og:image" content="{{ asset(config('app.og_image')) }}" />
+  <!--END Open Graph tags-->
+
+  <!--Google Tag Manager-->
+  @if(config('services.gtm.container_id'))
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+          new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+        j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+        'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+      })(window,document,'script','dataLayer', '{{ config('services.gtm.container_id') }}');
+    </script>
+  @endif
+  <!--END Google Tag Manager-->
+
+  <!-- Bootstrap CSS (required for Tkoin Wallet) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Font Awesome (required for Tkoin Wallet icons) -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+  @foreach($stylesheets as $stylesheet)
+    <link href="{{ $stylesheet }}" rel="stylesheet">
+  @endforeach
+
+  <noscript>
+    <h3>{{ __('Please enable JavaScript in your browser.') }}</h3>
+  </noscript>
+</head>
+<body onload="if(window !== window.top) window.top.location = window.location">
+  <div id="app"></div>
+
+  <script>
+    window.store = "{{ $store }}"
+  </script>
+
+  <script src="{{ asset('js/app.js') . '?' . md5(config('app.version')) }}"></script>
+  
+  <!-- Bootstrap JS (required for Tkoin Wallet modals) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  
+  {!! $javascript !!}
+  
+</body>
+</html>
+
+<style>
+  .tkoin-nav-btn {
+    position: fixed;
+    top: 20px;
+    right: 240px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 10px 16px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 500;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .tkoin-nav-btn:hover {
+    opacity: 0.9;
+    color: white;
+  }
+</style>
+
+<a href="/user/tkoin-wallet" class="tkoin-nav-btn" onclick="event.preventDefault(); window.location.href=this.href; return false;">
+  <i class="fa fa-coins"></i> Tkoin
+</a>
+total 32
+drwxrwxr-x 2 tkoin-betwin tkoin-betwin  4096 Nov 22 07:20 .
+drwxrwx--- 6 tkoin-betwin tkoin-betwin  4096 Nov 23 23:32 ..
+-rw-rw-r-- 1 tkoin-betwin tkoin-betwin  9270 Nov 22 07:20 tkoin-wallet.blade.php
+-rw-rw-r-- 1 tkoin-betwin tkoin-betwin 10935 Nov 22 07:11 tkoin-wallet.blade.php.backup
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# ^C
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# cd /home/tkoin-betwin/htdocs/betwin.tkoin.finance
+
+# 1. Check if tkoin-wallet.js is loaded in the user blade file
+grep -n "tkoin-wallet.js" resources/views/user/tkoin-wallet.blade.php
+
+# 2. Check what's in the $javascript variable that gets injected
+grep -r "tkoin-wallet.js" app/Http/Controllers/*.php
+14:    <script src="{{ asset('js/tkoin-wallet.js') }}"></script>
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# cd /home/tkoin-betwin/htdocs/betwin.tkoin.finance
+
+# Create the injection script
+cat > public/js/tkoin-menu-injector.js << 'EOF'
+// Tkoin Menu Injector - Safely adds Tkoin Wallet to user dropdown
+(function() {
+    'use strict';
+    
+    // Wait for Vue to render the DOM
+    function injectTkoinLink() {
+        // Find the user dropdown menu (try multiple selectors)
+        const dropdownSelectors = [
+            '.dropdown-menu',
+            '[role="menu"]',
+            '.user-menu',
+            '.nav-dropdown',
+            'ul[class*="dropdown"]'
+        ];
+        
+        let userMenu = null;
+        for (const selector of dropdownSelectors) {
+            const menus = document.querySelectorAll(selector);
+            // Find the menu that likely contains user options
+            for (const menu of menus) {
+                if (menu.textContent.includes('Profile') || 
+                    menu.textContent.includes('Settings') || 
+                    menu.textContent.includes('Logout')) {
+                    userMenu = menu;
+                    break;
+                }
+            }
+            if (userMenu) break;
+        }
+        
+        if (!userMenu) {
+            console.log('Tkoin: User menu not found, retrying...');
+            return false;
+        }
+        
+        // Check if already injected
+        if (document.getElementById('tkoin-wallet-menu-link')) {
+            return true;
+        }
+        
+        // Create Tkoin Wallet menu item
+        const tkoinItem = document.createElement('li');
+echo "". Look for 'Tkoin Wallet' in the dropdown!"user.tkoin-wallet'|g" app/Http/Controllers/TkoinController.php/>
+
+   INFO  Compiled views cleared successfully.  
+
+
+   INFO  Application cache cleared successfully.  
+
+
+✅✅✅ COMPLETE SOLUTION DEPLOYED! ✅✅✅
+
+Changes made:
+1. ✅ Removed fixed-position button
+2. ✅ Created smart menu injector script
+3. ✅ Fixed controller view path
+4. ✅ Cleared all caches
+
+🧪 TEST NOW:
+1. Refresh BetWin (Ctrl+F5)
+2. Click your avatar/user menu
+3. Look for 'Tkoin Wallet' in the dropdown!
+
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# 
