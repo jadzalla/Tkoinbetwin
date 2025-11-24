@@ -1,0 +1,79 @@
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# cd /home/tkoin-betwin/htdocs/betwin.tkoin.finance
+
+# Create improved menu injector that inspects the DOM better
+cat > public/js/tkoin-menu-injector.js << 'EOF'
+// Tkoin Menu Injector v2 - Improved for BetWin
+(function() {
+    'use strict';
+    
+    function injectTkoinLink() {
+        console.log('🔍 Tkoin: Searching for user menu...');
+        
+        // Try to find elements that contain "Log out" (BetWin's text)
+        const allElements = document.querySelectorAll('*');
+        let menuContainer = null;
+        
+        for (const el of allElements) {
+            const text = el.textContent || '';
+            // Look for BetWin's specific menu items
+            if (text.includes('Profile') && 
+                text.includes('Redeem code') && 
+                text.includes('Log out')) {
+                
+                console.log('✓ Found element with menu text:', el);
+                console.log('  - Tag:', el.tagName);
+                console.log('  - Classes:', el.className);
+                console.log('  - ID:', el.id);
+                
+                // Find the closest list or container
+                menuContainer = el.closest('ul, div[role="menu"], nav') || el;
+                if (menuContainer) {
+                    console.log('✓ Found menu container:', menuContainer);
+                    break;
+                }
+            }
+        }
+        
+        if (!menuContainer) {
+            console.log('❌ Tkoin: User menu not found, retrying...');
+            return false;
+        }
+        
+        // Check if already injected
+        if (document.getElementById('tkoin-wallet-menu-item')) {
+            console.log('✓ Tkoin link already exists');
+            return true;
+        }
+echo "📸 Show me the console logs!"ected!""ogs showing:" dynamically) + ' attempts'););menu"]');
+
+   INFO  Compiled views cleared successfully.  
+
+
+   INFO  Application cache cleared successfully.  
+
+
+✅ Updated menu injector with better debugging!
+
+🧪 TEST NOW:
+1. Go to BetWin and hard refresh (Ctrl+F5)
+2. Open console (F12)
+3. Click your avatar
+4. You should see detailed console logs showing:
+   - 🔍 Searching for user menu...
+   - ✓ Found element with menu text
+   - ✓ Found menu container
+   - ✓ Found Redeem code element
+   - ✅ Tkoin Wallet link injected!
+
+📸 Show me the console logs!
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# ^C
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# # On BetWin server - verify the file was created
+cd /home/tkoin-betwin/htdocs/betwin.tkoin.finance
+ls -lh public/js/tkoin-menu-injector.js
+head -5 public/js/tkoin-menu-injector.js
+-rw-rw-r-- 1 root root 4.6K Nov 24 00:37 public/js/tkoin-menu-injector.js
+// Tkoin Menu Injector v2 - Improved for BetWin
+(function() {
+    'use strict';
+    
+    function injectTkoinLink() {
