@@ -1,0 +1,81 @@
+root@srv684502:~# cd /home/tkoin-betwin/htdocs/betwin.tkoin.finance
+
+# Check if blade template has inline script or src reference
+echo "=== Checking blade template script loading ==="
+grep -A 5 -B 5 "script" resources/views/user/tkoin-wallet.blade.php
+
+echo ""
+echo "=== Checking if JS is embedded inline ==="
+grep -c "console.log" resources/views/user/tkoin-wallet.blade.php && echo "⚠️  JS code embedded in blade!" || echo "✅ No inline JS"
+
+echo ""
+echo "=== Actual JS file size ==="
+wc -l public/js/tkoin-wallet.js
+
+echo ""
+echo "=== What browser is actually getting ==="
+curl -s https://betwin.tkoin.finance/js/tkoin-wallet.js | head -50
+=== Checking blade template script loading ===
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <script src="{{ asset('js/tkoin-wallet.js') }}?v=2"></script>
+</body>
+</html>
+
+=== Checking if JS is embedded inline ===
+0
+✅ No inline JS
+
+=== Actual JS file size ===
+45 public/js/tkoin-wallet.js
+
+=== What browser is actually getting ===
+console.log('Tkoin Wallet Loading...');
+
+(function() {
+    var API = '/tkoin';
+    
+    function load() {
+        fetch(API + '/balance', {credentials: 'same-origin'})
+            .then(r => r.json())
+            .then(d => {
+                document.getElementById('tkoin-balance').textContent = d.tkoinBalance || 0;
+                document.getElementById('credits-balance').textContent = d.creditsBalance || 0;
+                document.getElementById('account-id').textContent = d.userId || '---';
+            });
+        
+        fetch(API + '/history?limit=20', {credentials: 'same-origin'})
+            .then(r => r.json())
+            .then(d => {
+                var tbody = document.querySelector('#transaction-table tbody');
+                if (d.transactions && d.transactions.length > 0) {
+                    tbody.innerHTML = d.transactions.map(tx => 
+                        '<tr><td>' + tx.type + '</td><td>' + tx.amount + '</td><td>' + tx.status + '</td><td>' + tx.createdAt + '</td></tr>'
+                    ).join('');
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="4">No transactions</td></tr>';
+                }
+                document.getElementById('loading-spinner').style.display = 'none';
+            });
+    }
+    
+    document.getElementById('connect-wallet-btn').onclick = function() {
+        if (window.solana) {
+            window.solana.connect().then(r => {
+                alert('Connected: ' + r.publicKey.toString().substring(0,8) + '...');
+            });
+        } else {
+            alert('Please install Phantom wallet');
+        }
+    };
+    
+    document.getElementById('refresh-btn').onclick = load;
+    
+    setTimeout(load, 500);
+})();
+
+console.log('Tkoin Wallet Ready');
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# 
