@@ -1,0 +1,52 @@
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# cd /home/tkoin-betwin/htdocs/betwin.tkoin.finance
+
+# 1. Check what version is actually in the file
+echo "=== Current script version ==="
+head -1 public/js/tkoin-menu-injector.js
+
+# 2. Check index.blade.php has the right version number
+echo ""
+echo "=== Script tag in index.blade.php ==="
+grep "tkoin-menu-injector" resources/views/index.blade.php
+
+# 3. Create a completely new approach - only inject into VISIBLE menu
+cat > public/js/tkoin-menu-injector.js << 'EOF'
+// Tkoin Menu Injector v7 - Only visible menus
+(function() {
+    'use strict';
+    
+    let hasRun = false;
+    
+    function isVisible(el) {
+        if (!el) return false;
+        const style = window.getComputedStyle(el);
+        return style.display !== 'none' && 
+               style.visibility !== 'hidden' && 
+               style.opacity !== '0' &&
+               el.offsetWidth > 0 && 
+               el.offsetHeight > 0;
+    }
+    
+    function injectTkoinLink() {
+        if (hasRun) return true;
+        
+        console.log('🔍 v7: Looking for VISIBLE Redeem code...');
+        
+        // Find all "Redeem code" text elements
+        const allTexts = Array.from(document.querySelectorAll('*')).filter(el => {
+            return (el.textContent || '').trim() === 'Redeem code' && el.children.length === 0;
+        });
+        
+        console.log(`Found ${allTexts.length} "Redeem code" elements total`);
+        
+        // Filter to only VISIBLE ones
+        const visibleOnes = allTexts.filter(el => {
+            // Check if element and all parents are visible
+            let current = el;
+            while (current) {
+            link.onclick = (ink.href = '/user/tkoin-wallet';;Node); code', 'Tkoin Wallet');.parentElement;
+=== Current script version ===
+// Tkoin Menu Injector v6 - Smart deduplication
+
+=== Script tag in index.blade.php ===
+  <script src="{{ asset('js/tkoin-menu-injector.js') }}?v=3"></script>
