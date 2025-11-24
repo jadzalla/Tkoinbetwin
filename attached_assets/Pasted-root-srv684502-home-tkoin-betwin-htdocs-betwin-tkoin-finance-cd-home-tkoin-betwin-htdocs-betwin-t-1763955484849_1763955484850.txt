@@ -1,0 +1,43 @@
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# cd /home/tkoin-betwin/htdocs/betwin.tkoin.finance
+
+# Restore the working IIFE version
+cp public/js/tkoin-wallet.js.old public/js/tkoin-wallet.js
+
+# Verify it's clean
+echo "=== Checking for pollution ==="
+grep -n "'" public/js/tkoin-wallet.js && echo "⚠️  Found smart quotes!" || echo "✅ No smart quotes"
+
+# Validate syntax
+echo ""
+echo "=== Validating syntax ==="
+node -c public/js/tkoin-wallet.js && echo "✅ JavaScript syntax valid!" || echo "❌ Still has errors"
+
+echo ""
+echo "✅ Working version restored!"
+echo "Hard refresh: https://betwin.tkoin.finance/user/tkoin-wallet (Ctrl+Shift+R)"
+=== Checking for pollution ===
+1:console.log('Tkoin Wallet Loading...');
+4:    var API = '/tkoin';
+7:        fetch(API + '/balance', {credentials: 'same-origin'})
+10:                document.getElementById('tkoin-balance').textContent = d.tkoinBalance || 0;
+11:                document.getElementById('credits-balance').textContent = d.creditsBalance || 0;
+12:                document.getElementById('account-id').textContent = d.userId || '---';
+15:        fetch(API + '/history?limit=20', {credentials: 'same-origin'})
+18:                var tbody = document.querySelector('#transaction-table tbody');
+21:                        '<tr><td>' + tx.type + '</td><td>' + tx.amount + '</td><td>' + tx.status + '</td><td>' + tx.createdAt + '</td></tr>'
+22:                    ).join('');
+24:                    tbody.innerHTML = '<tr><td colspan="4">No transactions</td></tr>';
+26:                document.getElementById('loading-spinner').style.display = 'none';
+30:    document.getElementById('connect-wallet-btn').onclick = function() {
+33:                alert('Connected: ' + r.publicKey.toString().substring(0,8) + '...');
+36:            alert('Please install Phantom wallet');
+40:    document.getElementById('refresh-btn').onclick = load;
+45:console.log('Tkoin Wallet Ready');
+⚠️  Found smart quotes!
+
+=== Validating syntax ===
+✅ JavaScript syntax valid!
+
+✅ Working version restored!
+Hard refresh: https://betwin.tkoin.finance/user/tkoin-wallet (Ctrl+Shift+R)
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# 
