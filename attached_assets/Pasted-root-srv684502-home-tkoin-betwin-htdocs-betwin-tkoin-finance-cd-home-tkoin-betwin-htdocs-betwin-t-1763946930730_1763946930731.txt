@@ -1,0 +1,66 @@
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# cd /home/tkoin-betwin/htdocs/betwin.tkoin.finance
+
+# Complete the v7 script (the previous command got cut off)
+cat > public/js/tkoin-menu-injector.js << 'EOF'
+// Tkoin Menu Injector v7 - Only visible menus
+(function() {
+    'use strict';
+    
+    let hasRun = false;
+    
+    function isVisible(el) {
+        if (!el) return false;
+        const style = window.getComputedStyle(el);
+        return style.display !== 'none' && 
+               style.visibility !== 'hidden' && 
+               style.opacity !== '0' &&
+               el.offsetWidth > 0 && 
+               el.offsetHeight > 0;
+    }
+    
+    function injectTkoinLink() {
+        if (hasRun) return true;
+        
+        console.log('🔍 v7: Looking for VISIBLE Redeem code...');
+        
+        const allTexts = Array.from(document.querySelectorAll('*')).filter(el => {
+            return (el.textContent || '').trim() === 'Redeem code' && el.children.length === 0;
+        });
+        
+        console.log(`Found ${allTexts.length} "Redeem code" elements total`);
+        
+        const visibleOnes = allTexts.filter(el => {
+            let current = el;
+            while (current) {
+                if (!isVisible(current)) return false;
+                current = current.parentElement;
+            }
+            return true;
+        });
+        
+        console.log(`${visibleOnes.length} are actually visible`);
+        
+        if (visibleOnes.length === 0) return false;
+        
+        const redeemElement = visibleOnes[0];
+        const wrapper = redeemElement.closest('a, li, div[class*="item"]') || redeemElement.parentElement;
+echo "6. Should see: '🔍 v7: Looking for VISIBLE Redeem code...'"TIMESTAMP}|g" resources/views/index.blade.php
+=== Version updated ===
+  <script src="{{ asset('js/tkoin-menu-injector.js') }}?v=3"></script>
+
+   INFO  Compiled views cleared successfully.  
+
+
+   INFO  Application cache cleared successfully.  
+
+
+✅ FIXED: Version number updated to 1763946884
+
+🧪 NOW:
+1. CLOSE all BetWin tabs
+2. Ctrl+Shift+Delete → Clear 'Cached images'
+3. Open https://betwin.tkoin.finance
+4. F12 → Console
+5. Click avatar
+6. Should see: '🔍 v7: Looking for VISIBLE Redeem code...'
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# 
