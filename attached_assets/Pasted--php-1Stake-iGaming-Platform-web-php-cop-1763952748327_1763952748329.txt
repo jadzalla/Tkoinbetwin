@@ -1,0 +1,57 @@
+<?php
+/**
+ *   1Stake iGaming Platform
+ *   -----------------------
+ *   web.php
+ * 
+ *   @copyright  Copyright (c) 1stake, All rights reserved
+ *   @author     1stake <sales@1stake.app>
+ *   @see        https://1stake.app
+*/
+
+use App\Http\Controllers\Auth\VerificationController;
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\PageController;
+
+Route::get('manifest.json', [PageController::class, 'makeManifestFile']);
+
+Route::get('email/verify/{id}/{hash}', [VerificationController::class, 'verify'])
+    ->name('verification.verify')
+    ->middleware(['auth:sanctum', 'signed', 'throttle:6,1']);
+
+Route::get('login', [PageController::class, 'index'])->middleware('referrer')->name('login');
+
+// Tkoin Wallet Route - MUST be before catch-all
+Route::get('/user/tkoin-wallet', function () {
+    return view('user.tkoin-wallet');
+})->middleware('auth')->name('user.tkoin-wallet');
+
+// Catch-all Vue SPA route - MUST be last
+Route::get('{path}', [PageController::class, 'index'])->where('path', '.*')->middleware('referrer');
+
+// Tkoin Wallet Widget Routes
+Route::prefix('tkoin')->name('tkoin.')->middleware('auth')->group(function () {
+    Route::get('/balance', [App\Http\Controllers\TkoinController::class, 'balance'])->name('balance');
+    Route::get('/history', [App\Http\Controllers\TkoinController::class, 'history'])->name('history');
+    Route::post('/deposit', [App\Http\Controllers\TkoinController::class, 'deposit'])->name('deposit');
+    Route::post('/withdrawal', [App\Http\Controllers\TkoinController::class, 'withdrawal'])->name('withdrawal');
+});
+
+// Tkoin Wallet Routes
+Route::prefix('tkoin')->name('tkoin.')->middleware('auth')->group(function () {
+    Route::get('/balance', [App\Http\Controllers\TkoinController::class, 'balance'])->name('balance');
+    Route::get('/history', [App\Http\Controllers\TkoinController::class, 'history'])->name('history');
+    Route::post('/deposit', [App\Http\Controllers\TkoinController::class, 'deposit'])->name('deposit');
+    Route::post('/withdrawal', [App\Http\Controllers\TkoinController::class, 'withdrawal'])->name('withdrawal');
+});
+
+// Tkoin Wallet Page
+Route::get('/user/tkoin-wallet', [App\Http\Controllers\TkoinController::class, 'showWallet'])->middleware('auth')->name('user.tkoin');
+
+// Tkoin Wallet Integration Routes
+Route::prefix('tkoin')->name('tkoin.')->middleware('auth')->group(function () {
+    Route::get('/wallet', [App\Http\Controllers\TkoinController::class, 'showWallet'])->name('wallet');
+    Route::post('/verify-deposit', [App\Http\Controllers\TkoinController::class, 'verifyDeposit'])->name('verify-deposit');
+    Route::post('/withdraw', [App\Http\Controllers\TkoinController::class, 'withdraw'])->name('withdraw');
+    Route::get('/marketplace', [App\Http\Controllers\TkoinController::class, 'redirectToMarketplace'])->name('marketplace');
+});
