@@ -1,0 +1,69 @@
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# cd /home/tkoin-betwin/htdocs/betwin.tkoin.finance
+
+# Create v10 with MutationObserver
+cat > public/js/tkoin-menu-injector.js << 'EOF'
+// Tkoin Menu Injector v10 - MutationObserver for Vue portal
+(function() {
+    'use strict';
+    
+    let hasInjected = false;
+    
+    function injectTkoinLink() {
+        if (hasInjected) return;
+        
+        // Find the Vuetify menu portal
+        const menuPortal = document.querySelector('div[role="menu"] .v-overlay__content');
+        if (!menuPortal) return;
+        
+        console.log('✓ Found menu portal:', menuPortal);
+        
+        // Find all list items
+        const listItems = Array.from(menuPortal.querySelectorAll('.v-list-item'));
+        console.log(`Found ${listItems.length} list items`);
+        
+        // Find "Redeem code" item
+        const redeemItem = listItems.find(item => {
+            const text = item.textContent || '';
+            return text.includes('Redeem code');
+        });
+        
+        if (!redeemItem) {
+            console.log('❌ No "Redeem code" item found');
+            return;
+        }
+        
+        console.log('✓ Found Redeem code item:', redeemItem);
+        
+        // Clone it
+        const tkoinItem = redeemItem.cloneNode(true);
+        tkoinItem.setAttribute('data-tkoin-wallet', 'true');
+        
+        // Replace text
+        const content = tkoinItem.querySelector('.v-list-item__content');
+        if (content) {
+            content.childNodes.forEach(node => {
+                if (node.nodeType === 3 && node.textContent.includes('Redeem code')) {
+                    node.textContent = 'Tkoin Wallet';
+echo "6. Verify 'Tkoin Wallet' appears in dropdown!"de.phptor.js?v=10/g' resources/views/index.blade.php
+=== Updated Version ===
+  <script src="{{ asset('js/tkoin-menu-injector.js') }}?v=7"></script>
+
+   INFO  Compiled views cleared successfully.  
+
+
+   INFO  Application cache cleared successfully.  
+
+
+✅ v10: MutationObserver approach deployed!
+
+🧪 CRITICAL TEST:
+1. Close ALL BetWin tabs
+2. Ctrl+Shift+Delete → Clear cached files
+3. Open fresh: https://betwin.tkoin.finance
+4. F12 → Console should show:
+   '🔍 v10: MutationObserver watching...'
+5. Click avatar → Should see:
+   '✓ Found menu portal'
+-bash: !': event not found
+6. Verify 'Tkoin Wallet' appears in dropdown!
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# 
