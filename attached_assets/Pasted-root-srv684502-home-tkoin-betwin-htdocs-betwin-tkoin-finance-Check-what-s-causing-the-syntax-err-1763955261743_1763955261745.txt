@@ -1,0 +1,200 @@
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# # Check what's causing the syntax error
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# echo "=== Checking current tkoin-wallet.js around line 38 ==="
+false;
+   === Checking current tkoin-wallet.js around line 38 ===
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# sed -n '35,42p' public/js/tkoin-wallet.js
+atch(function(er        } else {
+            alert('Please install Phantom wallet');
+        }
+    };
+    
+    document.getElementById('refresh-btn').onclick = load;
+    
+    setTimeout(load, 500);
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# 
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# echo ""
+
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# echo "=== Creating clean JavaScript file ==="
+n=== Creating clean JavaScript file ===
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# 
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# # Create a completely clean JavaScript file
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# cat > public/js/tkoin-wallet.js.new << 'JSEND'
+> console.log('Tkoin Wallet v3 Loading');
+El> (function() {
+>     var API_BASE = '/tkoin';
+>     var walletConnected = false;
+>     
+>     function loadBalance() {
+>         fetch(API_BASE + '/balance', {credentials: 'same-origin'})
+>             .then(function(r) { return r.json(); })
+>             .then(function(data) {
+>                 console.log('Balance loaded:', data);
+>                 document.getElementById('tkoin-balance').textContent = (data.tkoinBalance || 0).toFixed(2);
+>                 document.getElementById('credits-balance').textContent = (data.creditsBalance || 0).toFixed(2);
+>                 document.getElementById('account-id').textContent = data.userId || '---';
+>             })
+>             .catch(function(err) { console.error('Balance error:', err); });
+>     }
+>     
+>     function loadHistory() {
+>         fetch(API_BASE + '/history?limit=20', {credentials: 'same-origin'})
+>             .then(function(r) { return r.json(); })
+>             .then(function(data) {
+>                 console.log('History loaded:', data);
+>                 var tbody = document.querySelector('#transaction-table tbody');
+>                 var spinner = document.getElementById('loading-spinner');
+>                 if (spinner) spinner.style.display = 'none';
+>                 
+>                 if (!data.transactions || data.transactions.length === 0) {
+>                     tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;color:#94a3b8">No transactions yet</td></tr>';
+>                 } else {
+>                     tbody.innerHTML = data.transactions.map(function(tx) {
+>                         var statusColor = tx.status === 'completed' ? '#10b981' : (tx.status === 'pending' ? '#f59e0b' : '#64748b');
+>                         var date = tx.createdAt ? new Date(tx.createdAt).toLocaleDateString() : 'N/A';
+>                         return '<tr>' +
+>                             '<td style="padding:12px;color:#e2e8f0">' + (tx.type || 'N/A') + '</td>' +
+>                             '<td style="padding:12px;color:#e2e8f0">' + (tx.amount || 0).toFixed(2) + '</td>' +
+>                             '<td style="padding:12px"><span style="color:' + statusColor + ';font-weight:500">' + (tx.status || 'pending') + '</span></td>' +
+>                             '<td style="padding:12px;color:#94a3b8">' + date + '</td>' +
+>                             '</tr>';
+>                     }).join('');
+>                 }
+>             })
+>             .catch(function(err) { 
+>                 console.error('History error:', err);
+>                 var spinner = document.getElementById('loading-spinner');
+>                 if (spinner) spinner.style.display = 'none';
+>             });
+>     }
+>     
+>     function connectPhantom() {
+>         console.log('Attempting Phantom connection...');
+>         if (!window.solana || !window.solana.isPhantom) {
+>             alert('Phantom wallet not detected. Please install Phantom browser extension.');
+>             window.open('https://phantom.app/', '_blank');
+>             return;
+>         }
+>         
+>         window.solana.connect()
+>             .then(function(response) {
+>                 var address = response.publicKey.toString();
+>                 console.log('Wallet connected:', address);
+>                 walletConnected = true;
+>                 
+>                 var btn = document.getElementById('connect-wallet-btn');
+>                 if (btn) {
+>                     btn.textContent = address.substring(0, 4) + '...' + address.substring(address.length - 4);
+>                     btn.style.background = 'linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%)';
+>                     btn.disabled = true;
+>                 }
+>                 
+>                 var depositBtn = document.getElementById('deposit-btn');
+>                 var withdrawBtn = document.getElementById('withdraw-btn');
+>                 if (depositBtn) depositBtn.disabled = false;
+>                 if (withdrawBtn) withdrawBtn.disabled = false;
+>             })
+>             .catch(function(error) {
+>                 console.error('Wallet connection error:', error);
+>                 alert('Failed to connect wallet: ' + error.message);
+>             });
+>     }
+>     
+>     document.getElementById('connect-wallet-btn').addEventListener('click', connectPhantom);
+>     document.getElementById('refresh-btn').addEventListener('click', function() {
+>         loadBalance();
+>         loadHistory();
+>     });
+>     
+>     setTimeout(function() {
+>         loadBalance();
+>         loadHistory();
+>     }, 300);
+>     
+>     console.log('Tkoin Wallet v3 Ready');
+> })();
+> JSEND
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# 
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# # Replace the file
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# mv public/js/tkoin-wallet.js public/js/tkoin-wallet.js.old
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# mv public/js/tkoin-wallet.js.new public/js/tkoin-wallet.js
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# 
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# echo "✅ JavaScript file replaced"
+✅ JavaScript file replaced
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# echo ""
+
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# echo "=== Verifying no syntax errors ==="
+=== Verifying no syntax errors ===
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# node -c public/js/tkoin-wallet.js && echo "✅ JavaScript syntax is valid!" || echo "❌ Still has syntax errors"
+✅ JavaScript syntax is valid!
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# 
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# echo ""
+
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# echo "Now reload: https://betwin.tkoin.finance/user/tkoin-wallet"~
+Now reload: https://betwin.tkoin.finance/user/tkoin-wallet~
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# cd /home/tkoin-betwin/htdocs/betwin.tkoin.finance
+
+# Backup current broken file
+cp public/js/tkoin-wallet.js public/js/tkoin-wallet.js.broken-$(date +%Y%m%d-%H%M%S)
+
+# Create clean JavaScript file
+cat > /tmp/tkoin-wallet-clean.js << 'JSEOF'
+class TkoinWallet {
+  constructor() {
+    this.apiBaseUrl = '/tkoin';
+    this.authToken = this.getAuthToken();
+    this.refreshInterval = null;
+    this.init();
+  }
+
+  init() {
+    this.setupEventListeners();
+    this.fetchBalance();
+    this.fetchHistory();
+    this.refreshInterval = setInterval(() => {
+      this.fetchBalance();
+      this.fetchHistory();
+    }, 30000);
+  }
+
+  getAuthToken() {
+    const meta = document.querySelector('meta[name="csrf-token"]');
+    return meta ? meta.getAttribute('content') : null;
+  }
+
+  setupEventListeners() {
+    document.getElementById('btn-refresh')?.addEventListener('click', () => {
+      this.fetchBalance();
+      this.fetchHistory();
+    });
+    
+    const connectBtn = document.getElementById('connect-wallet-btn');
+    if (connectBtn) {
+      connectBtn.addEventListener('click', () => this.connectPhantom());
+    }
+  }
+
+  async fetchBalance() {
+    try {
+      const response = await fetch(this.apiBaseUrl + '/balance', {
+        method: 'GET',
+echo "✅ Deployment complete! Hard refresh: https://betwin.tkoin.finance/user/tkoin-wallet"ror" echo "✅ No script tags - file is clean"' + prevents th
+✅ Clean JavaScript deployed
+The architect found the problem: **Your JavaScript file has Blade/HTML fragments polluting it**, causing the parse error at line 32. This prevents the entire script from loading.
+# Create clean JavaScript file
+⚠️  WARNING: Found 'script' in JS file!
+/home/tkoin-betwin/htdocs/betwin.tkoin.finance/public/js/tkoin-wallet.js:99
+        '<td style="padding:12px"><span style="color:' + statusColor + 🎯 **Architect Review Complete - Root Cause Identified!**
+                                                                       ^
+
+SyntaxError: Invalid or unexpected token
+    at internalCompileFunction (node:internal/vm:73:18)
+    at wrapSafe (node:internal/modules/cjs/loader:1274:20)
+    at node:internal/main/check_syntax:84:41
+    at loadESM (node:internal/process/esm_loader:34:13)
+    at checkSyntax (node:internal/main/check_syntax:84:21)
+
+Node.js v18.19.1
+❌ Syntax error
+
+✅ Deployment complete! Hard refresh: https://betwin.tkoin.finance/user/tkoin-wallet
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# 
