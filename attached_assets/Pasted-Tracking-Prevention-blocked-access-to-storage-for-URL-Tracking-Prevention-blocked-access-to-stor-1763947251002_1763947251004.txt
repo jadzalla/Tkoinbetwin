@@ -1,0 +1,1268 @@
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+[NEW] Explain Console errors by using Copilot in Edge: click
+         
+         to explain an error. 
+        Learn more
+        Don't show again
+inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+R @ inpage.js:1
+(anonymous) @ inpage.js:1
+j.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+R @ inpage.js:1
+j.push @ inpage.js:1
+_onData @ inpage.js:1
+_onMessage @ inpage.js:1
+postMessage
+_postMessage @ contentscript.js:1
+_write @ contentscript.js:1
+_onData @ contentscript.js:1
+_onMessage @ contentscript.js:1
+postMessage
+_postMessage @ inpage.js:1
+_write @ inpage.js:1
+_handshake @ inpage.js:1
+f @ inpage.js:1
+(anonymous) @ inpage.js:1
+(anonymous) @ inpage.js:1
+2.../../shared/modules/provider-injection @ inpage.js:1
+i @ inpage.js:1
+e @ inpage.js:1
+(anonymous) @ inpage.js:1
+inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+j @ inpage.js:1
+(anonymous) @ inpage.js:1
+R.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+j @ inpage.js:1
+R.push @ inpage.js:1
+_onData @ inpage.js:1
+_onMessage @ inpage.js:1
+postMessage
+_postMessage @ contentscript.js:1
+_write @ contentscript.js:1
+_onData @ contentscript.js:1
+_onMessage @ contentscript.js:1
+postMessage
+_postMessage @ inpage.js:1
+_write @ inpage.js:1
+_handshake @ inpage.js:1
+f @ inpage.js:1
+(anonymous) @ inpage.js:1
+(anonymous) @ inpage.js:1
+2.../../shared/modules/provider-injection @ inpage.js:1
+i @ inpage.js:1
+e @ inpage.js:1
+(anonymous) @ inpage.js:1
+inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+R @ inpage.js:1
+(anonymous) @ inpage.js:1
+j.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+R @ inpage.js:1
+j.push @ inpage.js:1
+_onData @ inpage.js:1
+_onMessage @ inpage.js:1
+postMessage
+_postMessage @ contentscript.js:1
+_write @ contentscript.js:1
+_onData @ contentscript.js:1
+_onMessage @ contentscript.js:1
+postMessage
+_postMessage @ inpage.js:1
+_write @ inpage.js:1
+_handshake @ inpage.js:1
+f @ inpage.js:1
+(anonymous) @ inpage.js:1
+(anonymous) @ inpage.js:1
+2.../../shared/modules/provider-injection @ inpage.js:1
+i @ inpage.js:1
+e @ inpage.js:1
+(anonymous) @ inpage.js:1
+inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+j @ inpage.js:1
+(anonymous) @ inpage.js:1
+R.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+j @ inpage.js:1
+R.push @ inpage.js:1
+_onData @ inpage.js:1
+_onMessage @ inpage.js:1
+postMessage
+_postMessage @ contentscript.js:1
+_write @ contentscript.js:1
+_onData @ contentscript.js:1
+_onMessage @ contentscript.js:1
+postMessage
+_postMessage @ inpage.js:1
+_write @ inpage.js:1
+_handshake @ inpage.js:1
+f @ inpage.js:1
+(anonymous) @ inpage.js:1
+(anonymous) @ inpage.js:1
+2.../../shared/modules/provider-injection @ inpage.js:1
+i @ inpage.js:1
+e @ inpage.js:1
+(anonymous) @ inpage.js:1
+inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+R @ inpage.js:1
+(anonymous) @ inpage.js:1
+j.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+R @ inpage.js:1
+j.push @ inpage.js:1
+_onData @ inpage.js:1
+_onMessage @ inpage.js:1
+postMessage
+_postMessage @ contentscript.js:1
+_write @ contentscript.js:1
+_onData @ contentscript.js:1
+_onMessage @ contentscript.js:1
+postMessage
+_postMessage @ inpage.js:1
+_write @ inpage.js:1
+_handshake @ inpage.js:1
+f @ inpage.js:1
+(anonymous) @ inpage.js:1
+(anonymous) @ inpage.js:1
+2.../../shared/modules/provider-injection @ inpage.js:1
+i @ inpage.js:1
+e @ inpage.js:1
+(anonymous) @ inpage.js:1
+inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+j @ inpage.js:1
+(anonymous) @ inpage.js:1
+R.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+j @ inpage.js:1
+R.push @ inpage.js:1
+_onData @ inpage.js:1
+_onMessage @ inpage.js:1
+postMessage
+_postMessage @ contentscript.js:1
+_write @ contentscript.js:1
+_onData @ contentscript.js:1
+_onMessage @ contentscript.js:1
+postMessage
+_postMessage @ inpage.js:1
+_write @ inpage.js:1
+_handshake @ inpage.js:1
+f @ inpage.js:1
+(anonymous) @ inpage.js:1
+(anonymous) @ inpage.js:1
+2.../../shared/modules/provider-injection @ inpage.js:1
+i @ inpage.js:1
+e @ inpage.js:1
+(anonymous) @ inpage.js:1
+inpage.js:1  StreamMiddleware - Unknown response id "2404101468"
+(anonymous) @ inpage.js:1
+write @ inpage.js:1
+j @ inpage.js:1
+(anonymous) @ inpage.js:1
+R.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+j @ inpage.js:1
+R.push @ inpage.js:1
+_write @ inpage.js:1
+j @ inpage.js:1
+(anonymous) @ inpage.js:1
+R.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+j @ inpage.js:1
+R.push @ inpage.js:1
+_onData @ inpage.js:1
+_onMessage @ inpage.js:1
+postMessage
+_postMessage @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+d @ contentscript.js:1
+a.emit @ contentscript.js:10
+I @ contentscript.js:1
+x @ contentscript.js:1
+R.push @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+d @ contentscript.js:1
+a.emit @ contentscript.js:10
+I @ contentscript.js:1
+x @ contentscript.js:1
+R.push @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+f @ contentscript.js:12
+a.emit @ contentscript.js:10
+J @ contentscript.js:12
+K @ contentscript.js:12
+q.push @ contentscript.js:12
+(anonymous) @ contentscript.js:10
+inpage.js:1  StreamMiddleware - Unknown response id "2404101468"
+(anonymous) @ inpage.js:1
+write @ inpage.js:1
+R @ inpage.js:1
+(anonymous) @ inpage.js:1
+j.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+R @ inpage.js:1
+j.push @ inpage.js:1
+_write @ inpage.js:1
+R @ inpage.js:1
+(anonymous) @ inpage.js:1
+j.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+R @ inpage.js:1
+j.push @ inpage.js:1
+_onData @ inpage.js:1
+_onMessage @ inpage.js:1
+postMessage
+_postMessage @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+d @ contentscript.js:1
+a.emit @ contentscript.js:10
+I @ contentscript.js:1
+x @ contentscript.js:1
+R.push @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+d @ contentscript.js:1
+a.emit @ contentscript.js:10
+I @ contentscript.js:1
+x @ contentscript.js:1
+R.push @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+f @ contentscript.js:12
+a.emit @ contentscript.js:10
+J @ contentscript.js:12
+K @ contentscript.js:12
+q.push @ contentscript.js:12
+(anonymous) @ contentscript.js:10
+inpage.js:1  StreamMiddleware - Unknown response id "2404101468"
+(anonymous) @ inpage.js:1
+write @ inpage.js:1
+j @ inpage.js:1
+(anonymous) @ inpage.js:1
+R.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+j @ inpage.js:1
+R.push @ inpage.js:1
+_write @ inpage.js:1
+j @ inpage.js:1
+(anonymous) @ inpage.js:1
+R.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+j @ inpage.js:1
+R.push @ inpage.js:1
+_onData @ inpage.js:1
+_onMessage @ inpage.js:1
+postMessage
+_postMessage @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+d @ contentscript.js:1
+a.emit @ contentscript.js:10
+I @ contentscript.js:1
+x @ contentscript.js:1
+R.push @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+d @ contentscript.js:1
+a.emit @ contentscript.js:10
+I @ contentscript.js:1
+x @ contentscript.js:1
+R.push @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+f @ contentscript.js:12
+a.emit @ contentscript.js:10
+J @ contentscript.js:12
+K @ contentscript.js:12
+q.push @ contentscript.js:12
+(anonymous) @ contentscript.js:10
+inpage.js:1  StreamMiddleware - Unknown response id "2404101469"
+(anonymous) @ inpage.js:1
+write @ inpage.js:1
+j @ inpage.js:1
+(anonymous) @ inpage.js:1
+R.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+j @ inpage.js:1
+R.push @ inpage.js:1
+_write @ inpage.js:1
+j @ inpage.js:1
+(anonymous) @ inpage.js:1
+R.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+j @ inpage.js:1
+R.push @ inpage.js:1
+_onData @ inpage.js:1
+_onMessage @ inpage.js:1
+postMessage
+_postMessage @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+d @ contentscript.js:1
+a.emit @ contentscript.js:10
+I @ contentscript.js:1
+x @ contentscript.js:1
+R.push @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+d @ contentscript.js:1
+a.emit @ contentscript.js:10
+I @ contentscript.js:1
+x @ contentscript.js:1
+R.push @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+f @ contentscript.js:12
+a.emit @ contentscript.js:10
+J @ contentscript.js:12
+K @ contentscript.js:12
+q.push @ contentscript.js:12
+(anonymous) @ contentscript.js:10
+inpage.js:1  StreamMiddleware - Unknown response id "2404101469"
+(anonymous) @ inpage.js:1
+write @ inpage.js:1
+R @ inpage.js:1
+(anonymous) @ inpage.js:1
+j.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+R @ inpage.js:1
+j.push @ inpage.js:1
+_write @ inpage.js:1
+R @ inpage.js:1
+(anonymous) @ inpage.js:1
+j.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+R @ inpage.js:1
+j.push @ inpage.js:1
+_onData @ inpage.js:1
+_onMessage @ inpage.js:1
+postMessage
+_postMessage @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+d @ contentscript.js:1
+a.emit @ contentscript.js:10
+I @ contentscript.js:1
+x @ contentscript.js:1
+R.push @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+d @ contentscript.js:1
+a.emit @ contentscript.js:10
+I @ contentscript.js:1
+x @ contentscript.js:1
+R.push @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+f @ contentscript.js:12
+a.emit @ contentscript.js:10
+J @ contentscript.js:12
+K @ contentscript.js:12
+q.push @ contentscript.js:12
+(anonymous) @ contentscript.js:10
+inpage.js:1  StreamMiddleware - Unknown response id "2404101469"
+(anonymous) @ inpage.js:1
+write @ inpage.js:1
+j @ inpage.js:1
+(anonymous) @ inpage.js:1
+R.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+j @ inpage.js:1
+R.push @ inpage.js:1
+_write @ inpage.js:1
+j @ inpage.js:1
+(anonymous) @ inpage.js:1
+R.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+j @ inpage.js:1
+R.push @ inpage.js:1
+_onData @ inpage.js:1
+_onMessage @ inpage.js:1
+postMessage
+_postMessage @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+d @ contentscript.js:1
+a.emit @ contentscript.js:10
+I @ contentscript.js:1
+x @ contentscript.js:1
+R.push @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+d @ contentscript.js:1
+a.emit @ contentscript.js:10
+I @ contentscript.js:1
+x @ contentscript.js:1
+R.push @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+f @ contentscript.js:12
+a.emit @ contentscript.js:10
+J @ contentscript.js:12
+K @ contentscript.js:12
+q.push @ contentscript.js:12
+(anonymous) @ contentscript.js:10
+inpage.js:1  StreamMiddleware - Unknown response id "112758994"
+(anonymous) @ inpage.js:1
+write @ inpage.js:1
+R @ inpage.js:1
+(anonymous) @ inpage.js:1
+j.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+R @ inpage.js:1
+j.push @ inpage.js:1
+_write @ inpage.js:1
+R @ inpage.js:1
+(anonymous) @ inpage.js:1
+j.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+R @ inpage.js:1
+j.push @ inpage.js:1
+_onData @ inpage.js:1
+_onMessage @ inpage.js:1
+postMessage
+_postMessage @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+d @ contentscript.js:1
+a.emit @ contentscript.js:10
+I @ contentscript.js:1
+x @ contentscript.js:1
+R.push @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+d @ contentscript.js:1
+a.emit @ contentscript.js:10
+I @ contentscript.js:1
+x @ contentscript.js:1
+R.push @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+f @ contentscript.js:12
+a.emit @ contentscript.js:10
+J @ contentscript.js:12
+K @ contentscript.js:12
+q.push @ contentscript.js:12
+(anonymous) @ contentscript.js:10
+inpage.js:1  StreamMiddleware - Unknown response id "112758994"
+(anonymous) @ inpage.js:1
+write @ inpage.js:1
+R @ inpage.js:1
+(anonymous) @ inpage.js:1
+j.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+R @ inpage.js:1
+j.push @ inpage.js:1
+_write @ inpage.js:1
+R @ inpage.js:1
+(anonymous) @ inpage.js:1
+j.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+R @ inpage.js:1
+j.push @ inpage.js:1
+_onData @ inpage.js:1
+_onMessage @ inpage.js:1
+postMessage
+_postMessage @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+d @ contentscript.js:1
+a.emit @ contentscript.js:10
+I @ contentscript.js:1
+x @ contentscript.js:1
+R.push @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+d @ contentscript.js:1
+a.emit @ contentscript.js:10
+I @ contentscript.js:1
+x @ contentscript.js:1
+R.push @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+f @ contentscript.js:12
+a.emit @ contentscript.js:10
+J @ contentscript.js:12
+K @ contentscript.js:12
+q.push @ contentscript.js:12
+(anonymous) @ contentscript.js:10
+inpage.js:1  StreamMiddleware - Unknown response id "112758994"
+(anonymous) @ inpage.js:1
+write @ inpage.js:1
+j @ inpage.js:1
+(anonymous) @ inpage.js:1
+R.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+j @ inpage.js:1
+R.push @ inpage.js:1
+_write @ inpage.js:1
+j @ inpage.js:1
+(anonymous) @ inpage.js:1
+R.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+j @ inpage.js:1
+R.push @ inpage.js:1
+_onData @ inpage.js:1
+_onMessage @ inpage.js:1
+postMessage
+_postMessage @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+d @ contentscript.js:1
+a.emit @ contentscript.js:10
+I @ contentscript.js:1
+x @ contentscript.js:1
+R.push @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+d @ contentscript.js:1
+a.emit @ contentscript.js:10
+I @ contentscript.js:1
+x @ contentscript.js:1
+R.push @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+f @ contentscript.js:12
+a.emit @ contentscript.js:10
+J @ contentscript.js:12
+K @ contentscript.js:12
+q.push @ contentscript.js:12
+(anonymous) @ contentscript.js:10
+inpage.js:1  StreamMiddleware - Unknown response id "112758995"
+(anonymous) @ inpage.js:1
+write @ inpage.js:1
+R @ inpage.js:1
+(anonymous) @ inpage.js:1
+j.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+R @ inpage.js:1
+j.push @ inpage.js:1
+_write @ inpage.js:1
+R @ inpage.js:1
+(anonymous) @ inpage.js:1
+j.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+R @ inpage.js:1
+j.push @ inpage.js:1
+_onData @ inpage.js:1
+_onMessage @ inpage.js:1
+postMessage
+_postMessage @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+d @ contentscript.js:1
+a.emit @ contentscript.js:10
+I @ contentscript.js:1
+x @ contentscript.js:1
+R.push @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+d @ contentscript.js:1
+a.emit @ contentscript.js:10
+I @ contentscript.js:1
+x @ contentscript.js:1
+R.push @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+f @ contentscript.js:12
+a.emit @ contentscript.js:10
+J @ contentscript.js:12
+K @ contentscript.js:12
+q.push @ contentscript.js:12
+(anonymous) @ contentscript.js:10
+inpage.js:1  StreamMiddleware - Unknown response id "112758995"
+(anonymous) @ inpage.js:1
+write @ inpage.js:1
+R @ inpage.js:1
+(anonymous) @ inpage.js:1
+j.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+R @ inpage.js:1
+j.push @ inpage.js:1
+_write @ inpage.js:1
+R @ inpage.js:1
+(anonymous) @ inpage.js:1
+j.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+R @ inpage.js:1
+j.push @ inpage.js:1
+_onData @ inpage.js:1
+_onMessage @ inpage.js:1
+postMessage
+_postMessage @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+d @ contentscript.js:1
+a.emit @ contentscript.js:10
+I @ contentscript.js:1
+x @ contentscript.js:1
+R.push @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+d @ contentscript.js:1
+a.emit @ contentscript.js:10
+I @ contentscript.js:1
+x @ contentscript.js:1
+R.push @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+f @ contentscript.js:12
+a.emit @ contentscript.js:10
+J @ contentscript.js:12
+K @ contentscript.js:12
+q.push @ contentscript.js:12
+(anonymous) @ contentscript.js:10
+inpage.js:1  StreamMiddleware - Unknown response id "112758995"
+(anonymous) @ inpage.js:1
+write @ inpage.js:1
+j @ inpage.js:1
+(anonymous) @ inpage.js:1
+R.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+j @ inpage.js:1
+R.push @ inpage.js:1
+_write @ inpage.js:1
+j @ inpage.js:1
+(anonymous) @ inpage.js:1
+R.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+j @ inpage.js:1
+R.push @ inpage.js:1
+_onData @ inpage.js:1
+_onMessage @ inpage.js:1
+postMessage
+_postMessage @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+d @ contentscript.js:1
+a.emit @ contentscript.js:10
+I @ contentscript.js:1
+x @ contentscript.js:1
+R.push @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+d @ contentscript.js:1
+a.emit @ contentscript.js:10
+I @ contentscript.js:1
+x @ contentscript.js:1
+R.push @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+f @ contentscript.js:12
+a.emit @ contentscript.js:10
+J @ contentscript.js:12
+K @ contentscript.js:12
+q.push @ contentscript.js:12
+(anonymous) @ contentscript.js:10
+app.js?93dd16f99950312e32f87049a058942e:1   GET https://betwin.tkoin.finance/lang/fr.json 404 (Not Found)
+(anonymous) @ app.js?93dd16f99950312e32f87049a058942e:1
+xhr @ app.js?93dd16f99950312e32f87049a058942e:1
+dn @ app.js?93dd16f99950312e32f87049a058942e:1
+_request @ app.js?93dd16f99950312e32f87049a058942e:1
+request @ app.js?93dd16f99950312e32f87049a058942e:1
+X.forEach.vn.<computed> @ app.js?93dd16f99950312e32f87049a058942e:1
+(anonymous) @ app.js?93dd16f99950312e32f87049a058942e:1
+(anonymous) @ app.js?93dd16f99950312e32f87049a058942e:1
+p @ app.js?93dd16f99950312e32f87049a058942e:1
+(anonymous) @ app.js?93dd16f99950312e32f87049a058942e:1
+(anonymous) @ app.js?93dd16f99950312e32f87049a058942e:1
+s @ app.js?93dd16f99950312e32f87049a058942e:1
+a @ app.js?93dd16f99950312e32f87049a058942e:1
+(anonymous) @ app.js?93dd16f99950312e32f87049a058942e:1
+(anonymous) @ app.js?93dd16f99950312e32f87049a058942e:1
+(anonymous) @ app.js?93dd16f99950312e32f87049a058942e:1
+(anonymous) @ app.js?93dd16f99950312e32f87049a058942e:1
+p @ app.js?93dd16f99950312e32f87049a058942e:1
+(anonymous) @ app.js?93dd16f99950312e32f87049a058942e:1
+(anonymous) @ app.js?93dd16f99950312e32f87049a058942e:1
+s @ app.js?93dd16f99950312e32f87049a058942e:1
+a @ app.js?93dd16f99950312e32f87049a058942e:1
+(anonymous) @ app.js?93dd16f99950312e32f87049a058942e:1
+(anonymous) @ app.js?93dd16f99950312e32f87049a058942e:1
+89491 @ app.js?93dd16f99950312e32f87049a058942e:1
+o @ app.js?93dd16f99950312e32f87049a058942e:1
+(anonymous) @ app.js?93dd16f99950312e32f87049a058942e:1
+(anonymous) @ app.js?93dd16f99950312e32f87049a058942e:1
+(anonymous) @ app.js?93dd16f99950312e32f87049a058942e:1
+app.js?93dd16f99950312e32f87049a058942e:1  Uncaught (in promise) Y {message: 'Request failed with status code 404', name: 'AxiosError', code: 'ERR_BAD_REQUEST', config: {…}, request: XMLHttpRequest, …}
+Ne @ app.js?93dd16f99950312e32f87049a058942e:1
+v @ app.js?93dd16f99950312e32f87049a058942e:1
+XMLHttpRequest.send
+(anonymous) @ app.js?93dd16f99950312e32f87049a058942e:1
+xhr @ app.js?93dd16f99950312e32f87049a058942e:1
+dn @ app.js?93dd16f99950312e32f87049a058942e:1
+_request @ app.js?93dd16f99950312e32f87049a058942e:1
+request @ app.js?93dd16f99950312e32f87049a058942e:1
+X.forEach.vn.<computed> @ app.js?93dd16f99950312e32f87049a058942e:1
+(anonymous) @ app.js?93dd16f99950312e32f87049a058942e:1
+(anonymous) @ app.js?93dd16f99950312e32f87049a058942e:1
+p @ app.js?93dd16f99950312e32f87049a058942e:1
+(anonymous) @ app.js?93dd16f99950312e32f87049a058942e:1
+(anonymous) @ app.js?93dd16f99950312e32f87049a058942e:1
+s @ app.js?93dd16f99950312e32f87049a058942e:1
+a @ app.js?93dd16f99950312e32f87049a058942e:1
+(anonymous) @ app.js?93dd16f99950312e32f87049a058942e:1
+(anonymous) @ app.js?93dd16f99950312e32f87049a058942e:1
+(anonymous) @ app.js?93dd16f99950312e32f87049a058942e:1
+(anonymous) @ app.js?93dd16f99950312e32f87049a058942e:1
+p @ app.js?93dd16f99950312e32f87049a058942e:1
+(anonymous) @ app.js?93dd16f99950312e32f87049a058942e:1
+(anonymous) @ app.js?93dd16f99950312e32f87049a058942e:1
+s @ app.js?93dd16f99950312e32f87049a058942e:1
+a @ app.js?93dd16f99950312e32f87049a058942e:1
+(anonymous) @ app.js?93dd16f99950312e32f87049a058942e:1
+(anonymous) @ app.js?93dd16f99950312e32f87049a058942e:1
+89491 @ app.js?93dd16f99950312e32f87049a058942e:1
+o @ app.js?93dd16f99950312e32f87049a058942e:1
+(anonymous) @ app.js?93dd16f99950312e32f87049a058942e:1
+(anonymous) @ app.js?93dd16f99950312e32f87049a058942e:1
+(anonymous) @ app.js?93dd16f99950312e32f87049a058942e:1
+inpage.js:1  StreamMiddleware - Unknown response id "112758996"
+(anonymous) @ inpage.js:1
+write @ inpage.js:1
+R @ inpage.js:1
+(anonymous) @ inpage.js:1
+j.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+R @ inpage.js:1
+j.push @ inpage.js:1
+_write @ inpage.js:1
+R @ inpage.js:1
+(anonymous) @ inpage.js:1
+j.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+R @ inpage.js:1
+j.push @ inpage.js:1
+_onData @ inpage.js:1
+_onMessage @ inpage.js:1
+postMessage
+_postMessage @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+d @ contentscript.js:1
+a.emit @ contentscript.js:10
+I @ contentscript.js:1
+x @ contentscript.js:1
+R.push @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+d @ contentscript.js:1
+a.emit @ contentscript.js:10
+I @ contentscript.js:1
+x @ contentscript.js:1
+R.push @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+f @ contentscript.js:12
+a.emit @ contentscript.js:10
+J @ contentscript.js:12
+K @ contentscript.js:12
+q.push @ contentscript.js:12
+(anonymous) @ contentscript.js:10
+inpage.js:1  StreamMiddleware - Unknown response id "112758996"
+(anonymous) @ inpage.js:1
+write @ inpage.js:1
+R @ inpage.js:1
+(anonymous) @ inpage.js:1
+j.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+R @ inpage.js:1
+j.push @ inpage.js:1
+_write @ inpage.js:1
+R @ inpage.js:1
+(anonymous) @ inpage.js:1
+j.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+R @ inpage.js:1
+j.push @ inpage.js:1
+_onData @ inpage.js:1
+_onMessage @ inpage.js:1
+postMessage
+_postMessage @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+d @ contentscript.js:1
+a.emit @ contentscript.js:10
+I @ contentscript.js:1
+x @ contentscript.js:1
+R.push @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+d @ contentscript.js:1
+a.emit @ contentscript.js:10
+I @ contentscript.js:1
+x @ contentscript.js:1
+R.push @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+f @ contentscript.js:12
+a.emit @ contentscript.js:10
+J @ contentscript.js:12
+K @ contentscript.js:12
+q.push @ contentscript.js:12
+(anonymous) @ contentscript.js:10
+inpage.js:1  StreamMiddleware - Unknown response id "112758996"
+(anonymous) @ inpage.js:1
+write @ inpage.js:1
+j @ inpage.js:1
+(anonymous) @ inpage.js:1
+R.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+j @ inpage.js:1
+R.push @ inpage.js:1
+_write @ inpage.js:1
+j @ inpage.js:1
+(anonymous) @ inpage.js:1
+R.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+j @ inpage.js:1
+R.push @ inpage.js:1
+_onData @ inpage.js:1
+_onMessage @ inpage.js:1
+postMessage
+_postMessage @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+d @ contentscript.js:1
+a.emit @ contentscript.js:10
+I @ contentscript.js:1
+x @ contentscript.js:1
+R.push @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+d @ contentscript.js:1
+a.emit @ contentscript.js:10
+I @ contentscript.js:1
+x @ contentscript.js:1
+R.push @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+f @ contentscript.js:12
+a.emit @ contentscript.js:10
+J @ contentscript.js:12
+K @ contentscript.js:12
+q.push @ contentscript.js:12
+(anonymous) @ contentscript.js:10
+inpage.js:1  StreamMiddleware - Unknown response id "2404101470"
+(anonymous) @ inpage.js:1
+write @ inpage.js:1
+j @ inpage.js:1
+(anonymous) @ inpage.js:1
+R.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+j @ inpage.js:1
+R.push @ inpage.js:1
+_write @ inpage.js:1
+j @ inpage.js:1
+(anonymous) @ inpage.js:1
+R.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+j @ inpage.js:1
+R.push @ inpage.js:1
+_onData @ inpage.js:1
+_onMessage @ inpage.js:1
+postMessage
+_postMessage @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+d @ contentscript.js:1
+a.emit @ contentscript.js:10
+I @ contentscript.js:1
+x @ contentscript.js:1
+R.push @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+d @ contentscript.js:1
+a.emit @ contentscript.js:10
+I @ contentscript.js:1
+x @ contentscript.js:1
+R.push @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+f @ contentscript.js:12
+a.emit @ contentscript.js:10
+J @ contentscript.js:12
+K @ contentscript.js:12
+q.push @ contentscript.js:12
+(anonymous) @ contentscript.js:10
+inpage.js:1  StreamMiddleware - Unknown response id "2404101470"
+(anonymous) @ inpage.js:1
+write @ inpage.js:1
+R @ inpage.js:1
+(anonymous) @ inpage.js:1
+j.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+R @ inpage.js:1
+j.push @ inpage.js:1
+_write @ inpage.js:1
+R @ inpage.js:1
+(anonymous) @ inpage.js:1
+j.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+R @ inpage.js:1
+j.push @ inpage.js:1
+_onData @ inpage.js:1
+_onMessage @ inpage.js:1
+postMessage
+_postMessage @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+d @ contentscript.js:1
+a.emit @ contentscript.js:10
+I @ contentscript.js:1
+x @ contentscript.js:1
+R.push @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+d @ contentscript.js:1
+a.emit @ contentscript.js:10
+I @ contentscript.js:1
+x @ contentscript.js:1
+R.push @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+f @ contentscript.js:12
+a.emit @ contentscript.js:10
+J @ contentscript.js:12
+K @ contentscript.js:12
+q.push @ contentscript.js:12
+(anonymous) @ contentscript.js:10
+inpage.js:1  StreamMiddleware - Unknown response id "2404101470"
+(anonymous) @ inpage.js:1
+write @ inpage.js:1
+j @ inpage.js:1
+(anonymous) @ inpage.js:1
+R.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+j @ inpage.js:1
+R.push @ inpage.js:1
+_write @ inpage.js:1
+j @ inpage.js:1
+(anonymous) @ inpage.js:1
+R.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+j @ inpage.js:1
+R.push @ inpage.js:1
+_onData @ inpage.js:1
+_onMessage @ inpage.js:1
+postMessage
+_postMessage @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+d @ contentscript.js:1
+a.emit @ contentscript.js:10
+I @ contentscript.js:1
+x @ contentscript.js:1
+R.push @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+d @ contentscript.js:1
+a.emit @ contentscript.js:10
+I @ contentscript.js:1
+x @ contentscript.js:1
+R.push @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+f @ contentscript.js:12
+a.emit @ contentscript.js:10
+J @ contentscript.js:12
+K @ contentscript.js:12
+q.push @ contentscript.js:12
+(anonymous) @ contentscript.js:10
+tkoin-menu-injector.js?v=7:20 🔍 v7: Looking for VISIBLE Redeem code...
+tkoin-menu-injector.js?v=7:26 Found 0 "Redeem code" elements total
+tkoin-menu-injector.js?v=7:37 0 are actually visible
+tkoin-menu-injector.js?v=7:20 🔍 v7: Looking for VISIBLE Redeem code...
+tkoin-menu-injector.js?v=7:26 Found 0 "Redeem code" elements total
+tkoin-menu-injector.js?v=7:37 0 are actually visible
+tkoin-menu-injector.js?v=7:20 🔍 v7: Looking for VISIBLE Redeem code...
+tkoin-menu-injector.js?v=7:26 Found 0 "Redeem code" elements total
+tkoin-menu-injector.js?v=7:37 0 are actually visible
+tkoin-menu-injector.js?v=7:20 🔍 v7: Looking for VISIBLE Redeem code...
+tkoin-menu-injector.js?v=7:26 Found 0 "Redeem code" elements total
+tkoin-menu-injector.js?v=7:37 0 are actually visible
+tkoin-menu-injector.js?v=7:20 🔍 v7: Looking for VISIBLE Redeem code...
+tkoin-menu-injector.js?v=7:26 Found 0 "Redeem code" elements total
+tkoin-menu-injector.js?v=7:37 0 are actually visible
+tkoin-menu-injector.js?v=7:20 🔍 v7: Looking for VISIBLE Redeem code...
+tkoin-menu-injector.js?v=7:26 Found 0 "Redeem code" elements total
+tkoin-menu-injector.js?v=7:37 0 are actually visible
+tkoin-menu-injector.js?v=7:20 🔍 v7: Looking for VISIBLE Redeem code...
+tkoin-menu-injector.js?v=7:26 Found 0 "Redeem code" elements total
+tkoin-menu-injector.js?v=7:37 0 are actually visible
+tkoin-menu-injector.js?v=7:20 🔍 v7: Looking for VISIBLE Redeem code...
+tkoin-menu-injector.js?v=7:26 Found 0 "Redeem code" elements total
+tkoin-menu-injector.js?v=7:37 0 are actually visible
+tkoin-menu-injector.js?v=7:20 🔍 v7: Looking for VISIBLE Redeem code...
+tkoin-menu-injector.js?v=7:26 Found 0 "Redeem code" elements total
+tkoin-menu-injector.js?v=7:37 0 are actually visible
+tkoin-menu-injector.js?v=7:20 🔍 v7: Looking for VISIBLE Redeem code...
+tkoin-menu-injector.js?v=7:26 Found 0 "Redeem code" elements total
+tkoin-menu-injector.js?v=7:37 0 are actually visible
+tkoin-menu-injector.js?v=7:20 🔍 v7: Looking for VISIBLE Redeem code...
+tkoin-menu-injector.js?v=7:26 Found 0 "Redeem code" elements total
+tkoin-menu-injector.js?v=7:37 0 are actually visible
+tkoin-menu-injector.js?v=7:20 🔍 v7: Looking for VISIBLE Redeem code...
+tkoin-menu-injector.js?v=7:26 Found 0 "Redeem code" elements total
+tkoin-menu-injector.js?v=7:37 0 are actually visible
+tkoin-menu-injector.js?v=7:20 🔍 v7: Looking for VISIBLE Redeem code...
+tkoin-menu-injector.js?v=7:26 Found 0 "Redeem code" elements total
+tkoin-menu-injector.js?v=7:37 0 are actually visible
+tkoin-menu-injector.js?v=7:20 🔍 v7: Looking for VISIBLE Redeem code...
+tkoin-menu-injector.js?v=7:26 Found 0 "Redeem code" elements total
+tkoin-menu-injector.js?v=7:37 0 are actually visible
+tkoin-menu-injector.js?v=7:20 🔍 v7: Looking for VISIBLE Redeem code...
+tkoin-menu-injector.js?v=7:26 Found 0 "Redeem code" elements total
+tkoin-menu-injector.js?v=7:37 0 are actually visible
+tkoin-menu-injector.js?v=7:20 🔍 v7: Looking for VISIBLE Redeem code...
+tkoin-menu-injector.js?v=7:26 Found 0 "Redeem code" elements total
+tkoin-menu-injector.js?v=7:37 0 are actually visible
+tkoin-menu-injector.js?v=7:20 🔍 v7: Looking for VISIBLE Redeem code...
+tkoin-menu-injector.js?v=7:26 Found 0 "Redeem code" elements total
+tkoin-menu-injector.js?v=7:37 0 are actually visible
+tkoin-menu-injector.js?v=7:20 🔍 v7: Looking for VISIBLE Redeem code...
+tkoin-menu-injector.js?v=7:26 Found 0 "Redeem code" elements total
+tkoin-menu-injector.js?v=7:37 0 are actually visible
+tkoin-menu-injector.js?v=7:20 🔍 v7: Looking for VISIBLE Redeem code...
+tkoin-menu-injector.js?v=7:26 Found 0 "Redeem code" elements total
+tkoin-menu-injector.js?v=7:37 0 are actually visible
+tkoin-menu-injector.js?v=7:20 🔍 v7: Looking for VISIBLE Redeem code...
+tkoin-menu-injector.js?v=7:26 Found 0 "Redeem code" elements total
+tkoin-menu-injector.js?v=7:37 0 are actually visible
+tkoin-menu-injector.js?v=7:20 🔍 v7: Looking for VISIBLE Redeem code...
+tkoin-menu-injector.js?v=7:26 Found 0 "Redeem code" elements total
+tkoin-menu-injector.js?v=7:37 0 are actually visible
+tkoin-menu-injector.js?v=7:20 🔍 v7: Looking for VISIBLE Redeem code...
+tkoin-menu-injector.js?v=7:26 Found 0 "Redeem code" elements total
+tkoin-menu-injector.js?v=7:37 0 are actually visible
+tkoin-menu-injector.js?v=7:20 🔍 v7: Looking for VISIBLE Redeem code...
+tkoin-menu-injector.js?v=7:26 Found 0 "Redeem code" elements total
+tkoin-menu-injector.js?v=7:37 0 are actually visible
+tkoin-menu-injector.js?v=7:20 🔍 v7: Looking for VISIBLE Redeem code...
+tkoin-menu-injector.js?v=7:26 Found 0 "Redeem code" elements total
+tkoin-menu-injector.js?v=7:37 0 are actually visible
+tkoin-menu-injector.js?v=7:20 🔍 v7: Looking for VISIBLE Redeem code...
+tkoin-menu-injector.js?v=7:26 Found 0 "Redeem code" elements total
+tkoin-menu-injector.js?v=7:37 0 are actually visible
+tkoin-menu-injector.js?v=7:20 🔍 v7: Looking for VISIBLE Redeem code...
+tkoin-menu-injector.js?v=7:26 Found 1 "Redeem code" elements total
+tkoin-menu-injector.js?v=7:37 0 are actually visible
+tkoin-menu-injector.js?v=7:20 🔍 v7: Looking for VISIBLE Redeem code...
+tkoin-menu-injector.js?v=7:26 Found 0 "Redeem code" elements total
+tkoin-menu-injector.js?v=7:37 0 are actually visible
+tkoin-menu-injector.js?v=7:20 🔍 v7: Looking for VISIBLE Redeem code...
+tkoin-menu-injector.js?v=7:26 Found 0 "Redeem code" elements total
+tkoin-menu-injector.js?v=7:37 0 are actually visible
