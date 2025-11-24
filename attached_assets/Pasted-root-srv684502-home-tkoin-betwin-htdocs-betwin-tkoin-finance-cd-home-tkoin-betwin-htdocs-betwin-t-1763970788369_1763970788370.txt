@@ -1,0 +1,60 @@
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# cd /home/tkoin-betwin/htdocs/betwin.tkoin.finance
+
+echo "=== Check actual JavaScript file on BetWin server ==="
+cat public/js/tkoin-wallet.js | head -50
+
+echo ""
+echo "=== Check API_BASE configuration ==="
+grep -n "API" public/js/tkoin-wallet.js | head -10
+=== Check actual JavaScript file on BetWin server ===
+console.log('Tkoin Wallet Loading...');
+
+(function() {
+    var API = '/tkoin';
+    
+    function load() {
+        fetch(API + '/balance', {credentials: 'same-origin'})
+            .then(r => r.json())
+            .then(d => {
+                document.getElementById('tkoin-balance').textContent = d.tkoinBalance || 0;
+                document.getElementById('credits-balance').textContent = d.creditsBalance || 0;
+                document.getElementById('account-id').textContent = d.userId || '---';
+            });
+        
+        fetch(API + '/history?limit=20', {credentials: 'same-origin'})
+            .then(r => r.json())
+            .then(d => {
+                var tbody = document.querySelector('#transaction-table tbody');
+                if (d.transactions && d.transactions.length > 0) {
+                    tbody.innerHTML = d.transactions.map(tx => 
+                        '<tr><td>' + tx.type + '</td><td>' + tx.amount + '</td><td>' + tx.status + '</td><td>' + tx.createdAt + '</td></tr>'
+                    ).join('');
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="4">No transactions</td></tr>';
+                }
+                document.getElementById('loading-spinner').style.display = 'none';
+            });
+    }
+    
+    document.getElementById('connect-wallet-btn').onclick = function() {
+        if (window.solana) {
+            window.solana.connect().then(r => {
+                alert('Connected: ' + r.publicKey.toString().substring(0,8) + '...');
+            });
+        } else {
+            alert('Please install Phantom wallet');
+        }
+    };
+    
+    document.getElementById('refresh-btn').onclick = load;
+    
+    setTimeout(load, 500);
+})();
+
+console.log('Tkoin Wallet Ready');
+
+=== Check API_BASE configuration ===
+4:    var API = '/tkoin';
+7:        fetch(API + '/balance', {credentials: 'same-origin'})
+15:        fetch(API + '/history?limit=20', {credentials: 'same-origin'})
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# 
