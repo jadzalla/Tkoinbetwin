@@ -1,0 +1,63 @@
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# cd /home/tkoin-betwin/htdocs/betwin.tkoin.finance
+
+# Backup original
+cp app/Http/Controllers/TkoinController.php app/Http/Controllers/TkoinController.php.backup.$(date +%s)
+
+# Write complete updated controller
+cat > app/Http/Controllers/TkoinController.php << 'PHPEOF'
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
+use App\Models\User;
+use App\Models\Account;
+use App\Services\TkoinService;
+
+class TkoinController extends Controller
+{
+    protected $tkoinService;
+    protected $tkoinApiBase;
+
+    public function __construct(TkoinService $tkoinService)
+    {
+        $this->tkoinService = $tkoinService;
+        $this->tkoinApiBase = config('services.tkoin.api_base');
+    }
+
+    public function showWallet()
+    {
+        $user = auth()->user();
+        
+        // Use existing TkoinService methods (pass User model, not ID)
+        $balance = $this->tkoinService->getUserBalance($user);
+        $transactions = $this->tkoinService->getUserTransactions($user, 20);
+        
+        return view('user.tkoin-wallet', [
+            'balance' => $balance ?? ['credits' => 0, 'tkoin' => 0],
+            'transactions' => $transactions ?? [],
+            'treasuryWallet' => config('services.tkoin.treasury_wallet'),
+            'tkoinMint' => config('services.tkoin.mint_address'),
+        ]);
+    }
+
+=================================ed with balance() and history() methods" your wallet shortly.',
+
+   INFO  Route cache cleared successfully.  
+
+
+   INFO  Application cache cleared successfully.  
+
+✅ TkoinController.php updated with balance() and history() methods
+✅ Laravel cache cleared
+=================================: command not found
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# ssh root@srv684502 'bash -s' < /tmp/update-tkoin-controller.sh
+-bash: /tmp/update-tkoin-controller.sh: No such file or directory
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# 'bash -s' < /tmp/update-tkoin-controller.sh
+-bash: /tmp/update-tkoin-controller.sh: No such file or directory
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance#  -s' < /tmp/update-tkoin-controller.sh
+> ^C
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# 
