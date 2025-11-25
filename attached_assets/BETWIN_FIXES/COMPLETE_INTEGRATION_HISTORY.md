@@ -203,13 +203,23 @@ mint.toBytes(),
 
 ---
 
+---
+
+## CRITICAL: Use COMPLETE file
+
+The truncated `tkoin-wallet-v6.6-FIXED.js` (294 lines) was incomplete!
+
+**Use this file instead:** `tkoin-wallet-v6.6-COMPLETE.js` (958 lines)
+
+---
+
 ## File Inventory
 
 ### Files to Deploy to BetWin
 
 | File | Destination | Purpose |
 |------|-------------|---------|
-| `tkoin-wallet-v6.6-FIXED.js` | `public/js/tkoin-wallet.js` | Main wallet integration |
+| `tkoin-wallet-v6.6-COMPLETE.js` | `public/js/tkoin-wallet.js` | **DEPLOY THIS** - Main wallet (958 lines) |
 | `tkoin-wallet.blade.php` | `resources/views/frontend/user/tkoin-wallet.blade.php` | UI template |
 | `TkoinController.php` | `app/Http/Controllers/TkoinController.php` | API endpoints |
 | `web.php` | `routes/web.php` (merge) | Route definitions |
@@ -225,7 +235,8 @@ mint.toBytes(),
 | `tkoin-wallet-v6.3-FINAL.js` | v6.3 | Dual IDs |
 | `tkoin-wallet-v6.4-FIXED.js` | v6.4 | Auto-connect fix |
 | `tkoin-wallet-v6.5-FIXED.js` | v6.5 | Account ID + History fix |
-| `tkoin-wallet-v6.6-FIXED.js` | v6.6 | **CURRENT PRODUCTION** |
+| `tkoin-wallet-v6.6-FIXED.js` | v6.6 | Truncated - DO NOT USE |
+| `tkoin-wallet-v6.6-COMPLETE.js` | v6.6 | **CURRENT PRODUCTION** (958 lines) |
 
 ---
 
@@ -241,8 +252,8 @@ cp public/js/tkoin-wallet.js public/js/tkoin-wallet.js.backup
 ### Step 2: Deploy v6.6
 
 ```bash
-# Copy the v6.6 JavaScript file
-cp tkoin-wallet-v6.6-FIXED.js public/js/tkoin-wallet.js
+# Copy the COMPLETE v6.6 JavaScript file (958 lines - NOT the truncated version!)
+cp tkoin-wallet-v6.6-COMPLETE.js public/js/tkoin-wallet.js
 
 # Add cache-busting version
 # In blade template, change:
