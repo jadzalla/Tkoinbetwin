@@ -1,0 +1,119 @@
+23:09:32.894 tkoin-wallet?amount=1400&solana_address=cubBpiKduvNCGgPpshb3Jn1fhd6Bjaj8ttX6kd1JQSV:21  Tracking Prevention blocked access to storage for https://cdnjs.cloudflare.com/ajax/libs/buffer/6.0.3/buffer.min.js.
+23:09:32.894 tkoin-wallet?amount=1400&solana_address=cubBpiKduvNCGgPpshb3Jn1fhd6Bjaj8ttX6kd1JQSV:21  Tracking Prevention blocked access to storage for https://cdnjs.cloudflare.com/ajax/libs/buffer/6.0.3/buffer.min.js.
+23:09:32.894 tkoin-wallet?amount=1400&solana_address=cubBpiKduvNCGgPpshb3Jn1fhd6Bjaj8ttX6kd1JQSV:21  Tracking Prevention blocked access to storage for https://cdnjs.cloudflare.com/ajax/libs/buffer/6.0.3/buffer.min.js.
+23:09:32.894 tkoin-wallet?amount=1400&solana_address=cubBpiKduvNCGgPpshb3Jn1fhd6Bjaj8ttX6kd1JQSV:21  Tracking Prevention blocked access to storage for https://cdnjs.cloudflare.com/ajax/libs/buffer/6.0.3/buffer.min.js.
+23:09:32.915 inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+23:09:32.917 inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+23:09:32.921 inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+23:09:32.922 inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+23:09:32.923 inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+23:09:32.924 inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+23:09:32.959 inpage.js:1  StreamMiddleware - Unknown response id "3507633710"
+(anonymous) @ inpage.js:1
+23:09:32.962 inpage.js:1  StreamMiddleware - Unknown response id "3507633710"
+(anonymous) @ inpage.js:1
+23:09:32.963 inpage.js:1  StreamMiddleware - Unknown response id "3507633710"
+(anonymous) @ inpage.js:1
+23:09:32.964 inpage.js:1  StreamMiddleware - Unknown response id "3507633711"
+(anonymous) @ inpage.js:1
+23:09:32.965 inpage.js:1  StreamMiddleware - Unknown response id "3507633711"
+(anonymous) @ inpage.js:1
+23:09:32.966 inpage.js:1  StreamMiddleware - Unknown response id "3507633711"
+(anonymous) @ inpage.js:1
+23:09:32.969 tkoin-wallet.js?v=1764108573:884 [Tkoin] DOM ready, initializing TkoinWallet v6.7...
+23:09:32.969 tkoin-wallet.js?v=1764108573:39 [Tkoin] Initializing wallet manager v6.7 (COMPLETE FIX)
+23:09:32.969 tkoin-wallet.js?v=1764108573:40 [Tkoin] Token2022 Mint: 9XPD1ZcAtNZgc1pGYYL3Z4W3mNqHKmqKDsUtsKKzAJE5
+23:09:32.969 tkoin-wallet.js?v=1764108573:41 [Tkoin] Treasury: 953CKYH169xXxaNKVwLT9z9s38TEg1d2pQsY7d1Lv6dD
+23:09:32.970 tkoin-wallet.js?v=1764108573:49 [Tkoin] Connected to Solana Devnet
+23:09:32.970 tkoin-wallet.js?v=1764108573:73 [Tkoin] Found element: connect-wallet-btn
+23:09:32.970 tkoin-wallet.js?v=1764108573:73 [Tkoin] Found element: disconnect-wallet-btn
+23:09:32.970 tkoin-wallet.js?v=1764108573:125 [Tkoin] Events bound successfully
+23:09:32.970 tkoin-wallet.js?v=1764108573:133 [Tkoin] Phantom wallet detected
+23:09:32.970 tkoin-wallet.js?v=1764108573:293 [Tkoin] Fetching balance from API...
+23:09:32.974 inpage.js:1  StreamMiddleware - Unknown response id "1146087233"
+(anonymous) @ inpage.js:1
+23:09:32.976 inpage.js:1  StreamMiddleware - Unknown response id "1146087233"
+(anonymous) @ inpage.js:1
+23:09:32.978 inpage.js:1  StreamMiddleware - Unknown response id "1146087233"
+(anonymous) @ inpage.js:1
+23:09:32.982 inpage.js:1  StreamMiddleware - Unknown response id "1146087234"
+(anonymous) @ inpage.js:1
+23:09:32.984 inpage.js:1  StreamMiddleware - Unknown response id "1146087234"
+(anonymous) @ inpage.js:1
+23:09:32.986 inpage.js:1  StreamMiddleware - Unknown response id "1146087234"
+(anonymous) @ inpage.js:1
+23:09:33.006 inpage.js:1  StreamMiddleware - Unknown response id "3507633712"
+(anonymous) @ inpage.js:1
+23:09:33.008 inpage.js:1  StreamMiddleware - Unknown response id "3507633712"
+(anonymous) @ inpage.js:1
+23:09:33.009 inpage.js:1  StreamMiddleware - Unknown response id "3507633712"
+(anonymous) @ inpage.js:1
+23:09:33.010 inpage.js:1  StreamMiddleware - Unknown response id "1146087235"
+(anonymous) @ inpage.js:1
+23:09:33.012 inpage.js:1  StreamMiddleware - Unknown response id "1146087235"
+(anonymous) @ inpage.js:1
+23:09:33.013 inpage.js:1  StreamMiddleware - Unknown response id "1146087235"
+(anonymous) @ inpage.js:1
+23:09:33.084 tkoin-wallet.js?v=1764108573:139 [Tkoin] Phantom connected event
+23:09:33.084 tkoin-wallet.js?v=1764108573:234 [Tkoin] Wallet connected: cubBpiKduvNCGgPpshb3Jn1fhd6Bjaj8ttX6kd1JQSV
+23:09:33.084 tkoin-wallet.js?v=1764108573:73 [Tkoin] Found element: connect-wallet-btn
+23:09:33.084 tkoin-wallet.js?v=1764108573:73 [Tkoin] Found element: disconnect-wallet-btn
+23:09:33.084 tkoin-wallet.js?v=1764108573:246 [Tkoin] Disconnect button shown
+23:09:33.085 tkoin-wallet.js?v=1764108573:445 [Tkoin] Fetching on-chain TKOIN balance...
+23:09:33.087 tkoin-wallet.js?v=1764108573:451 [Tkoin] Token2022 ATA: EJF2s4eZz68wJCRENcYXG38mtBNNXJUgrDA3QBmmESvE
+23:09:33.185 tkoin-wallet.js?v=1764108573:298 [Tkoin] Balance API response: {
+  "balance": 2461.73,
+  "currency": "CREDIT",
+  "account_id": 1,
+  "tkoin_equivalent": 24.6173
+}
+23:09:33.187 tkoin-wallet.js?v=1764108573:313 [Tkoin] Updating balance display with: {
+  "balance": 2461.73,
+  "currency": "CREDIT",
+  "account_id": 1,
+  "tkoin_equivalent": 24.6173
+}
+23:09:33.187 tkoin-wallet.js?v=1764108573:73 [Tkoin] Found element: balance-amount
+23:09:33.188 tkoin-wallet.js?v=1764108573:323 [Tkoin] Updated credit balance to: 2461.73
+23:09:33.188 tkoin-wallet.js?v=1764108573:73 [Tkoin] Found element: balance-account
+23:09:33.189 tkoin-wallet.js?v=1764108573:335 [Tkoin] Updated account ID to: 1
+23:09:33.189 tkoin-wallet.js?v=1764108573:344 [Tkoin] Fetching transaction history...
+23:09:33.332 tkoin-wallet.js?v=1764108573:464 [Tkoin] Raw balance: 98981980000000
+23:09:33.332 tkoin-wallet.js?v=1764108573:465 [Tkoin] TKOIN balance: 98981.98
+23:09:33.401 tkoin-wallet.js?v=1764108573:349 [Tkoin] History API response: {
+  "transactions": [
+    {
+      "id": 30,
+      "type": "deposit",
+      "amount": 1000,
+      "status": "completed",
+      "solana_signature": "xb31ZHfRjbKoUsha5D9zdEtzJm9T51rPHMF2oCU78xnQfCvrZaKT7hzsNXvrABHoTKDQJMkDdU6J12kZ5h1Wnd7",
+      "created_at": "2025-11-25T20:15:47+00:00",
+      "completed_at": "2025-11-25T20:15:47+00:00"
+    }
+  ],
+  "settlements": [
+    {
+      "id": 30,
+      "type": "deposit",
+      "amount": 1000,
+      "status": "completed",
+      "solana_signature": "xb31ZHfRjbKoUsha5D9zdEtzJm9T51rPHMF2oCU78xnQfCvrZaKT7hzsNXvrABHoTKDQJMkDdU6J12kZ5h1Wnd7",
+      "created_at": "2025-11-25T20:15:47+00:00",
+      "completed_at": "2025-11-25T20:15:47+00:00"
+    }
+  ]
+}
+23:09:33.402 tkoin-wallet.js?v=1764108573:378 [Tkoin] Found transaction container via content search
+23:09:33.402 tkoin-wallet.js?v=1764108573:389 [Tkoin] Updating transaction history with 1 transactions
+23:09:33.403 tkoin-wallet.js?v=1764108573:412 [Tkoin] Transaction history updated
+23:10:17.103 [NEW] Explain Console errors by using Copilot in Edge: click
+         
+         to explain an error. 
+        Learn more
