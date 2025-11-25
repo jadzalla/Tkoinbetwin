@@ -2,7 +2,7 @@
 
 ## Complete Development History & Documentation
 
-**Final Version:** v6.5  
+**Final Version:** v6.6  
 **Status:** Production Ready  
 **Last Updated:** November 25, 2025
 
@@ -93,6 +93,7 @@ User → Phantom Wallet → Solana Devnet → Treasury Wallet
 | v6.3 | Nov 21 | Dual element ID support |
 | v6.4 | Nov 21 | Auto-connect prevention |
 | v6.5 | Nov 25 | Account ID + History fix |
+| v6.6 | Nov 25 | Buffer polyfill fix for deposits |
 
 ### Critical Bug Fixes Explained
 
@@ -171,6 +172,27 @@ let targetContainer = document.getElementById('transactionHistory') ||
                       document.querySelector('.transaction-table tbody');
 ```
 
+#### 6. Buffer Not Defined Error (v6.6)
+**Problem:** `createToken2022TransferInstruction()` used Node.js `Buffer.alloc()` which doesn't exist in browsers  
+**Impact:** Deposit transactions fail with "Buffer is not defined" error  
+**Fix:** Replace `Buffer` with browser-native `Uint8Array`
+
+```javascript
+// WRONG (v6.5) - Node.js only
+const dataBuffer = Buffer.alloc(9);
+dataBuffer.writeUInt8(3, 0);
+for (let i = 0; i < 8; i++) {
+  dataBuffer.writeUInt8(Number((amountBigInt >> BigInt(i * 8)) & BigInt(0xff)), 1 + i);
+}
+
+// CORRECT (v6.6) - Browser compatible
+const dataBuffer = new Uint8Array(9);
+dataBuffer[0] = 3; // Transfer instruction discriminator
+for (let i = 0; i < 8; i++) {
+  dataBuffer[1 + i] = Number((amountBigInt >> BigInt(i * 8)) & BigInt(0xff));
+}
+```
+
 ---
 
 ## File Inventory
@@ -179,11 +201,10 @@ let targetContainer = document.getElementById('transactionHistory') ||
 
 | File | Destination | Purpose |
 |------|-------------|---------|
-| `tkoin-wallet-v6.5-FIXED.js` | `public/js/tkoin-wallet.js` | Main wallet integration |
+| `tkoin-wallet-v6.6-FIXED.js` | `public/js/tkoin-wallet.js` | Main wallet integration |
 | `tkoin-wallet.blade.php` | `resources/views/frontend/user/tkoin-wallet.blade.php` | UI template |
 | `TkoinController.php` | `app/Http/Controllers/TkoinController.php` | API endpoints |
 | `web.php` | `routes/web.php` (merge) | Route definitions |
-| `favicon.png` | `public/favicon.png` | Site favicon |
 
 ### Version History Files (Reference Only)
 
@@ -195,7 +216,8 @@ let targetContainer = document.getElementById('transactionHistory') ||
 | `tkoin-wallet-v6.1-FINAL.js` | v6.1 | Mint fix |
 | `tkoin-wallet-v6.3-FINAL.js` | v6.3 | Dual IDs |
 | `tkoin-wallet-v6.4-FIXED.js` | v6.4 | Auto-connect fix |
-| `tkoin-wallet-v6.5-FIXED.js` | v6.5 | **CURRENT PRODUCTION** |
+| `tkoin-wallet-v6.5-FIXED.js` | v6.5 | Account ID + History fix |
+| `tkoin-wallet-v6.6-FIXED.js` | v6.6 | **CURRENT PRODUCTION** |
 
 ---
 
@@ -208,11 +230,11 @@ cd /path/to/betwin
 cp public/js/tkoin-wallet.js public/js/tkoin-wallet.js.backup
 ```
 
-### Step 2: Deploy v6.5
+### Step 2: Deploy v6.6
 
 ```bash
-# Copy the v6.5 JavaScript file
-cp tkoin-wallet-v6.5-FIXED.js public/js/tkoin-wallet.js
+# Copy the v6.6 JavaScript file
+cp tkoin-wallet-v6.6-FIXED.js public/js/tkoin-wallet.js
 
 # Add cache-busting version
 # In blade template, change:
@@ -234,9 +256,10 @@ php artisan route:clear
 
 1. Open browser console (F12)
 2. Navigate to `/user/tkoin-wallet`
-3. Look for: `[Tkoin] Initializing wallet manager v6.5`
+3. Look for: `[Tkoin] Initializing wallet manager v6.6`
 4. Verify Account ID shows correctly
 5. Verify Transaction History loads
+6. **Test Deposit:** Click Deposit, enter amount, verify no "Buffer is not defined" error
 
 ---
 

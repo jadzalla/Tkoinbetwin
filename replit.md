@@ -83,10 +83,11 @@ The frontend uses React, TypeScript, Vite, Tailwind CSS, and shadcn/ui, adopting
 | v6.3 | Dual element ID support (hyphenated + camelCase) |
 | v6.4 | Phantom auto-connect prevention with forced popup |
 | v6.5 | Account ID + Transaction history display fixes |
+| v6.6 | Buffer polyfill fix - deposits now work |
 
 ### Deployment Files
 All files for BetWin deployment are in `attached_assets/BETWIN_FIXES/`:
-- `tkoin-wallet-v6.5-FIXED.js` - Current production JavaScript
+- `tkoin-wallet-v6.6-FIXED.js` - Current production JavaScript
 - `tkoin-wallet.blade.php` - Laravel blade template
 - `TkoinController.php` - API controller
 - `web.php` - Route definitions

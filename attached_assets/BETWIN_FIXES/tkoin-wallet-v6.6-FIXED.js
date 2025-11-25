@@ -1,6 +1,6 @@
 /**
  * Tkoin Wallet Integration for BetWin Casino
- * VERSION v6.5 - ACCOUNT ID + HISTORY FIX
+ * VERSION v6.6 - BUFFER POLYFILL FIX
  * 
  * FIXES:
  * ✅ Token2022 program ID (not standard SPL)
@@ -11,6 +11,7 @@
  * ✅ Transaction history displays properly (v6.5 fix)
  * ✅ Disconnect button always found and shown when connected
  * ✅ Forces Phantom popup for signature
+ * ✅ Buffer replaced with Uint8Array for browser compatibility (v6.6 fix)
  */
 
 class TkoinWallet {
@@ -89,7 +90,7 @@ class TkoinWallet {
 
   init() {
     console.log('[Tkoin] ========================================');
-    console.log('[Tkoin] Initializing wallet manager v6.5 (ACCOUNT ID + HISTORY FIX)');
+    console.log('[Tkoin] Initializing wallet manager v6.6 (BUFFER FIX)');
     console.log('[Tkoin] Network:', this.rpcUrl.includes('devnet') ? 'DEVNET' : 'MAINNET');
     console.log('[Tkoin] Treasury:', this.treasuryWallet);
     console.log('[Tkoin] Mint:', this.tkoinMint);
@@ -820,12 +821,14 @@ class TkoinWallet {
   }
 
   createToken2022TransferInstruction(source, destination, owner, amount, programId) {
-    const dataBuffer = Buffer.alloc(9);
-    dataBuffer.writeUInt8(3, 0);
+    // v6.6 FIX: Use Uint8Array instead of Buffer for browser compatibility
+    const dataBuffer = new Uint8Array(9);
+    dataBuffer[0] = 3; // Transfer instruction discriminator
     
+    // Write amount as little-endian 64-bit unsigned integer
     const amountBigInt = BigInt(amount);
     for (let i = 0; i < 8; i++) {
-      dataBuffer.writeUInt8(Number((amountBigInt >> BigInt(i * 8)) & BigInt(0xff)), 1 + i);
+      dataBuffer[1 + i] = Number((amountBigInt >> BigInt(i * 8)) & BigInt(0xff));
     }
     
     return new solanaWeb3.TransactionInstruction({
