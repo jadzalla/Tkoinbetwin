@@ -1,0 +1,80 @@
+Request URL
+https://betwin.tkoin.finance/tkoin/deposit
+Request Method
+POST
+Status Code
+500 Internal Server Error
+Remote Address
+188.114.97.2:443
+Referrer Policy
+strict-origin-when-cross-origin
+alt-svc
+h3=":443"; ma=86400
+cache-control
+no-cache, private
+cf-cache-status
+DYNAMIC
+cf-ray
+9a40a857d8594f05-CDG
+content-type
+application/json
+date
+Tue, 25 Nov 2025 11:03:06 GMT
+nel
+{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}
+priority
+u=1,i
+report-to
+{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=FjdendX%2FkQpbSyWQ87W8Jyg9kXYPV%2Fd%2Bj%2FhCvZK2EMW5KHwR06xDsSIxNzYe8z3l73ENyDME1GPfztX0XJMEkFqe%2FSLRNDRw7JXI5ebxGjxkV9IN"}]}
+server
+cloudflare
+server-timing
+cfExtPri
+set-cookie
+XSRF-TOKEN=eyJpdiI6Ijd4MGJhOE5pamdFRmduQXVoMncyR3c9PSIsInZhbHVlIjoiSTJ4bFUrNHF1cjZsbVFpcFZYQU1PWk5oUFUwUmhQK1Q3bU8wa0VBZ0swSVI4eDJrNWhsdUNldmJjb3J5Y29KU0w5R05UNlFUUS85cE5vWi9ST0IvbHJ0Mmo2MDVOeTdrbkNQakdCdXJ1MnhQc3VyaTRwcTg0cUlXTGhNMWJpKzMiLCJtYWMiOiI1MTlhNzk3MDg4ZDY4MDcyODFhZTk4YzIzNjE5NjIxNTQwNjVmYjNhOTcyYmE3YzdjOTM3OWMyM2JlM2VkYjFmIiwidGFnIjoiIn0%3D; SameSite=Lax; Secure; Path=/; Max-Age=604800; Expires=Tue, 02 Dec 2025 11:03:06 GMT
+set-cookie
+stake_session=eyJpdiI6ImVOaUsrWXp6K0RhWG0zaENOKzZSQkE9PSIsInZhbHVlIjoieCtHSWV6cnpJSDdLNCsveEZSdmZ3Wjh4bk5nMkExQ0Z1WW85dHRUQUFsRi9vOXF6S1JFVjlSekF5SUg5MWVFejVHSE54ZUV3MUUxcW1HVXNLT2hwdFAwQUdtT3lBY3R4RmQwQXAwTnhRODVnaWozT3gyMEd6MENoVXA4Z1prYnQiLCJtYWMiOiIwMzZmNDRkMTM0YTIyOTVmZDI0YjI1ZjY0Yjg5ZWExN2UxYmY2OTM2YjMwMTU5OWI5MzczY2EwYmZkNDg0YjhjIiwidGFnIjoiIn0%3D; SameSite=Lax; Secure; Path=/; Max-Age=604800; Expires=Tue, 02 Dec 2025 11:03:06 GMT
+:authority
+betwin.tkoin.finance
+:method
+POST
+:path
+/tkoin/deposit
+:scheme
+https
+accept
+application/json
+accept-encoding
+gzip, deflate, br, zstd
+accept-language
+fr,fr-FR;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+content-length
+14
+content-type
+application/json
+cookie
+cookie_consent=1; laravel_session=eyJpdiI6IkZHNkFiNUNvM2gxYWd5eWxjaWhVcVE9PSIsInZhbHVlIjoibThERUNvWDNPRC9PQXprUWNTdmJYRTUxSE9XdEl5V21lRTlHL29STkEwSTQwQmdtMTBXcEQ5Nmc4RHRxV0VqaFZzRHhqelJEbE5BUlQ2Ym5VaFgrNko1dUw4TFZGR2F1NDFYQjNUeW1XdEJzakFFZmdrOWR3THNGYTZYVnQ4bUUiLCJtYWMiOiIzYmIwZGMzM2JmNTYwOWE5MWRmNzY4YWI5YTg0ZWY3YTlmZGIzNmE0NzYwM2ViZDkwMjc1YTQyZjJiYTQ1NzNmIiwidGFnIjoiIn0%3D; XSRF-TOKEN=eyJpdiI6IkVGb1k5TVpyaHd5Z282TDN4OUZvWFE9PSIsInZhbHVlIjoiTjFpVXRjNFJhYVl6MEZXWU11bi90eW1TQk5zZXY0enVzWjBuMUlqWURZcURPWm9QdGlyVjNadEE1djl0dC9TY2s5Q3FsNlorZDdFSTF6aU5nUHFCNTR6WWg5Sy9wZi94blg1bEpzRHFUZEUwM1h4dUh5RlFxcDhiRnhvNFZRd0UiLCJtYWMiOiJlMjQxMDU4MDU4MzlkYWI3ZTYxZmVkN2E2ZDM2N2JhMDI2NGEyOWQ2YTU0NGVhZTQyMjJjZWM2YmFhNzcwZTE3IiwidGFnIjoiIn0%3D; stake_session=eyJpdiI6IjhMSUYwci9YRkhtTUNGdW1KTkNhYVE9PSIsInZhbHVlIjoiM2xEV3gyS3d6c1dPT1h1NHRIUkRncWtQTzZEb2J6eFN6ZkVjLzJTNFRtZjY1Szg4em9xRFRFa0xIdGtmdCtPVDdBdk5xbzZZaWxBMDIwVkZwWkN3Qi9zc3RXaEVGVENFdzNyRzJ4M3JJMDJKanRjajNObGpmUjJ6VnlGMS96TTQiLCJtYWMiOiJjNzMxNWZmYTMzZmViMjRmYTI4ZmVjMmJiNTU0MThkMGJmMTk1NGQyYzdiMTgyMjkwZjMwMzdkODFhZmRiNDU4IiwidGFnIjoiIn0%3D
+origin
+https://betwin.tkoin.finance
+priority
+u=1, i
+referer
+https://betwin.tkoin.finance/user/tkoin-wallet
+sec-ch-ua
+"Chromium";v="142", "Microsoft Edge";v="142", "Not_A Brand";v="99"
+sec-ch-ua-mobile
+?0
+sec-ch-ua-platform
+"Windows"
+sec-fetch-dest
+empty
+sec-fetch-mode
+cors
+sec-fetch-site
+same-origin
+user-agent
+Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0
+x-csrf-token
+W6UP9Vbpa8EOAfEJuLoIjnoo80pcuT2HBLafrtu6
+x-requested-with
+XMLHttpRequest

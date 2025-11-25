@@ -1,0 +1,78 @@
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# grep -n "getUserBalance" app/Services/TkoinService.php -A 15
+8: *   - getUserBalance() now queries BetWin local DB (not Tkoin Protocol API)
+9- *   - getUserTransactions() now queries local tkoin_settlements table
+10- * 
+11- *   @copyright  Copyright (c) BetWin, All rights reserved
+12- *   @author     BetWin <dev@betwin.tkoin.finance>
+13- *   @see        https://betwin.tkoin.finance
+14- */
+15-
+16-namespace App\Services;
+17-
+18-use App\Models\Account;
+19-use App\Models\TkoinSettlement;
+20-use App\Models\User;
+21-use App\Repositories\TkoinSettlementRepository;
+22-use GuzzleHttp\Client;
+23-use Illuminate\Support\Facades\Log;
+--
+95:    public function getUserBalance(User $user): ?array
+96-    {
+97-        try {
+98-            // Get account from BetWin's local database
+99-            $account = $user->account;
+100-            
+101-            if (!$account) {
+102-                Log::warning('User has no account', ['user_id' => $user->id]);
+103-                return [
+104-                    'balance' => 0,
+105-                    'credits' => 0,
+106-                    'tkoin' => 0,
+107-                    'currency' => 'CREDIT',
+108-                    'account_id' => null,
+109-                ];
+110-            }
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# grep -n "fetch\|balance" public/js/tkoin-wallet*.js | head -20
+public/js/tkoin-wallet-FINAL.js:9: * ✅ Display Phantom wallet TKOIN balance
+public/js/tkoin-wallet-FINAL.js:10: * ✅ Proper balance/history display from BetWin DB
+public/js/tkoin-wallet-FINAL.js:30:    this.fetchBalance();
+public/js/tkoin-wallet-FINAL.js:31:    this.fetchHistory();
+public/js/tkoin-wallet-FINAL.js:35:      this.fetchBalance();
+public/js/tkoin-wallet-FINAL.js:36:      this.fetchHistory();
+public/js/tkoin-wallet-FINAL.js:38:        this.fetchWalletBalance();
+public/js/tkoin-wallet-FINAL.js:105:      // Remove wallet balance display
+public/js/tkoin-wallet-FINAL.js:106:      document.getElementById('wallet-balance-card')?.remove();
+public/js/tkoin-wallet-FINAL.js:127:    // Show wallet balance card
+public/js/tkoin-wallet-FINAL.js:130:    // Fetch wallet balance
+public/js/tkoin-wallet-FINAL.js:131:    this.fetchWalletBalance();
+public/js/tkoin-wallet-FINAL.js:138:    if (document.getElementById('wallet-balance-card')) return;
+public/js/tkoin-wallet-FINAL.js:140:    const balanceCard = document.querySelector('.balance-card');
+public/js/tkoin-wallet-FINAL.js:141:    if (!balanceCard) return;
+public/js/tkoin-wallet-FINAL.js:144:    walletCard.id = 'wallet-balance-card';
+public/js/tkoin-wallet-FINAL.js:145:    walletCard.className = 'balance-card';
+public/js/tkoin-wallet-FINAL.js:148:      <div class="balance-label">Phantom Wallet</div>
+public/js/tkoin-wallet-FINAL.js:149:      <div class="balance-amount" id="wallet-balance-amount">--- TKOIN</div>
+public/js/tkoin-wallet-FINAL.js:150:      <div class="balance-subtext">${publicKey.slice(0, 8)}...${publicKey.slice(-8)}</div>
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# ^C
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# grep -n "tkoin-wallet" resources/views/frontend/user/tkoin-wallet.blade.php
+grep: resources/views/frontend/user/tkoin-wallet.blade.php: No such file or directory
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# grep: resources/views/frontend/user/tk^Cn-wallet.blade.php
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# php artisan config:clear
+
+   INFO  Configuration cache cleared successfully.  
+
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# php artisan cache:clear
+php artisan config:clear
+php artisan route:clear
+php artisan view:clear
+
+   INFO  Application cache cleared successfully.  
+
+
+   INFO  Configuration cache cleared successfully.  
+
+
+   INFO  Route cache cleared successfully.  
+
+
+   INFO  Compiled views cleared successfully.  
