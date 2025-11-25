@@ -583,11 +583,12 @@ class TkoinWallet {
     const token2022ProgramId = new solanaWeb3.PublicKey(this.TOKEN_2022_PROGRAM_ID);
     const associatedTokenProgramId = new solanaWeb3.PublicKey(this.ASSOCIATED_TOKEN_PROGRAM_ID);
     
+    // v6.6 FIX: Use toBytes() instead of toBuffer() for browser compatibility
     const [ata] = await solanaWeb3.PublicKey.findProgramAddress(
       [
-        owner.toBuffer(),
-        token2022ProgramId.toBuffer(),
-        mint.toBuffer(),
+        owner.toBytes(),
+        token2022ProgramId.toBytes(),
+        mint.toBytes(),
       ],
       associatedTokenProgramId
     );

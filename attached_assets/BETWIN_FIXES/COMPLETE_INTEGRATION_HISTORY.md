@@ -173,24 +173,32 @@ let targetContainer = document.getElementById('transactionHistory') ||
 ```
 
 #### 6. Buffer Not Defined Error (v6.6)
-**Problem:** `createToken2022TransferInstruction()` used Node.js `Buffer.alloc()` which doesn't exist in browsers  
-**Impact:** Deposit transactions fail with "Buffer is not defined" error  
-**Fix:** Replace `Buffer` with browser-native `Uint8Array`
+**Problem:** Multiple functions used Node.js `Buffer` API which doesn't exist in browsers  
+**Impact:** Wallet features fail with "Buffer is not defined" error  
+**Fix:** Replace all `Buffer` usage with browser-native alternatives
 
+**Fix 1:** `createToken2022TransferInstruction()` - Use Uint8Array
 ```javascript
 // WRONG (v6.5) - Node.js only
 const dataBuffer = Buffer.alloc(9);
 dataBuffer.writeUInt8(3, 0);
-for (let i = 0; i < 8; i++) {
-  dataBuffer.writeUInt8(Number((amountBigInt >> BigInt(i * 8)) & BigInt(0xff)), 1 + i);
-}
 
 // CORRECT (v6.6) - Browser compatible
 const dataBuffer = new Uint8Array(9);
-dataBuffer[0] = 3; // Transfer instruction discriminator
-for (let i = 0; i < 8; i++) {
-  dataBuffer[1 + i] = Number((amountBigInt >> BigInt(i * 8)) & BigInt(0xff));
-}
+dataBuffer[0] = 3;
+```
+
+**Fix 2:** `getToken2022ATA()` - Use toBytes() instead of toBuffer()
+```javascript
+// WRONG (v6.5) - Uses Buffer internally
+owner.toBuffer(),
+token2022ProgramId.toBuffer(),
+mint.toBuffer(),
+
+// CORRECT (v6.6) - Returns Uint8Array
+owner.toBytes(),
+token2022ProgramId.toBytes(),
+mint.toBytes(),
 ```
 
 ---
