@@ -1,0 +1,121 @@
+allow pasting
+15:13:34.637 // ===== DIAGNOSTIC SCRIPT =====
+console.log("=== TKOIN WALLET DIAGNOSTICS ===");
+
+// Check element IDs that JavaScript expects
+const expectedIds = ['creditBalance', 'accountId', 'connectWalletBtn', 'disconnectWalletBtn', 'depositForm', 'withdrawForm', 'transactionHistory'];
+
+expectedIds.forEach(id => {
+  const el = document.getElementById(id);
+  console.log(`${id}: ${el ? '✅ FOUND' : '❌ MISSING'}`);
+});
+
+// Show all buttons with their IDs
+console.log("\n=== ALL BUTTONS ===");
+document.querySelectorAll('button').forEach((btn, i) => {
+  console.log(`Button ${i}: id="${btn.id}" class="${btn.className}" text="${btn.textContent.trim().substring(0,30)}"`);
+});
+
+// Show balance-related elements
+console.log("\n=== BALANCE ELEMENTS ===");
+document.querySelectorAll('[class*="balance"], [id*="balance"], [id*="Balance"]').forEach(el => {
+  console.log(`Element: tag=${el.tagName} id="${el.id}" class="${el.className}"`);
+});
+
+// Try to manually update the balance
+console.log("\n=== ATTEMPTING MANUAL UPDATE ===");
+const balanceData = {balance: 1461.73, account_id: 1};
+// Try different possible element selectors
+['creditBalance', 'balance', 'credit-balance', 'available-balance'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) {
+    el.textContent = `${balanceData.balance.toFixed(2)} CREDIT`;
+    console.log(`Updated ${id} successfully!`);
+  }
+});
+15:13:34.639 VM310:2 === TKOIN WALLET DIAGNOSTICS ===
+15:13:34.640 VM310:9 creditBalance: ❌ MISSING
+15:13:34.640 VM310:9 accountId: ❌ MISSING
+15:13:34.641 VM310:9 connectWalletBtn: ❌ MISSING
+15:13:34.641 VM310:9 disconnectWalletBtn: ❌ MISSING
+15:13:34.641 VM310:9 depositForm: ✅ FOUND
+15:13:34.642 VM310:9 withdrawForm: ❌ MISSING
+15:13:34.642 VM310:9 transactionHistory: ❌ MISSING
+15:13:34.642 VM310:13 
+=== ALL BUTTONS ===
+15:13:34.642 VM310:15 Button 0: id="btn-deposit" class="btn btn-primary" text="Deposit"
+15:13:34.642 VM310:15 Button 1: id="btn-withdrawal" class="btn btn-primary" text="Withdraw"
+15:13:34.643 VM310:15 Button 2: id="btn-refresh" class="btn btn-secondary" text="Refresh"
+15:13:34.643 VM310:15 Button 3: id="connect-wallet-btn" class="btn btn-info" text="Connect Wallet"
+15:13:34.643 VM310:15 Button 4: id="" class="btn-close" text=""
+15:13:34.643 VM310:15 Button 5: id="" class="btn btn-secondary" text="Cancel"
+15:13:34.643 VM310:15 Button 6: id="depositSubmit" class="btn btn-primary" text="Initiate Deposit"
+15:13:34.643 VM310:15 Button 7: id="" class="btn-close" text=""
+15:13:34.643 VM310:15 Button 8: id="" class="btn btn-secondary" text="Cancel"
+15:13:34.644 VM310:15 Button 9: id="withdrawalSubmit" class="btn btn-primary" text="Initiate Withdrawal"
+15:13:34.644 VM310:19 
+=== BALANCE ELEMENTS ===
+15:13:34.644 VM310:21 Element: tag=DIV id="" class="balance-card"
+15:13:34.645 VM310:21 Element: tag=DIV id="" class="balance-label"
+15:13:34.645 VM310:21 Element: tag=DIV id="balance-amount" class="balance-amount"
+15:13:34.645 VM310:21 Element: tag=DIV id="balance-account" class="balance-subtext"
+15:13:34.645 VM310:25 
+=== ATTEMPTING MANUAL UPDATE ===
+15:13:34.713 undefined
+15:24:59.086 const expectedIds = ['creditBalance', 'accountId', 'connectWalletBtn', 'disconnectWalletBtn', 'depositForm', 'withdrawForm', 'transactionHistory'];
+15:24:59.153 undefined
+15:25:31.004 expectedIds.forEach(id => {
+  const el = document.getElementById(id);
+  console.log(`${id}: ${el ? '✅ FOUND' : '❌ MISSING'}`);
+});
+
+15:25:31.006 VM318:3 creditBalance: ❌ MISSING
+15:25:31.006 VM318:3 accountId: ❌ MISSING
+15:25:31.007 VM318:3 connectWalletBtn: ❌ MISSING
+15:25:31.007 VM318:3 disconnectWalletBtn: ❌ MISSING
+15:25:31.007 VM318:3 depositForm: ✅ FOUND
+15:25:31.008 VM318:3 withdrawForm: ❌ MISSING
+15:25:31.008 VM318:3 transactionHistory: ❌ MISSING
+15:25:31.061 undefined
+15:25:58.993 // Show all buttons with their IDs
+console.log("\n=== ALL BUTTONS ===");
+document.querySelectorAll('button').forEach((btn, i) => {
+  console.log(`Button ${i}: id="${btn.id}" class="${btn.className}" text="${btn.textContent.trim().substring(0,30)}"`);
+});
+// Show balance-related elements
+console.log("\n=== BALANCE ELEMENTS ===");
+document.querySelectorAll('[class*="balance"], [id*="balance"], [id*="Balance"]').forEach(el => {
+  console.log(`Element: tag=${el.tagName} id="${el.id}" class="${el.className}"`);
+});
+// Try to manually update the balance
+console.log("\n=== ATTEMPTING MANUAL UPDATE ===");
+const balanceData = {balance: 1461.73, account_id: 1};
+// Try different possible element selectors
+['creditBalance', 'balance', 'credit-balance', 'available-balance'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) {
+    el.textContent = `${balanceData.balance.toFixed(2)} CREDIT`;
+    console.log(`Updated ${id} successfully!`);
+  }
+});
+15:25:58.994 VM322:2 
+=== ALL BUTTONS ===
+15:25:58.996 VM322:4 Button 0: id="btn-deposit" class="btn btn-primary" text="Deposit"
+15:25:58.996 VM322:4 Button 1: id="btn-withdrawal" class="btn btn-primary" text="Withdraw"
+15:25:58.996 VM322:4 Button 2: id="btn-refresh" class="btn btn-secondary" text="Refresh"
+15:25:58.996 VM322:4 Button 3: id="connect-wallet-btn" class="btn btn-info" text="Connect Wallet"
+15:25:58.996 VM322:4 Button 4: id="" class="btn-close" text=""
+15:25:58.997 VM322:4 Button 5: id="" class="btn btn-secondary" text="Cancel"
+15:25:58.997 VM322:4 Button 6: id="depositSubmit" class="btn btn-primary" text="Initiate Deposit"
+15:25:58.997 VM322:4 Button 7: id="" class="btn-close" text=""
+15:25:58.997 VM322:4 Button 8: id="" class="btn btn-secondary" text="Cancel"
+15:25:58.997 VM322:4 Button 9: id="withdrawalSubmit" class="btn btn-primary" text="Initiate Withdrawal"
+15:25:58.998 VM322:7 
+=== BALANCE ELEMENTS ===
+15:25:58.998 VM322:9 Element: tag=DIV id="" class="balance-card"
+15:25:58.998 VM322:9 Element: tag=DIV id="" class="balance-label"
+15:25:58.999 VM322:9 Element: tag=DIV id="balance-amount" class="balance-amount"
+15:25:58.999 VM322:9 Element: tag=DIV id="balance-account" class="balance-subtext"
+15:25:58.999 VM322:12 
+=== ATTEMPTING MANUAL UPDATE ===
+15:25:59.001 undefined
