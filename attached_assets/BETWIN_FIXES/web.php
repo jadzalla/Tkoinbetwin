@@ -2,10 +2,11 @@
 /**
  *   BetWin - Tkoin Protocol Integration
  *   ------------------------------------
- *   web.php - COMPLETE MERGED VERSION v3
+ *   web.php - COMPLETE MERGED VERSION v4
  * 
  *   FIXES APPLIED:
- *   - Added named 'login' route that renders SPA (NO REDIRECT - prevents loop!)
+ *   - v3: Added named 'login' route that renders SPA (NO REDIRECT - prevents loop!)
+ *   - v4: Added /tkoin/withdraw route (JS calls /withdraw, not /withdrawal)
  *   - All Tkoin routes preserved
  *   - Catch-all SPA route preserved at end
  * 
@@ -46,11 +47,19 @@ Route::get('/user/tkoin-wallet', [TkoinController::class, 'showWallet'])
 
 // Tkoin API Routes (all require authentication)
 Route::prefix('tkoin')->name('tkoin.')->middleware('auth')->group(function () {
+    // Balance & History
     Route::get('/balance', [TkoinController::class, 'balance'])->name('balance');
     Route::get('/history', [TkoinController::class, 'history'])->name('history');
+    
+    // Deposits
     Route::post('/deposit', [TkoinController::class, 'deposit'])->name('deposit');
-    Route::post('/withdrawal', [TkoinController::class, 'withdrawal'])->name('withdrawal');
     Route::post('/verify-deposit', [TkoinController::class, 'verifyDeposit'])->name('verify-deposit');
+    
+    // Withdrawals - BOTH routes needed!
+    // /tkoin/withdraw - Used by tkoin-wallet.js (the JS frontend)
+    Route::post('/withdraw', [TkoinController::class, 'withdraw'])->name('withdraw');
+    // /tkoin/withdrawal - Legacy route (may be used by other code)
+    Route::post('/withdrawal', [TkoinController::class, 'withdrawal'])->name('withdrawal');
 });
 
 /*
