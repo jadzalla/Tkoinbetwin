@@ -1,0 +1,380 @@
+Stack
+Context
+Debug
+Flare
+Share
+Share with Flare
+Docs
+
+Stack
+
+Context
+
+Debug
+Create Share
+Docs
+
+Ignition Settings
+Docs
+Editor
+
+PhpStorm
+Theme
+auto
+Save settings
+Settings will be saved locally in ~/.ignition.json.
+
+View [frontend.layouts.user] not found.
+InvalidArgumentException
+PHP 8.2.29
+11.44.7
+View [frontend.layouts.user] not found.
+
+Expand vendor frames
+3 vendor frames
+resources
+ / 
+views
+ / 
+user
+ / 
+tkoin-wallet.blade
+.php
+ 
+: 623
+require
+13 vendor frames
+App
+ \ 
+Http
+ \ 
+Middleware
+ \ 
+DisableFraming
+ 
+: 23
+handle
+15 vendor frames
+App
+ \ 
+Http
+ \ 
+Middleware
+ \ 
+EncryptCookies
+ 
+: 26
+handle
+8 vendor frames
+App
+ \ 
+Http
+ \ 
+Middleware
+ \ 
+SetLocale
+ 
+: 25
+handle
+20 vendor frames
+resources
+ / 
+views
+ / 
+user
+ / 
+tkoin-wallet.blade
+.php
+ 
+: 623
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+{{-- Tkoin Wallet JavaScript - FIXED VERSION --}}
+
+<script src="{{ asset('js/tkoin-wallet.js') }}?v={{ time() }}"></script>
+
+
+
+<script>
+
+// Update wallet required notice based on connection status
+
+document.addEventListener('DOMContentLoaded', function() {
+
+    // Hide wallet notice when wallet is connected
+
+    const observer = new MutationObserver(function(mutations) {
+
+        const walletStatus = document.getElementById('walletStatus');
+
+        const notice = document.getElementById('walletRequiredNotice');
+
+        if (walletStatus && notice) {
+
+            if (walletStatus.classList.contains('bg-success')) {
+
+                notice.style.display = 'none';
+
+                document.body.classList.add('wallet-connected');
+
+            } else {
+
+                notice.style.display = 'block';
+
+                document.body.classList.remove('wallet-connected');
+
+            }
+
+        }
+
+    });
+
+
+
+    const walletStatus = document.getElementById('walletStatus');
+
+    if (walletStatus) {
+
+        observer.observe(walletStatus, { attributes: true, attributeFilter: ['class'] });
+
+    }
+
+});
+
+</script>
+
+@endpush
+
+App
+Routing
+Views
+Request
+Browser
+Headers
+Body
+Context
+User
+Versions
+App
+Routing
+Controller
+App\Http\Controllers\TkoinController@showWallet
+
+Route name
+user.tkoin-wallet
+
+Middleware
+web
+
+auth
+
+Views
+View
+resources
+ / 
+views
+ / 
+user
+ / 
+tkoin-wallet.blade
+.php
+Data
+Request
+https://betwin.tkoin.finance/user/tkoin-wallet
+GET
+curl "https://betwin.tkoin.finance/user/tkoin-wallet" \
+   -X GET \
+   -H 'cookie: <CENSORED>' \
+   -H 'x-forwarded-proto: https' \
+   -H 'cf-visitor: {"scheme":"https"}' \
+   -H 'cf-ipcountry: TG' \
+   -H 'cf-connecting-ip: 196.168.195.101' \
+   -H 'cdn-loop: cloudflare; loops=1' \
+   -H 'sec-fetch-dest: document' \
+   -H 'sec-fetch-user: ?1' \
+   -H 'sec-fetch-mode: navigate' \
+   -H 'sec-fetch-site: same-origin' \
+   -H 'accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7' \
+   -H 'user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0' \
+   -H 'upgrade-insecure-requests: 1' \
+   -H 'sec-ch-ua-platform: "Windows"' \
+   -H 'sec-ch-ua-mobile: ?0' \
+   -H 'sec-ch-ua: "Chromium";v="142", "Microsoft Edge";v="142", "Not_A Brand";v="99"' \
+   -H 'accept-language: fr,fr-FR;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6' \
+   -H 'cf-ray: 9a44503fcb74d632-CDG' \
+   -H 'priority: u=0, i' \
+   -H 'accept-encoding: gzip, br' \
+   -H 'referer: https://betwin.tkoin.finance/' \
+   -H 'x-forwarded-for: 196.168.195.101' \
+   -H 'host: betwin.tkoin.finance';
+
+
+Browser
+Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0
+
+Headers
+cookie
+<CENSORED>
+
+x-forwarded-proto
+https
+
+cf-visitor
+{"scheme":"https"}
+
+cf-ipcountry
+TG
+
+cf-connecting-ip
+196.168.195.101
+
+cdn-loop
+cloudflare; loops=1
+
+sec-fetch-dest
+document
+
+sec-fetch-user
+?1
+
+sec-fetch-mode
+navigate
+
+sec-fetch-site
+same-origin
+
+accept
+text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+
+user-agent
+Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0
+
+upgrade-insecure-requests
+1
+
+sec-ch-ua-platform
+"Windows"
+
+sec-ch-ua-mobile
+?0
+
+sec-ch-ua
+"Chromium";v="142", "Microsoft Edge";v="142", "Not_A Brand";v="99"
+
+accept-language
+fr,fr-FR;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+
+cf-ray
+9a44503fcb74d632-CDG
+
+priority
+u=0, i
+
+accept-encoding
+gzip, br
+
+referer
+https://betwin.tkoin.finance/
+
+x-forwarded-for
+196.168.195.101
+
+host
+betwin.tkoin.finance
+
+Body
+[]
+
+Context
+User
+{
+    "name": "Betwin Admin",
+    "code": "2149cb17-2830-43ad-91f2-c4639c54b4a6",
+    "display_name": "Betwin Admin",
+    "avatar_url": "https://betwin.tkoin.finance/storage/avatars/1762682555_74ca1856b655.svg",
+    "is_online": false
+}
+
+
+Versions
+Php Version
+8.2.29
+
+Laravel Version
+11.44.7
+
+Laravel Locale
+fr
+
+Laravel Config Cached
+false
+App Debug
+true
+App Env
+production
+
+
+3
+Queries
+
+1
+Logs
+10:42:00 PM
+5.07ms
+mysql
+select * from `users` where `id` = 1 limit 1
+
+
+1 query parameter
+10:42:00 PM
+1.76ms
+mysql
+select `accounts`.* from `accounts` inner join (select MIN(`accounts`.`id`) as `id_aggregate`, `accounts`.`user_id` from `accounts` where `accounts`.`user_id` = 1 and `accounts`.`user_id` is not null group by `accounts`.`user_id`) as `oldestOfMany` on `oldestOfMany`.`id_aggregate` = `accounts`.`id` and `oldestOfMany`.`user_id` = `accounts`.`user_id` where `accounts`.`user_id` = 1 and `accounts`.`user_id` is not null limit 1
+
+
+2 query parameters
+10:42:00 PM
+2.76ms
+mysql
+select * from `tkoin_settlements` where `user_id` = 1 order by `created_at` desc limit 20
+
+
+1 query parameter
+·
+Source
+·
+Docs
+·
+Laravel
+Ignition is built byFlare, the Laravel error reporting service.
