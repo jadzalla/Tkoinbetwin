@@ -249,35 +249,21 @@ GET https://betwin.tkoin.finance/favicon.ico 404 (Not Found)
 
 ### Solution
 
-#### Option A: Use PNG Favicon (Recommended)
+The favicon already exists at: `/public/images/favicon/favicon.png`
 
-1. Copy `favicon.png` to `public/favicon.png`
-
-2. Add to your layout template (`resources/views/frontend/layouts/user.blade.php`):
+Add to your layout template (`resources/views/frontend/layouts/user.blade.php`):
 
 ```html
 <head>
-    <!-- Add this line -->
-    <link rel="icon" type="image/png" href="/favicon.png">
-    <link rel="shortcut icon" type="image/png" href="/favicon.png">
+    <!-- Add this line - points to existing favicon -->
+    <link rel="icon" type="image/png" href="/images/favicon/favicon.png">
+    <link rel="shortcut icon" type="image/png" href="/images/favicon/favicon.png">
     
     <!-- Rest of head content -->
 </head>
 ```
 
-#### Option B: Create favicon.ico
-
-1. Use online converter: https://favicon.io/favicon-converter/
-2. Upload `favicon.png`
-3. Download `favicon.ico`
-4. Place in `public/favicon.ico`
-
-#### Option C: Inline SVG Favicon
-
-Add to layout head:
-```html
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23f97316' rx='10' width='100' height='100'/><text x='50' y='70' font-size='60' text-anchor='middle' fill='white'>T</text></svg>">
-```
+This tells browsers to use the PNG favicon instead of looking for `/favicon.ico`.
 
 ---
 

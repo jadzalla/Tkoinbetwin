@@ -90,5 +90,10 @@ All files for BetWin deployment are in `attached_assets/BETWIN_FIXES/`:
 - `tkoin-wallet.blade.php` - Laravel blade template
 - `TkoinController.php` - API controller
 - `web.php` - Route definitions
-- `favicon.png` - Site favicon
 - `COMPLETE_INTEGRATION_HISTORY.md` - Full documentation
+
+### Favicon Fix
+Add to layout template head:
+```html
+<link rel="icon" type="image/png" href="/images/favicon/favicon.png">
+```
