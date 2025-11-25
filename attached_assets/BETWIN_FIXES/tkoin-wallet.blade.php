@@ -546,7 +546,51 @@
 @endsection
 
 @push('scripts')
-{{-- IMPORTANT: Solana Web3.js - MUST be loaded BEFORE tkoin-wallet.js --}}
+{{-- CRITICAL: Buffer polyfill - required for Solana transactions --}}
+<script>
+// Inline Buffer polyfill to avoid CDN blocking by tracking prevention
+if (typeof window.Buffer === 'undefined') {
+    // Minimal Buffer implementation for Solana web3.js
+    window.Buffer = {
+        from: function(data, encoding) {
+            if (typeof data === 'string') {
+                if (encoding === 'base64') {
+                    const binary = atob(data);
+                    const bytes = new Uint8Array(binary.length);
+                    for (let i = 0; i < binary.length; i++) {
+                        bytes[i] = binary.charCodeAt(i);
+                    }
+                    return bytes;
+                }
+                return new TextEncoder().encode(data);
+            }
+            if (Array.isArray(data) || data instanceof Uint8Array) {
+                return new Uint8Array(data);
+            }
+            return new Uint8Array(0);
+        },
+        alloc: function(size) {
+            return new Uint8Array(size);
+        },
+        isBuffer: function(obj) {
+            return obj instanceof Uint8Array;
+        },
+        concat: function(arrays) {
+            const totalLength = arrays.reduce((acc, arr) => acc + arr.length, 0);
+            const result = new Uint8Array(totalLength);
+            let offset = 0;
+            for (const arr of arrays) {
+                result.set(arr, offset);
+                offset += arr.length;
+            }
+            return result;
+        }
+    };
+    console.log('[Tkoin] Buffer polyfill initialized');
+}
+</script>
+
+{{-- IMPORTANT: Solana Web3.js - MUST be loaded AFTER Buffer polyfill --}}
 <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
 
 {{-- Tkoin Wallet JavaScript - FIXED VERSION --}}
