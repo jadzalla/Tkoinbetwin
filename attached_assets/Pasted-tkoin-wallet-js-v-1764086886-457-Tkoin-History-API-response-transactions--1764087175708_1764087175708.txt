@@ -1,0 +1,95 @@
+tkoin-wallet.js?v=1764086886:457 [Tkoin] History API response: {
+  "transactions": [
+    {
+      "id": 3,
+      "type": "deposit",
+      "amount": 100,
+      "status": "processing",
+      "solana_signature": null,
+      "created_at": "2025-11-21T17:21:48+00:00",
+      "completed_at": null
+    },
+    {
+      "id": 2,
+      "type": "withdrawal",
+      "amount": 5,
+      "status": "processing",
+      "solana_signature": null,
+      "created_at": "2025-11-21T15:50:54+00:00",
+      "completed_at": null
+    },
+    {
+      "id": 1,
+      "type": "deposit",
+      "amount": 10.5,
+      "status": "processing",
+      "solana_signature": null,
+      "created_at": "2025-11-21T15:50:43+00:00",
+      "completed_at": null
+    }
+  ],
+  "settlements": [
+    {
+      "id": 3,
+      "type": "deposit",
+      "amount": 100,
+      "status": "processing",
+      "solana_signature": null,
+      "created_at": "2025-11-21T17:21:48+00:00",
+      "completed_at": null
+    },
+    {
+      "id": 2,
+      "type": "withdrawal",
+      "amount": 5,
+      "status": "processing",
+      "solana_signature": null,
+      "created_at": "2025-11-21T15:50:54+00:00",
+      "completed_at": null
+    },
+    {
+      "id": 1,
+      "type": "deposit",
+      "amount": 10.5,
+      "status": "processing",
+      "solana_signature": null,
+      "created_at": "2025-11-21T15:50:43+00:00",
+      "completed_at": null
+    }
+  ]
+}
+tkoin-wallet.js?v=1764086886:472 [Tkoin] transactionHistory not found - trying alternatives...
+tkoin-wallet.js?v=1764086886:486 [Tkoin] Found transaction container: transaction-body
+tkoin-wallet.js?v=1764086886:399 Fetch finished loading: GET "https://betwin.tkoin.finance/tkoin/balance".
+tkoin-wallet.js?v=1764086886:488 [Tkoin] Updating transaction history with 3 transactions
+tkoin-wallet.js?v=1764086886:511 [Tkoin] ✓ Transaction history updated
+tkoin-wallet.js?v=1764086886:453 Fetch finished loading: GET "https://betwin.tkoin.finance/tkoin/history?limit=10".
+vcd15cbe7772f49c399c…c1241717689176015:1 XHR finished loading: POST "https://betwin.tkoin.finance/cdn-cgi/rum?".
+favicon.ico:1 
+ 
+ GET https://betwin.tkoin.finance/favicon.ico 404 (Not Found)
+tkoin-wallet.js?v=1764086886:167 [Tkoin] Connect button clicked!
+tkoin-wallet.js?v=1764086886:237 [Tkoin] User clicked Connect - requesting wallet popup...
+tkoin-wallet.js?v=1764086886:246 [Tkoin] Disconnecting existing session to force popup...
+tkoin-wallet.js?v=1764086886:309 [Tkoin] Wallet disconnected
+tkoin-wallet.js?v=1764086886:52 [Tkoin] Found element: connect-wallet-btn
+tkoin-wallet.js?v=1764086886:58 [Tkoin] Found element via fallback: disconnectWalletBtn
+tkoin-wallet.js?v=1764086886:373 [Tkoin] Updating UI to DISCONNECTED state
+tkoin-wallet.js?v=1764086886:251 [Tkoin] Calling phantom.connect() - popup should appear now...
+tkoin-wallet.js?v=1764086886:254 [Tkoin] ✓ Wallet connected with user approval: 953CKYH169xXxaNKVwLT9z9s38TEg1d2pQsY7d1Lv6dD
+tkoin-wallet.js?v=1764086886:287 [Tkoin] ========================================
+tkoin-wallet.js?v=1764086886:288 [Tkoin] WALLET CONNECTED: 953CKYH169xXxaNKVwLT9z9s38TEg1d2pQsY7d1Lv6dD
+tkoin-wallet.js?v=1764086886:289 [Tkoin] ========================================
+tkoin-wallet.js?v=1764086886:52 [Tkoin] Found element: connect-wallet-btn
+tkoin-wallet.js?v=1764086886:58 [Tkoin] Found element via fallback: disconnectWalletBtn
+tkoin-wallet.js?v=1764086886:356 [Tkoin] Updating UI to CONNECTED state
+tkoin-wallet.js?v=1764086886:361 [Tkoin] ✓ Disconnect button is now VISIBLE
+tkoin-wallet.js?v=1764086886:540 [Tkoin] Fetching TKOIN Token2022 balance...
+tkoin-wallet.js?v=1764086886:541 [Tkoin] Wallet: 953CKYH169xXxaNKVwLT9z9s38TEg1d2pQsY7d1Lv6dD
+tkoin-wallet.js?v=1764086886:542 [Tkoin] Mint: 9XPD1ZcAtNZgc1pGYYL3Z4W3mNqHKmqKDsUtsKKzAJE5
+tkoin-wallet.js?v=1764086886:549 [Tkoin] Token2022 ATA: GJ8ZUGBD7UAtffi8eWjfqN63nCMhPgmDuH44YNRct3R6
+connection.ts:1674 Fetch finished loading: POST "https://api.devnet.solana.com/".
+tkoin-wallet.js?v=1764086886:564 [Tkoin] Raw balance: 999990000000000000
+tkoin-wallet.js?v=1764086886:565 [Tkoin] TKOIN balance: 999990000
+﻿
+
