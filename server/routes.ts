@@ -1414,10 +1414,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         TOKEN_2022_PROGRAM_ID
       );
       
-      console.log('[VERIFY DEBUG] Expected Treasury ATA:', treasuryTokenAccount.toBase58());
-      console.log('[VERIFY DEBUG] Treasury Wallet:', TREASURY_WALLET);
-      console.log('[VERIFY DEBUG] TKOIN Mint:', TKOIN_MINT);
-      
       let transferInfo: { 
         senderAddress: string; 
         amount: number; 
@@ -1432,18 +1428,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Helper to extract transfer from instructions
       const extractTransfer = (instrs: any[]): typeof transferInfo => {
         for (const instr of instrs) {
-          console.log('[VERIFY DEBUG] Instruction program:', (instr as any).program, 'has parsed:', 'parsed' in instr);
           if ('parsed' in instr && 
               (instr.program === 'spl-token' || instr.program === 'spl-token-2022')) {
             const parsed = instr.parsed;
-            console.log('[VERIFY DEBUG] Parsed type:', parsed.type);
             
             if (parsed.type === 'transferChecked' || parsed.type === 'transfer') {
               const info = parsed.info;
               const destination = info.destination;
-              console.log('[VERIFY DEBUG] Found transfer, destination:', destination);
-              console.log('[VERIFY DEBUG] Expected ATA:', treasuryTokenAccount.toBase58());
-              console.log('[VERIFY DEBUG] Match:', destination === treasuryTokenAccount.toBase58());
               
               // Check if transfer is to our treasury
               if (destination === treasuryTokenAccount.toBase58()) {
