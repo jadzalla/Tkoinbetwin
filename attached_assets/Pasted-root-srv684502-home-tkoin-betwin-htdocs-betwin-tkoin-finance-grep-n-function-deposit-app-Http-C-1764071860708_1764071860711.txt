@@ -1,0 +1,152 @@
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# grep -n "function deposit" app/Http/Controllers/TkoinController.php | head -5
+head -20 public/js/tkoin-wallet.js
+123:    public function deposit(Request $request)
+/**
+ * Tkoin Wallet Integration for BetWin Casino
+ * FIXED VERSION - v4.0
+ * 
+ * FIXES:
+ * ✅ Wallet connection requires explicit user click (no auto-connect)
+ * ✅ Disconnect wallet button added
+ * ✅ Deposit triggers actual Phantom SPL token transfer
+ * ✅ Verifies transaction on blockchain after sending
+ * ✅ Credits added after verification
+ */
+
+class TkoinWallet {
+  constructor() {
+    this.apiBaseUrl = '/tkoin';
+    this.phantom = null;
+    this.publicKey = null;
+    this.connected = false;
+    
+    // Solana configuration
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# php artisan cache:clear
+php artisan config:clear
+php artisan route:clear
+php artisan view:clear
+
+   INFO  Application cache cleared successfully.  
+
+
+   INFO  Configuration cache cleared successfully.  
+
+
+   INFO  Route cache cleared successfully.  
+
+
+   INFO  Compiled views cleared successfully.  
+
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# ls -la app/Http/Controllers/TkoinController.php
+ls -la public/js/tkoin-wallet.js
+ls -la resources/views/user/tkoin-wallet.blade.php
+-rw-r--r-- 1 tkoin-betwin tkoin-betwin 14090 Nov 25 11:48 app/Http/Controllers/TkoinController.php
+-rw-r--r-- 1 tkoin-betwin tkoin-betwin 23283 Nov 25 11:49 public/js/tkoin-wallet.js
+-rw-rw-r-- 1 tkoin-betwin tkoin-betwin 9325 Nov 25 11:53 resources/views/user/tkoin-wallet.blade.php
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# tail -50 storage/logs/laravel.log
+tail: cannot open 'storage/logs/laravel.log' for reading: No such file or directory
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# ^C
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# tail -n 100 storage/logs
+tail: error reading 'storage/logs': Is a directory
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# tail -n 100 storage/logs/app-2025-11-25.log
+[2025-11-25 11:53:50] production.INFO: Crash game 116057 auto cash out by user 19  
+[2025-11-25 11:53:50] production.INFO: CRASH | MultGame ID: 116057 | UID: 19 | CASH OUT  
+[2025-11-25 11:53:59] production.INFO: Crash game 116057 completion | scheduled at 2025-11-25 11:53:59.997 | started at 2025-11-25 11:53:59.912 (diff -84.565000 ms)  
+[2025-11-25 11:53:59] production.INFO: CRASH | MultGame ID: 116057 | UID: 0 | COMPLETE  
+[2025-11-25 11:54:00] production.INFO: CRASH | MultGame ID: 116057 | UID: 0 | CREATE NEXT MULTIPLAYER GAME  
+[2025-11-25 11:54:00] production.INFO: CRASH | MultGame ID: 0 | UID: 0 | Payout interval: 1.71 - 2.00  
+[2025-11-25 11:54:00] production.INFO: CRASH | MultGame ID: 116058 | UID: 0 | DISPATCH COMPLETION JOB: 2025-11-25 11:54:32.143  
+[2025-11-25 11:54:00] production.INFO: Crash game 116057 completion | finished at 2025-11-25 11:54:00.272  
+[2025-11-25 11:54:02] production.INFO: Schedule CreateBets: hourly  
+[2025-11-25 11:54:02] production.INFO: Schedule CreateBets: hourly  
+[2025-11-25 11:54:03] production.INFO: Schedule CreateBets: hourly  
+[2025-11-25 11:54:06] production.INFO: Game 116058 (CRASH): auto bet by UID 19  
+[2025-11-25 11:54:06] production.INFO: CRASH | MultGame ID: 116058 | UID: 19 | NEW BET  
+[2025-11-25 11:54:08] production.INFO: Schedule CreateBets: hourly  
+[2025-11-25 11:54:09] production.INFO: Schedule CreateBets: hourly  
+[2025-11-25 11:54:09] production.INFO: Game 116058 (CRASH): auto bet by UID 21  
+[2025-11-25 11:54:09] production.INFO: CRASH | MultGame ID: 116058 | UID: 21 | NEW BET  
+[2025-11-25 11:54:09] production.INFO: Schedule CreateBets: hourly  
+[2025-11-25 11:54:10] production.INFO: Schedule CreateBets: hourly  
+[2025-11-25 11:54:12] production.INFO: Game 116058 (CRASH): auto bet by UID 31  
+[2025-11-25 11:54:12] production.INFO: CRASH | MultGame ID: 116058 | UID: 31 | NEW BET  
+[2025-11-25 11:54:15] production.INFO: Game 116058 (CRASH): auto bet by UID 15  
+[2025-11-25 11:54:15] production.INFO: CRASH | MultGame ID: 116058 | UID: 15 | NEW BET  
+[2025-11-25 11:54:15] production.INFO: Game 116058 (CRASH): auto bet by UID 24  
+[2025-11-25 11:54:15] production.INFO: CRASH | MultGame ID: 116058 | UID: 24 | NEW BET  
+[2025-11-25 11:54:18] production.INFO: Game 116058 (CRASH): auto bet by UID 25  
+[2025-11-25 11:54:18] production.INFO: CRASH | MultGame ID: 116058 | UID: 25 | NEW BET  
+[2025-11-25 11:54:27] production.INFO: Crash game 116058 auto cash out by user 19  
+[2025-11-25 11:54:27] production.INFO: CRASH | MultGame ID: 116058 | UID: 19 | CASH OUT  
+[2025-11-25 11:54:28] production.INFO: Crash game 116058 auto cash out by user 21  
+[2025-11-25 11:54:28] production.INFO: CRASH | MultGame ID: 116058 | UID: 21 | CASH OUT  
+[2025-11-25 11:54:28] production.INFO: Crash game 116058 auto cash out by user 15  
+[2025-11-25 11:54:28] production.INFO: CRASH | MultGame ID: 116058 | UID: 15 | CASH OUT  
+[2025-11-25 11:54:31] production.INFO: Crash game 116058 auto cash out by user 31  
+[2025-11-25 11:54:31] production.INFO: CRASH | MultGame ID: 116058 | UID: 31 | CASH OUT  
+[2025-11-25 11:54:34] production.INFO: Crash game 116058 completion | scheduled at 2025-11-25 11:54:32.143 | started at 2025-11-25 11:54:34.403 (diff 2260.664000 ms)  
+[2025-11-25 11:54:34] production.INFO: CRASH | MultGame ID: 116058 | UID: 0 | COMPLETE  
+[2025-11-25 11:54:34] production.INFO: CRASH | MultGame ID: 116058 | UID: 0 | CREATE NEXT MULTIPLAYER GAME  
+[2025-11-25 11:54:34] production.INFO: CRASH | MultGame ID: 0 | UID: 0 | Payout interval: 2.01 - 2.50  
+[2025-11-25 11:54:34] production.INFO: CRASH | MultGame ID: 116059 | UID: 0 | DISPATCH COMPLETION JOB: 2025-11-25 11:55:12.444  
+[2025-11-25 11:54:34] production.INFO: Crash game 116058 completion | finished at 2025-11-25 11:54:34.507  
+[2025-11-25 11:54:46] production.INFO: Game 116059 (CRASH): auto bet by UID 32  
+[2025-11-25 11:54:46] production.INFO: CRASH | MultGame ID: 116059 | UID: 32 | NEW BET  
+[2025-11-25 11:55:01] production.INFO: Crash game 116059 auto cash out by user 32  
+[2025-11-25 11:55:01] production.INFO: CRASH | MultGame ID: 116059 | UID: 32 | CASH OUT  
+[2025-11-25 11:55:01] production.INFO: Schedule CreateBets: hourly  
+[2025-11-25 11:55:02] production.INFO: Schedule CreateBets: hourly  
+[2025-11-25 11:55:13] production.INFO: Crash game 116059 completion | scheduled at 2025-11-25 11:55:12.444 | started at 2025-11-25 11:55:13.799 (diff 1355.134000 ms)  
+[2025-11-25 11:55:13] production.INFO: CRASH | MultGame ID: 116059 | UID: 0 | COMPLETE  
+[2025-11-25 11:55:13] production.INFO: CRASH | MultGame ID: 116059 | UID: 0 | CREATE NEXT MULTIPLAYER GAME  
+[2025-11-25 11:55:13] production.INFO: CRASH | MultGame ID: 0 | UID: 0 | Payout interval: 2.01 - 2.50  
+[2025-11-25 11:55:13] production.INFO: CRASH | MultGame ID: 116060 | UID: 0 | DISPATCH COMPLETION JOB: 2025-11-25 11:55:49.615  
+[2025-11-25 11:55:13] production.INFO: Crash game 116059 completion | finished at 2025-11-25 11:55:13.843  
+[2025-11-25 11:55:19] production.INFO: Game 116060 (CRASH): auto bet by UID 33  
+[2025-11-25 11:55:19] production.INFO: CRASH | MultGame ID: 116060 | UID: 33 | NEW BET  
+[2025-11-25 11:55:22] production.INFO: Game 116060 (CRASH): auto bet by UID 22  
+[2025-11-25 11:55:22] production.INFO: CRASH | MultGame ID: 116060 | UID: 22 | NEW BET  
+[2025-11-25 11:55:29] production.INFO: Game 116060 (CRASH): auto bet by UID 16  
+[2025-11-25 11:55:29] production.INFO: CRASH | MultGame ID: 116060 | UID: 16 | NEW BET  
+[2025-11-25 11:55:47] production.INFO: Crash game 116060 auto cash out by user 16  
+[2025-11-25 11:55:47] production.INFO: CRASH | MultGame ID: 116060 | UID: 16 | CASH OUT  
+[2025-11-25 11:55:50] production.INFO: Crash game 116060 completion | scheduled at 2025-11-25 11:55:49.615 | started at 2025-11-25 11:55:50.302 (diff 687.619000 ms)  
+[2025-11-25 11:55:50] production.INFO: CRASH | MultGame ID: 116060 | UID: 0 | COMPLETE  
+[2025-11-25 11:55:50] production.INFO: CRASH | MultGame ID: 116060 | UID: 0 | CREATE NEXT MULTIPLAYER GAME  
+[2025-11-25 11:55:50] production.INFO: CRASH | MultGame ID: 0 | UID: 0 | Payout interval: 2.51 - 10.00  
+[2025-11-25 11:55:50] production.INFO: CRASH | MultGame ID: 116061 | UID: 0 | DISPATCH COMPLETION JOB: 2025-11-25 11:56:46.529  
+[2025-11-25 11:55:50] production.INFO: Crash game 116060 completion | finished at 2025-11-25 11:55:50.404  
+[2025-11-25 11:56:02] production.INFO: Schedule CreateBets: hourly  
+[2025-11-25 11:56:02] production.INFO: Game 116061 (CRASH): auto bet by UID 22  
+[2025-11-25 11:56:02] production.INFO: CRASH | MultGame ID: 116061 | UID: 22 | NEW BET  
+[2025-11-25 11:56:03] production.INFO: Schedule CreateBets: hourly  
+[2025-11-25 11:56:05] production.INFO: Game 116061 (CRASH): auto bet by UID 32  
+[2025-11-25 11:56:05] production.INFO: CRASH | MultGame ID: 116061 | UID: 32 | NEW BET  
+[2025-11-25 11:56:29] production.INFO: Crash game 116061 auto cash out by user 32  
+[2025-11-25 11:56:29] production.INFO: CRASH | MultGame ID: 116061 | UID: 32 | CASH OUT  
+[2025-11-25 11:56:47] production.INFO: Crash game 116061 completion | scheduled at 2025-11-25 11:56:46.529 | started at 2025-11-25 11:56:47.903 (diff 1374.431000 ms)  
+[2025-11-25 11:56:47] production.INFO: CRASH | MultGame ID: 116061 | UID: 0 | COMPLETE  
+[2025-11-25 11:56:47] production.INFO: CRASH | MultGame ID: 116061 | UID: 0 | CREATE NEXT MULTIPLAYER GAME  
+[2025-11-25 11:56:47] production.INFO: CRASH | MultGame ID: 0 | UID: 0 | Payout 0 (crash at x1)  
+[2025-11-25 11:56:47] production.INFO: CRASH | MultGame ID: 116062 | UID: 0 | DISPATCH COMPLETION JOB: 2025-11-25 11:57:07.937  
+[2025-11-25 11:56:47] production.INFO: Crash game 116061 completion | finished at 2025-11-25 11:56:47.981  
+[2025-11-25 11:56:54] production.INFO: Game 116062 (CRASH): auto bet by UID 17  
+[2025-11-25 11:56:54] production.INFO: CRASH | MultGame ID: 116062 | UID: 17 | NEW BET  
+[2025-11-25 11:56:57] production.INFO: Game 116062 (CRASH): auto bet by UID 32  
+[2025-11-25 11:56:57] production.INFO: CRASH | MultGame ID: 116062 | UID: 32 | NEW BET  
+[2025-11-25 11:56:57] production.INFO: Game 116062 (CRASH): auto bet by UID 33  
+[2025-11-25 11:56:57] production.INFO: CRASH | MultGame ID: 116062 | UID: 33 | NEW BET  
+[2025-11-25 11:57:00] production.INFO: Game 116062 (CRASH): auto bet by UID 23  
+[2025-11-25 11:57:00] production.INFO: CRASH | MultGame ID: 116062 | UID: 23 | NEW BET  
+[2025-11-25 11:57:01] production.INFO: Schedule CreateBets: hourly  
+[2025-11-25 11:57:02] production.INFO: Schedule CreateBets: hourly  
+[2025-11-25 11:57:02] production.INFO: Schedule CreateBets: hourly  
+[2025-11-25 11:57:06] production.INFO: Game 116062 (CRASH): auto bet by UID 19  
+[2025-11-25 11:57:06] production.INFO: CRASH | MultGame ID: 116062 | UID: 19 | NEW BET  
+[2025-11-25 11:57:09] production.INFO: Crash game 116062 completion | scheduled at 2025-11-25 11:57:07.937 | started at 2025-11-25 11:57:09.551 (diff 1614.613000 ms)  
+[2025-11-25 11:57:09] production.INFO: CRASH | MultGame ID: 116062 | UID: 0 | COMPLETE  
+[2025-11-25 11:57:09] production.INFO: CRASH | MultGame ID: 116062 | UID: 0 | CREATE NEXT MULTIPLAYER GAME  
+[2025-11-25 11:57:09] production.INFO: CRASH | MultGame ID: 0 | UID: 0 | Payout interval: 1.11 - 1.30  
+[2025-11-25 11:57:09] production.INFO: CRASH | MultGame ID: 116063 | UID: 0 | DISPATCH COMPLETION JOB: 2025-11-25 11:57:33.216  
+[2025-11-25 11:57:09] production.INFO: Crash game 116062 completion | finished at 2025-11-25 11:57:09.765  
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# 
