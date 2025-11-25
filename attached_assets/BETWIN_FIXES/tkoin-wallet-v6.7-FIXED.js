@@ -520,9 +520,6 @@ class TkoinWallet {
       <div class="balance-amount tkoin-balance">
         ${formattedBalance} TKOIN
       </div>
-      <div class="conversion-info">
-        ≈ ${(tkoinBalance * this.CREDIT_TO_TKOIN).toLocaleString()} CREDIT
-      </div>
     `;
     
     balanceCard.parentNode.insertBefore(walletCard, balanceCard.nextSibling);
