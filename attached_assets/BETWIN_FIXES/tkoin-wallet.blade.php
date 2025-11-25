@@ -1,5 +1,5 @@
-{{-- BetWin Tkoin Wallet - FIXED VERSION v4 --}}
-{{-- Place in: resources/views/frontend/user/tkoin-wallet.blade.php --}}
+{{-- BetWin Tkoin Wallet - FIXED VERSION v5 --}}
+{{-- Place in: resources/views/user/tkoin-wallet.blade.php --}}
 {{-- 
   FIXES:
   ✅ Solana web3.js library included
@@ -7,9 +7,11 @@
   ✅ Correct element IDs for JavaScript
   ✅ Dark BetWin theme
   ✅ Proper deposit flow with blockchain transaction
+  ✅ Inline Buffer polyfill (prevents CDN blocking)
+  ✅ Withdrawal flow with on-chain transfer
 --}}
 
-@extends('frontend.layouts.user')
+@extends('layouts.user')
 
 @section('content')
 <div class="tkoin-wallet-page">
