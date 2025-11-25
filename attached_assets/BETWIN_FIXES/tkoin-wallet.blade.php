@@ -367,6 +367,7 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
   <!-- CRITICAL: Inline Buffer polyfill - prevents CDN blocking by tracking prevention -->
+  @verbatim
   <script>
     if (typeof window.Buffer === 'undefined') {
       window.Buffer = {
@@ -407,6 +408,7 @@
       console.log('[Tkoin] Buffer polyfill initialized');
     }
   </script>
+  @endverbatim
 
   <!-- Solana Web3.js - MUST be loaded AFTER Buffer polyfill -->
   <script src="https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js"></script>
@@ -414,6 +416,7 @@
   <!-- Tkoin Wallet JS -->
   <script src="{{ asset('js/tkoin-wallet.js') }}?v={{ time() }}"></script>
 
+  @verbatim
   <script>
     // Hide wallet notice when wallet is connected
     document.addEventListener('DOMContentLoaded', function() {
@@ -435,5 +438,6 @@
       }
     });
   </script>
+  @endverbatim
 </body>
 </html>
