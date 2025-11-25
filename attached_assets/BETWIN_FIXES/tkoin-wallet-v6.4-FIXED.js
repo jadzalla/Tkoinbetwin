@@ -1,0 +1,954 @@
+/**
+ * Tkoin Wallet Integration for BetWin Casino
+ * VERSION v6.4 - ALL BUGS FIXED
+ * 
+ * FIXES:
+ * ✅ Token2022 program ID (not standard SPL)
+ * ✅ CORRECT MINT ADDRESS: 9XPD1ZcAtNZgc1pGYYL3Z4W3mNqHKmqKDsUtsKKzAJE5
+ * ✅ Supports BOTH element ID formats (camelCase AND hyphenated)
+ * ✅ Prevents Phantom auto-connect (requires explicit click via popup)
+ * ✅ Account ID preserved from server (not overwritten by JS)
+ * ✅ Disconnect button always found and shown when connected
+ * ✅ Forces Phantom popup for signature
+ */
+
+class TkoinWallet {
+  constructor() {
+    this.apiBaseUrl = '/tkoin';
+    this.phantom = null;
+    this.publicKey = null;
+    this.connected = false;
+    this.autoConnectBlocked = true; // Block auto-connect until user clicks
+    this.userClickedConnect = false; // Track if user initiated connection
+    
+    // ============ NETWORK CONFIGURATION ============
+    // DEVNET (for testing)
+    this.rpcUrl = 'https://api.devnet.solana.com';
+    this.treasuryWallet = '953CKYH169xXxaNKVwLT9z9s38TEg1d2pQsY7d1Lv6dD';
+    this.tkoinMint = '9XPD1ZcAtNZgc1pGYYL3Z4W3mNqHKmqKDsUtsKKzAJE5';  // CORRECT DEVNET MINT!
+    
+    // MAINNET (uncomment for production)
+    // this.rpcUrl = 'https://api.mainnet-beta.solana.com';
+    // this.treasuryWallet = '953CKYH169xXxaNKVwLT9z9s38TEg1d2pQsY7d1Lv6dD';
+    // this.tkoinMint = 'YOUR_MAINNET_MINT_ADDRESS_HERE';
+    
+    // ============ TOKEN2022 PROGRAM IDs ============
+    this.TOKEN_2022_PROGRAM_ID = 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb';
+    this.ASSOCIATED_TOKEN_PROGRAM_ID = 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL';
+    
+    this.tokenDecimals = 9;
+    this.platformUserId = null;
+    this.connection = null;
+    
+    this.init();
+  }
+
+  // ============ DUAL-COMPATIBLE ELEMENT GETTER ============
+  // Tries multiple ID formats to find elements
+  getElement(primaryId, fallbackId) {
+    let el = document.getElementById(primaryId);
+    if (el) {
+      console.log(`[Tkoin] Found element: ${primaryId}`);
+      return el;
+    }
+    if (fallbackId) {
+      el = document.getElementById(fallbackId);
+      if (el) {
+        console.log(`[Tkoin] Found element via fallback: ${fallbackId}`);
+        return el;
+      }
+    }
+    console.warn(`[Tkoin] Element not found: ${primaryId}${fallbackId ? ' or ' + fallbackId : ''}`);
+    return null;
+  }
+
+  // ============ DOM ELEMENT LOGGING ============
+  logDOMElements() {
+    console.log('[Tkoin] ---- DOM Elements Check ----');
+    
+    // List all possible IDs for wallet buttons
+    const elementIds = [
+      'connect-wallet-btn', 'connectWalletBtn',
+      'disconnect-wallet-btn', 'disconnectWalletBtn',
+      'balance-account', 'accountId',
+      'balance-amount', 'creditBalance',
+      'btn-refresh', 'refreshBtn',
+      'walletStatus', 'walletAddress'
+    ];
+    
+    elementIds.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        console.log(`[Tkoin] ✓ Found: #${id} (${el.tagName})`);
+      }
+    });
+    
+    console.log('[Tkoin] --------------------------------');
+  }
+
+  init() {
+    console.log('[Tkoin] ========================================');
+    console.log('[Tkoin] Initializing wallet manager v6.4 (ALL BUGS FIXED)');
+    console.log('[Tkoin] Network:', this.rpcUrl.includes('devnet') ? 'DEVNET' : 'MAINNET');
+    console.log('[Tkoin] Treasury:', this.treasuryWallet);
+    console.log('[Tkoin] Mint:', this.tkoinMint);
+    console.log('[Tkoin] Token Program: Token2022');
+    console.log('[Tkoin] ========================================');
+    
+    // Log all relevant DOM elements for debugging
+    this.logDOMElements();
+    
+    // Initialize Solana connection
+    if (typeof solanaWeb3 !== 'undefined') {
+      this.connection = new solanaWeb3.Connection(this.rpcUrl, 'confirmed');
+      console.log('[Tkoin] Solana Web3.js loaded successfully');
+    } else {
+      console.error('[Tkoin] ERROR: Solana Web3.js not loaded!');
+    }
+    
+    // Fetch initial data
+    this.fetchBalance();
+    this.fetchHistory();
+    
+    // Setup event listeners
+    this.setupEventListeners();
+    
+    // Check Phantom but DON'T auto-connect
+    this.checkPhantomInstalled();
+    
+    console.log('[Tkoin] Initialization complete');
+  }
+
+  checkPhantomInstalled() {
+    if (window.solana?.isPhantom) {
+      console.log('[Tkoin] Phantom wallet detected');
+      this.phantom = window.solana;
+      
+      // Listen for account changes ONLY if user initiated connection
+      this.phantom.on('accountChanged', (publicKey) => {
+        if (!this.autoConnectBlocked && publicKey) {
+          this.handleWalletConnected(publicKey.toString());
+        } else if (!publicKey) {
+          this.handleWalletDisconnected();
+        }
+      });
+      
+      // Listen for disconnect
+      this.phantom.on('disconnect', () => {
+        this.handleWalletDisconnected();
+      });
+      
+      // Check if already connected from previous session
+      // BUT don't auto-trigger the full connection flow
+      if (this.phantom.isConnected && this.phantom.publicKey) {
+        console.log('[Tkoin] Phantom already connected from previous session');
+        console.log('[Tkoin] Waiting for user to click Connect button...');
+        // DON'T call handleWalletConnected here - wait for user click
+      }
+      
+      // Update UI to show "Connect" button
+      this.updateWalletUI(false);
+    } else {
+      console.log('[Tkoin] Phantom wallet not detected');
+      this.showPhantomNotInstalled();
+    }
+  }
+
+  setupEventListeners() {
+    console.log('[Tkoin] Setting up event listeners...');
+    
+    // ============ CONNECT WALLET BUTTON (DUAL IDs) ============
+    const connectBtn = this.getElement('connect-wallet-btn', 'connectWalletBtn');
+    if (connectBtn) {
+      connectBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('[Tkoin] Connect button clicked!');
+        this.connectWallet();
+      });
+      console.log('[Tkoin] ✓ Connect button listener attached');
+    }
+
+    // ============ DISCONNECT WALLET BUTTON (DUAL IDs) ============
+    const disconnectBtn = this.getElement('disconnect-wallet-btn', 'disconnectWalletBtn');
+    if (disconnectBtn) {
+      disconnectBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.disconnectWallet();
+      });
+      console.log('[Tkoin] ✓ Disconnect button listener attached');
+    }
+
+    // ============ DEPOSIT FORM ============
+    const depositForm = document.getElementById('depositForm');
+    if (depositForm) {
+      depositForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        this.handleDeposit();
+      });
+      console.log('[Tkoin] ✓ Deposit form listener attached');
+    }
+
+    // ============ WITHDRAW FORM ============
+    const withdrawForm = document.getElementById('withdrawForm');
+    if (withdrawForm) {
+      withdrawForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        this.handleWithdraw();
+      });
+      console.log('[Tkoin] ✓ Withdraw form listener attached');
+    }
+
+    // ============ REFRESH BUTTON (DUAL IDs) ============
+    const refreshBtn = this.getElement('btn-refresh', 'refreshBtn');
+    if (refreshBtn) {
+      refreshBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        console.log('[Tkoin] Refresh button clicked!');
+        this.refreshData();
+      });
+      console.log('[Tkoin] ✓ Refresh button listener attached');
+    }
+
+    console.log('[Tkoin] Event listeners setup complete');
+  }
+
+  getHeaders() {
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+    return {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
+      ...(csrfToken && { 'X-CSRF-TOKEN': csrfToken }),
+    };
+  }
+
+  // ==================== WALLET CONNECTION ====================
+
+  async connectWallet() {
+    if (!this.phantom) {
+      alert('Please install Phantom wallet extension first!');
+      window.open('https://phantom.app/', '_blank');
+      return;
+    }
+
+    try {
+      console.log('[Tkoin] User clicked Connect - requesting wallet popup...');
+      
+      // Mark that user explicitly clicked Connect
+      this.userClickedConnect = true;
+      this.autoConnectBlocked = false;
+      
+      // FORCE disconnect first to ensure popup appears
+      // This breaks any auto-connect and requires user approval
+      if (this.phantom.isConnected) {
+        console.log('[Tkoin] Disconnecting existing session to force popup...');
+        await this.phantom.disconnect();
+      }
+      
+      // Now connect - this WILL show the popup
+      console.log('[Tkoin] Calling phantom.connect() - popup should appear now...');
+      const response = await this.phantom.connect({ onlyIfTrusted: false });
+      const pubKey = response.publicKey.toString();
+      console.log('[Tkoin] ✓ Wallet connected with user approval:', pubKey);
+      
+      this.handleWalletConnected(pubKey);
+    } catch (error) {
+      console.error('[Tkoin] Connection error:', error);
+      this.autoConnectBlocked = true;
+      this.userClickedConnect = false;
+      if (error.code === 4001) {
+        alert('Connection request was rejected. Please try again.');
+      } else {
+        alert('Failed to connect wallet: ' + error.message);
+      }
+    }
+  }
+
+  async disconnectWallet() {
+    try {
+      if (this.phantom) {
+        await this.phantom.disconnect();
+      }
+      this.autoConnectBlocked = true; // Re-block auto-connect
+      this.handleWalletDisconnected();
+      console.log('[Tkoin] Wallet disconnected');
+    } catch (error) {
+      console.error('[Tkoin] Disconnect error:', error);
+      this.handleWalletDisconnected();
+    }
+  }
+
+  handleWalletConnected(publicKey) {
+    this.publicKey = publicKey;
+    this.connected = true;
+    
+    console.log('[Tkoin] ========================================');
+    console.log('[Tkoin] WALLET CONNECTED:', publicKey);
+    console.log('[Tkoin] ========================================');
+    
+    // Update UI
+    this.updateWalletUI(true);
+    
+    // Fetch TKOIN Token2022 balance
+    this.fetchTkoinBalance();
+    
+    // Auto-fill withdraw wallet address
+    const withdrawWallet = document.getElementById('withdrawWallet');
+    if (withdrawWallet && !withdrawWallet.value) {
+      withdrawWallet.value = publicKey;
+    }
+  }
+
+  handleWalletDisconnected() {
+    this.publicKey = null;
+    this.connected = false;
+    this.autoConnectBlocked = true;
+    
+    console.log('[Tkoin] Wallet disconnected');
+    
+    // Update UI
+    this.updateWalletUI(false);
+    
+    // Clear TKOIN balance display
+    const tkoinBalanceEl = document.getElementById('tkoinBalance');
+    if (tkoinBalanceEl) {
+      tkoinBalanceEl.textContent = '0.00 TKOIN';
+    }
+    
+    // Remove wallet balance card
+    const walletCard = document.getElementById('wallet-balance-card');
+    if (walletCard) walletCard.remove();
+  }
+
+  updateWalletUI(connected) {
+    // DUAL IDs for connect/disconnect buttons
+    const connectBtn = this.getElement('connect-wallet-btn', 'connectWalletBtn');
+    let disconnectBtn = this.getElement('disconnect-wallet-btn', 'disconnectWalletBtn');
+    const walletStatus = document.getElementById('walletStatus');
+    const walletAddress = document.getElementById('walletAddress');
+    
+    // If disconnect button doesn't exist, CREATE IT dynamically next to connect button
+    if (!disconnectBtn && connectBtn) {
+      console.log('[Tkoin] Creating disconnect button dynamically...');
+      disconnectBtn = document.createElement('button');
+      disconnectBtn.type = 'button';
+      disconnectBtn.id = 'disconnectWalletBtn';
+      disconnectBtn.className = 'btn btn-outline-danger';
+      disconnectBtn.style.display = 'none';
+      disconnectBtn.innerHTML = '<i class="fa fa-unlink"></i> Disconnect';
+      
+      // Insert after connect button
+      connectBtn.parentNode.insertBefore(disconnectBtn, connectBtn.nextSibling);
+      
+      // Add click handler
+      disconnectBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        console.log('[Tkoin] Disconnect button clicked!');
+        this.disconnectWallet();
+      });
+      console.log('[Tkoin] ✓ Disconnect button created and listener attached');
+    }
+
+    if (connected && this.publicKey) {
+      // Show connected state
+      console.log('[Tkoin] Updating UI to CONNECTED state');
+      if (connectBtn) connectBtn.style.display = 'none';
+      if (disconnectBtn) {
+        disconnectBtn.style.display = 'inline-flex';
+        disconnectBtn.innerHTML = `<i class="fa fa-unlink"></i> Disconnect ${this.publicKey.slice(0, 4)}...${this.publicKey.slice(-4)}`;
+        console.log('[Tkoin] ✓ Disconnect button is now VISIBLE');
+      }
+      if (walletStatus) {
+        walletStatus.textContent = 'Connected';
+        walletStatus.className = 'badge bg-success';
+      }
+      if (walletAddress) {
+        walletAddress.textContent = `${this.publicKey.slice(0, 8)}...${this.publicKey.slice(-8)}`;
+        walletAddress.style.display = 'inline-block';
+      }
+    } else {
+      // Show disconnected state
+      console.log('[Tkoin] Updating UI to DISCONNECTED state');
+      if (connectBtn) connectBtn.style.display = 'inline-flex';
+      if (disconnectBtn) disconnectBtn.style.display = 'none';
+      if (walletStatus) {
+        walletStatus.textContent = 'Not Connected';
+        walletStatus.className = 'badge bg-secondary';
+      }
+      if (walletAddress) {
+        walletAddress.style.display = 'none';
+      }
+    }
+  }
+
+  showPhantomNotInstalled() {
+    const connectBtn = this.getElement('connect-wallet-btn', 'connectWalletBtn');
+    if (connectBtn) {
+      connectBtn.innerHTML = '<i class="fa fa-download"></i> Install Phantom';
+      connectBtn.onclick = () => window.open('https://phantom.app/', '_blank');
+    }
+  }
+
+  // ==================== BALANCE FETCHING ====================
+
+  async fetchBalance() {
+    try {
+      console.log('[Tkoin] Fetching balance from API...');
+      const response = await fetch(`${this.apiBaseUrl}/balance`, {
+        headers: this.getHeaders(),
+      });
+      const data = await response.json();
+      console.log('[Tkoin] Balance API response:', JSON.stringify(data, null, 2));
+      
+      if (data.success !== false) {
+        this.updateBalanceDisplay(data.balance || data);
+      } else {
+        console.error('[Tkoin] Balance fetch failed:', data.message);
+      }
+    } catch (error) {
+      console.error('[Tkoin] Balance error:', error);
+    }
+  }
+
+  updateBalanceDisplay(balance) {
+    console.log('[Tkoin] Updating balance display with:', JSON.stringify(balance, null, 2));
+    
+    // ============ CREDIT BALANCE (DUAL IDs) ============
+    const creditBalanceEl = this.getElement('balance-amount', 'creditBalance');
+    if (creditBalanceEl) {
+      const amount = parseFloat(balance.credits || balance || 0);
+      creditBalanceEl.textContent = `${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CREDIT`;
+      console.log('[Tkoin] ✓ Updated credit balance to:', amount);
+    }
+    
+    // ============ ACCOUNT ID - DO NOT OVERWRITE! ============
+    // The Account ID is set server-side by Laravel blade template.
+    // We should NOT overwrite it from JavaScript unless API explicitly returns it.
+    // This prevents showing "Account ID: ---" or undefined values.
+    const accountIdEl = this.getElement('balance-account', 'accountId');
+    if (accountIdEl) {
+      // Only update if API explicitly returns account_id and it's a valid value
+      const accountId = balance.account_id || balance.user_id;
+      if (accountId && accountId !== 'undefined' && accountId !== 'null' && accountId !== '---') {
+        accountIdEl.textContent = 'Account ID: ' + accountId;
+        console.log('[Tkoin] ✓ Updated account ID to:', accountId);
+      } else {
+        // Keep the server-rendered value - DO NOT OVERWRITE
+        console.log('[Tkoin] Keeping server-rendered Account ID:', accountIdEl.textContent);
+      }
+    }
+  }
+
+  async fetchHistory() {
+    try {
+      console.log('[Tkoin] Fetching transaction history...');
+      const response = await fetch(`${this.apiBaseUrl}/history?limit=10`, {
+        headers: this.getHeaders(),
+      });
+      const data = await response.json();
+      console.log('[Tkoin] History API response:', JSON.stringify(data, null, 2));
+      
+      if (data.success !== false) {
+        this.updateHistoryDisplay(data.transactions || data.settlements || []);
+      }
+    } catch (error) {
+      console.error('[Tkoin] History error:', error);
+    }
+  }
+
+  updateHistoryDisplay(transactions) {
+    const container = document.getElementById('transactionHistory');
+    if (!container) {
+      console.warn('[Tkoin] transactionHistory element not found - trying alternative IDs...');
+      // Try alternative IDs
+      const altContainer = document.getElementById('transaction-history') || 
+                          document.querySelector('tbody[id*="transaction"]') ||
+                          document.querySelector('.transaction-table tbody');
+      if (!altContainer) {
+        console.error('[Tkoin] Could not find any transaction history container');
+        return;
+      }
+    }
+    
+    const targetContainer = container || document.querySelector('.transaction-table tbody');
+    if (!targetContainer) return;
+    
+    console.log('[Tkoin] Updating transaction history with', transactions.length, 'transactions');
+    
+    if (!transactions.length) {
+      targetContainer.innerHTML = `
+        <tr>
+          <td colspan="4" class="text-center text-muted py-4">
+            <i class="fa fa-inbox fa-2x mb-2 d-block"></i>
+            No transactions yet
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    targetContainer.innerHTML = transactions.map(tx => `
+      <tr>
+        <td class="tx-type ${tx.type?.toLowerCase()}">${tx.type?.toUpperCase() || 'N/A'}</td>
+        <td class="tx-amount">${parseFloat(tx.amount || 0).toFixed(2)} CREDIT</td>
+        <td><span class="badge ${this.getStatusBadge(tx.status)}">${tx.status?.toUpperCase() || 'N/A'}</span></td>
+        <td class="tx-date">${this.formatDate(tx.created_at)}</td>
+      </tr>
+    `).join('');
+    
+    console.log('[Tkoin] ✓ Transaction history updated');
+  }
+
+  getStatusBadge(status) {
+    const badges = {
+      'completed': 'bg-success',
+      'processing': 'bg-warning',
+      'pending': 'bg-info',
+      'failed': 'bg-danger',
+      'cancelled': 'bg-secondary',
+    };
+    return badges[status?.toLowerCase()] || 'bg-secondary';
+  }
+
+  formatDate(dateString) {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  // ==================== TOKEN2022 BALANCE FETCHING ====================
+
+  async fetchTkoinBalance() {
+    if (!this.publicKey || !this.connection) {
+      console.log('[Tkoin] Cannot fetch TKOIN balance - no wallet or connection');
+      return;
+    }
+    
+    try {
+      console.log('[Tkoin] Fetching TKOIN Token2022 balance...');
+      console.log('[Tkoin] Wallet:', this.publicKey);
+      console.log('[Tkoin] Mint:', this.tkoinMint);
+      
+      const ownerPubKey = new solanaWeb3.PublicKey(this.publicKey);
+      const mintPubKey = new solanaWeb3.PublicKey(this.tkoinMint);
+      
+      // Get the Associated Token Account for Token2022
+      const ata = await this.getToken2022ATA(mintPubKey, ownerPubKey);
+      console.log('[Tkoin] Token2022 ATA:', ata.toString());
+      
+      // Fetch token account info
+      const accountInfo = await this.connection.getAccountInfo(ata);
+      
+      let tkoinBalance = 0;
+      
+      if (accountInfo && accountInfo.data) {
+        const data = accountInfo.data;
+        
+        if (data.length >= 72) {
+          const amountBuffer = data.slice(64, 72);
+          const rawAmount = this.readUInt64LE(amountBuffer);
+          tkoinBalance = rawAmount / Math.pow(10, this.tokenDecimals);
+          
+          console.log('[Tkoin] Raw balance:', rawAmount);
+          console.log('[Tkoin] TKOIN balance:', tkoinBalance);
+        }
+      } else {
+        console.log('[Tkoin] No Token2022 account found - balance is 0');
+        console.log('[Tkoin] User needs to receive TKOIN first to create the account');
+      }
+      
+      this.updateTkoinBalanceDisplay(tkoinBalance);
+      this.createWalletBalanceCard(tkoinBalance);
+      
+    } catch (error) {
+      console.error('[Tkoin] Error fetching TKOIN balance:', error);
+      this.updateTkoinBalanceDisplay(0);
+    }
+  }
+
+  async getToken2022ATA(mint, owner) {
+    const token2022ProgramId = new solanaWeb3.PublicKey(this.TOKEN_2022_PROGRAM_ID);
+    const associatedTokenProgramId = new solanaWeb3.PublicKey(this.ASSOCIATED_TOKEN_PROGRAM_ID);
+    
+    const [ata] = await solanaWeb3.PublicKey.findProgramAddress(
+      [
+        owner.toBuffer(),
+        token2022ProgramId.toBuffer(),
+        mint.toBuffer(),
+      ],
+      associatedTokenProgramId
+    );
+    
+    return ata;
+  }
+
+  readUInt64LE(buffer) {
+    let result = BigInt(0);
+    for (let i = 0; i < 8; i++) {
+      result += BigInt(buffer[i]) << BigInt(i * 8);
+    }
+    return Number(result);
+  }
+
+  updateTkoinBalanceDisplay(balance) {
+    const tkoinBalanceEl = document.getElementById('tkoinBalance');
+    if (tkoinBalanceEl) {
+      let formattedBalance;
+      if (balance >= 1000000000) {
+        formattedBalance = (balance / 1000000000).toFixed(2) + 'B';
+      } else if (balance >= 1000000) {
+        formattedBalance = (balance / 1000000).toFixed(2) + 'M';
+      } else if (balance >= 1000) {
+        formattedBalance = (balance / 1000).toFixed(2) + 'K';
+      } else {
+        formattedBalance = balance.toFixed(5);
+      }
+      tkoinBalanceEl.textContent = `${formattedBalance} TKOIN`;
+    }
+  }
+
+  createWalletBalanceCard(tkoinBalance) {
+    const existingCard = document.getElementById('wallet-balance-card');
+    if (existingCard) existingCard.remove();
+    
+    const balanceCard = document.querySelector('.balance-card');
+    if (!balanceCard) return;
+    
+    let formattedBalance;
+    if (tkoinBalance >= 1000000000) {
+      formattedBalance = (tkoinBalance / 1000000000).toFixed(2) + 'B';
+    } else if (tkoinBalance >= 1000000) {
+      formattedBalance = (tkoinBalance / 1000000).toFixed(2) + 'M';
+    } else if (tkoinBalance >= 1000) {
+      formattedBalance = (tkoinBalance / 1000).toFixed(2) + 'K';
+    } else {
+      formattedBalance = tkoinBalance.toFixed(5);
+    }
+    
+    const walletCard = document.createElement('div');
+    walletCard.id = 'wallet-balance-card';
+    walletCard.className = 'balance-card mt-3';
+    walletCard.style.cssText = 'background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border: 1px solid #6c5ce7;';
+    walletCard.innerHTML = `
+      <div class="balance-label" style="color: #a29bfe;">Phantom Wallet (TKOIN)</div>
+      <div class="balance-amount" id="wallet-tkoin-balance" style="color: #fff; font-size: 1.5rem;">${formattedBalance} TKOIN</div>
+      <div class="balance-subtext" style="color: #74b9ff; font-size: 0.8rem;">${this.publicKey.slice(0, 8)}...${this.publicKey.slice(-8)}</div>
+    `;
+    
+    balanceCard.parentNode.insertBefore(walletCard, balanceCard.nextSibling);
+  }
+
+  // ==================== DEPOSIT FLOW ====================
+
+  async handleDeposit() {
+    const amountInput = document.getElementById('depositAmount');
+    const amount = parseFloat(amountInput?.value || 0);
+    const errorDiv = document.getElementById('depositError');
+    const submitBtn = document.getElementById('depositSubmit');
+    const spinner = document.getElementById('depositSpinner');
+    const submitText = document.getElementById('depositSubmitText');
+
+    if (errorDiv) {
+      errorDiv.style.display = 'none';
+      errorDiv.textContent = '';
+    }
+
+    if (!amount || amount < 1) {
+      this.showError('Please enter at least 1 CREDIT', errorDiv);
+      return;
+    }
+
+    if (!this.connected || !this.publicKey) {
+      this.showError('Please connect your Phantom wallet first', errorDiv);
+      return;
+    }
+
+    this.setLoading(submitBtn, spinner, submitText, true, 'Preparing...');
+
+    try {
+      console.log('[Tkoin] Step 1: Getting deposit instructions...');
+      const instructions = await this.getDepositInstructions(amount);
+      
+      if (!instructions) {
+        throw new Error('Failed to get deposit instructions');
+      }
+      
+      console.log('[Tkoin] Deposit instructions received:', instructions);
+      
+      const treasuryWallet = instructions.treasury_wallet || this.treasuryWallet;
+      const tkoinMint = instructions.tkoin_mint || this.tkoinMint;
+      const tkoinAmount = instructions.tkoin_amount || (amount / 100);
+      
+      this.setLoading(submitBtn, spinner, submitText, true, 'Open Phantom...');
+      console.log('[Tkoin] Step 2: Sending TKOIN via Phantom...');
+      
+      const signature = await this.sendToken2022Transfer(tkoinAmount, treasuryWallet, tkoinMint);
+      
+      if (!signature) {
+        throw new Error('Transaction was cancelled or failed');
+      }
+      
+      this.setLoading(submitBtn, spinner, submitText, true, 'Verifying...');
+      console.log('[Tkoin] Step 3: Verifying transaction...');
+      
+      const result = await this.verifyDeposit(instructions.deposit_id, signature);
+      
+      if (result.success) {
+        this.showSuccess(`Deposit successful! ${amount} CREDIT added to your account.`);
+        
+        const modal = bootstrap.Modal.getInstance(document.getElementById('depositModal'));
+        if (modal) modal.hide();
+        
+        this.refreshData();
+      } else {
+        throw new Error(result.message || 'Verification failed');
+      }
+      
+    } catch (error) {
+      console.error('[Tkoin] Deposit error:', error);
+      this.showError(error.message || 'Deposit failed. Please try again.', errorDiv);
+    } finally {
+      this.setLoading(submitBtn, spinner, submitText, false, '<i class="fa fa-paper-plane"></i> Send TKOIN');
+    }
+  }
+
+  async getDepositInstructions(creditAmount) {
+    try {
+      const response = await fetch(`${this.apiBaseUrl}/deposit`, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify({
+          amount: creditAmount,
+          wallet_address: this.publicKey,
+        }),
+      });
+      
+      const data = await response.json();
+      console.log('[Tkoin] Deposit API response:', data);
+      
+      if (data.success && data.instructions) {
+        return data.instructions;
+      } else if (data.success) {
+        return {
+          deposit_id: data.deposit_id || data.transaction_id,
+          tkoin_amount: data.tkoin_amount || (creditAmount / 100),
+          treasury_wallet: data.treasury_wallet || this.treasuryWallet,
+          tkoin_mint: data.tkoin_mint || this.tkoinMint,
+        };
+      } else {
+        throw new Error(data.message || data.error || 'Failed to initiate deposit');
+      }
+    } catch (error) {
+      console.error('[Tkoin] Get instructions error:', error);
+      throw error;
+    }
+  }
+
+  async sendToken2022Transfer(tkoinAmount, treasuryWallet, tkoinMint) {
+    if (!this.connection) {
+      this.connection = new solanaWeb3.Connection(this.rpcUrl, 'confirmed');
+    }
+    
+    const senderPubKey = new solanaWeb3.PublicKey(this.publicKey);
+    const treasuryPubKey = new solanaWeb3.PublicKey(treasuryWallet);
+    const mintPubKey = new solanaWeb3.PublicKey(tkoinMint);
+    const token2022ProgramId = new solanaWeb3.PublicKey(this.TOKEN_2022_PROGRAM_ID);
+    
+    console.log('[Tkoin] Preparing Token2022 transfer...');
+    
+    const senderAta = await this.getToken2022ATA(mintPubKey, senderPubKey);
+    const treasuryAta = await this.getToken2022ATA(mintPubKey, treasuryPubKey);
+    
+    console.log('[Tkoin] Sender ATA:', senderAta.toString());
+    console.log('[Tkoin] Treasury ATA:', treasuryAta.toString());
+    
+    const rawAmount = Math.floor(tkoinAmount * Math.pow(10, this.tokenDecimals));
+    console.log('[Tkoin] Raw amount:', rawAmount);
+    
+    const transferInstruction = this.createToken2022TransferInstruction(
+      senderAta,
+      treasuryAta,
+      senderPubKey,
+      BigInt(rawAmount),
+      token2022ProgramId
+    );
+    
+    const { blockhash, lastValidBlockHeight } = await this.connection.getLatestBlockhash('confirmed');
+    
+    const transaction = new solanaWeb3.Transaction({
+      recentBlockhash: blockhash,
+      feePayer: senderPubKey,
+    });
+    
+    transaction.add(transferInstruction);
+    
+    console.log('[Tkoin] Requesting Phantom signature...');
+    const signedTx = await this.phantom.signTransaction(transaction);
+    
+    console.log('[Tkoin] Sending transaction...');
+    const signature = await this.connection.sendRawTransaction(signedTx.serialize(), {
+      skipPreflight: false,
+      preflightCommitment: 'confirmed',
+    });
+    
+    console.log('[Tkoin] Transaction sent:', signature);
+    
+    const confirmation = await this.connection.confirmTransaction({
+      signature,
+      blockhash,
+      lastValidBlockHeight,
+    }, 'confirmed');
+    
+    if (confirmation.value.err) {
+      throw new Error('Transaction failed: ' + JSON.stringify(confirmation.value.err));
+    }
+    
+    console.log('[Tkoin] Transaction confirmed!');
+    return signature;
+  }
+
+  createToken2022TransferInstruction(source, destination, owner, amount, programId) {
+    const dataBuffer = Buffer.alloc(9);
+    dataBuffer.writeUInt8(3, 0);
+    
+    const amountBigInt = BigInt(amount);
+    for (let i = 0; i < 8; i++) {
+      dataBuffer.writeUInt8(Number((amountBigInt >> BigInt(i * 8)) & BigInt(0xff)), 1 + i);
+    }
+    
+    return new solanaWeb3.TransactionInstruction({
+      keys: [
+        { pubkey: source, isSigner: false, isWritable: true },
+        { pubkey: destination, isSigner: false, isWritable: true },
+        { pubkey: owner, isSigner: true, isWritable: false },
+      ],
+      programId: programId,
+      data: dataBuffer,
+    });
+  }
+
+  async verifyDeposit(depositId, signature) {
+    try {
+      const response = await fetch(`${this.apiBaseUrl}/verify-deposit`, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify({
+          deposit_id: depositId,
+          signature: signature,
+          wallet_address: this.publicKey,
+        }),
+      });
+      
+      return await response.json();
+    } catch (error) {
+      console.error('[Tkoin] Verify deposit error:', error);
+      return { success: false, message: error.message };
+    }
+  }
+
+  // ==================== WITHDRAW FLOW ====================
+
+  async handleWithdraw() {
+    const amountInput = document.getElementById('withdrawAmount');
+    const walletInput = document.getElementById('withdrawWallet');
+    const amount = parseFloat(amountInput?.value || 0);
+    const destinationWallet = walletInput?.value?.trim() || this.publicKey;
+    const errorDiv = document.getElementById('withdrawError');
+    
+    // DUAL IDs for withdraw button
+    const submitBtn = this.getElement('withdrawalSubmit', 'withdrawSubmit');
+    const spinner = document.getElementById('withdrawSpinner');
+    const submitText = document.getElementById('withdrawSubmitText');
+
+    if (errorDiv) {
+      errorDiv.style.display = 'none';
+      errorDiv.textContent = '';
+    }
+
+    if (!amount || amount < 100) {
+      this.showError('Minimum withdrawal is 100 CREDIT', errorDiv);
+      return;
+    }
+
+    if (!destinationWallet || destinationWallet.length < 32) {
+      this.showError('Please enter a valid Solana wallet address', errorDiv);
+      return;
+    }
+
+    this.setLoading(submitBtn, spinner, submitText, true, 'Processing...');
+
+    try {
+      const response = await fetch(`${this.apiBaseUrl}/withdraw`, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify({
+          credits_amount: amount,
+          destination_wallet: destinationWallet,
+        }),
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        this.showSuccess(`Withdrawal of ${amount} CREDIT initiated! You will receive ${data.tkoin_amount || (amount/100)} TKOIN.`);
+        
+        const modal = bootstrap.Modal.getInstance(document.getElementById('withdrawModal'));
+        if (modal) modal.hide();
+        
+        this.refreshData();
+      } else {
+        throw new Error(data.message || 'Withdrawal failed');
+      }
+      
+    } catch (error) {
+      console.error('[Tkoin] Withdraw error:', error);
+      this.showError(error.message || 'Withdrawal failed. Please try again.', errorDiv);
+    } finally {
+      this.setLoading(submitBtn, spinner, submitText, false, '<i class="fa fa-arrow-up"></i> Withdraw');
+    }
+  }
+
+  // ==================== UTILITIES ====================
+
+  setLoading(button, spinner, textEl, loading, text) {
+    if (button) button.disabled = loading;
+    if (spinner) spinner.style.display = loading ? 'inline-block' : 'none';
+    if (textEl) textEl.innerHTML = text;
+  }
+
+  showError(message, container) {
+    if (container) {
+      container.textContent = message;
+      container.style.display = 'block';
+      container.className = 'alert alert-danger';
+    } else {
+      alert(message);
+    }
+  }
+
+  showSuccess(message) {
+    if (typeof toastr !== 'undefined') {
+      toastr.success(message);
+    } else {
+      alert(message);
+    }
+  }
+
+  refreshData() {
+    console.log('[Tkoin] ========================================');
+    console.log('[Tkoin] REFRESHING ALL DATA...');
+    console.log('[Tkoin] ========================================');
+    this.fetchBalance();
+    this.fetchHistory();
+    if (this.connected) {
+      this.fetchTkoinBalance();
+    }
+  }
+}
+
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+  console.log('[Tkoin] DOM loaded, initializing TkoinWallet v6.4 (ALL BUGS FIXED)...');
+  window.tkoinWallet = new TkoinWallet();
+});
