@@ -1,0 +1,74 @@
+tkoin-wallet.js?v=1764098158:307 [Tkoin] Updated account ID to: 1
+20:15:59.968 tkoin-wallet.js?v=1764098158:316 [Tkoin] Fetching transaction history...
+20:16:00.238 tkoin-wallet.js?v=1764098158:321 [Tkoin] History API response: {
+  "transactions": [],
+  "settlements": []
+}
+20:16:00.239 tkoin-wallet.js?v=1764098158:350 [Tkoin] Found transaction container via content search
+20:16:00.239 tkoin-wallet.js?v=1764098158:361 [Tkoin] Updating transaction history with 0 transactions
+20:16:02.304 tkoin-wallet.js?v=1764098158:266 Fetch finished loading: GET "https://betwin.tkoin.finance/tkoin/balance".
+fetchBalance @ tkoin-wallet.js?v=1764098158:266
+init @ tkoin-wallet.js?v=1764098158:50
+TkoinWallet @ tkoin-wallet.js?v=1764098158:40
+(anonymous) @ tkoin-wallet.js?v=1764098158:844
+20:16:02.305 tkoin-wallet.js?v=1764098158:317 Fetch finished loading: GET "https://betwin.tkoin.finance/tkoin/history?limit=10".
+fetchHistory @ tkoin-wallet.js?v=1764098158:317
+init @ tkoin-wallet.js?v=1764098158:51
+await in init
+TkoinWallet @ tkoin-wallet.js?v=1764098158:40
+(anonymous) @ tkoin-wallet.js?v=1764098158:844
+20:16:02.823 vcd15cbe7772f49c399c6a5babf22c1241717689176015:1 XHR finished loading: POST "https://betwin.tkoin.finance/cdn-cgi/rum?".
+t.sendObjectBeacon @ vcd15cbe7772f49c399c6a5babf22c1241717689176015:1
+P @ vcd15cbe7772f49c399c6a5babf22c1241717689176015:1
+R @ vcd15cbe7772f49c399c6a5babf22c1241717689176015:1
+setTimeout
+(anonymous) @ vcd15cbe7772f49c399c6a5babf22c1241717689176015:1
+20:16:03.504 tkoin-wallet.js?v=1764098158:133 [Tkoin] Phantom connected event
+20:16:03.504 tkoin-wallet.js?v=1764098158:206 [Tkoin] Wallet connected: 953CKYH169xXxaNKVwLT9z9s38TEg1d2pQsY7d1Lv6dD
+20:16:03.505 tkoin-wallet.js?v=1764098158:70 [Tkoin] Found element: connect-wallet-btn
+20:16:03.505 tkoin-wallet.js?v=1764098158:80  [Tkoin] Element not found: disconnect-wallet-btn or disconnectWalletBtn
+getElement @ tkoin-wallet.js?v=1764098158:80
+onWalletConnected @ tkoin-wallet.js?v=1764098158:210
+(anonymous) @ tkoin-wallet.js?v=1764098158:134
+ur.emit @ solana.js:3
+#n @ solana.js:3
+await in #n
+connect @ solana.js:3
+request @ solana.js:3
+r @ solana.js:3
+Yk @ solana.js:3
+(anonymous) @ solana.js:5
+await in (anonymous)
+(anonymous) @ solana.js:5
+(anonymous) @ solana.js:5
+20:16:03.505 tkoin-wallet.js?v=1764098158:417 [Tkoin] Fetching on-chain TKOIN balance...
+20:16:03.512 tkoin-wallet.js?v=1764098158:423 [Tkoin] Token2022 ATA: GJ8ZUGBD7UAtffi8eWjfqN63nCMhPgmDuH44YNRct3R6
+20:16:03.891 tkoin-wallet.js?v=1764098158:436 [Tkoin] Raw balance: 999990000000000000
+20:16:03.891 tkoin-wallet.js?v=1764098158:437 [Tkoin] TKOIN balance: 999990000
+720:16:24.236 Fetch finished loading: POST "<URL>".
+20:16:13.788 tkoin-wallet.js?v=1764098158:70 [Tkoin] Found element: depositSubmit
+20:16:13.793 tkoin-wallet.js?v=1764098158:558 [Tkoin] Starting deposit flow for 1000 CREDIT
+20:16:14.026 tkoin-wallet.js?v=1764098158:568 [Tkoin] Deposit request response: {success: true, message: 'Send TKOIN to the treasury wallet, then verify your deposit.', instructions: {…}, treasury_wallet: '953CKYH169xXxaNKVwLT9z9s38TEg1d2pQsY7d1Lv6dD', tkoin_mint: null, …}
+20:16:14.027 tkoin-wallet.js?v=1764098158:577 [Tkoin] Deposit ID: undefined
+20:16:14.027 tkoin-wallet.js?v=1764098158:578 [Tkoin] TKOIN to send: 10
+20:16:14.031 tkoin-wallet.js?v=1764098158:626 [Tkoin] Source ATA: GJ8ZUGBD7UAtffi8eWjfqN63nCMhPgmDuH44YNRct3R6
+20:16:14.031 tkoin-wallet.js?v=1764098158:627 [Tkoin] Destination ATA: GJ8ZUGBD7UAtffi8eWjfqN63nCMhPgmDuH44YNRct3R6
+20:16:14.031 tkoin-wallet.js?v=1764098158:631 [Tkoin] Amount in smallest unit: 10000000000
+20:16:14.411 tkoin-wallet.js?v=1764098158:694 [Tkoin] TransferChecked instruction - amount: 10000000000 decimals: 9
+20:16:14.412 tkoin-wallet.js?v=1764098158:654 [Tkoin] Requesting Phantom signature...
+20:16:23.320 tkoin-wallet.js?v=1764098158:657 [Tkoin] Sending transaction...
+20:16:23.828 tkoin-wallet.js?v=1764098158:663 [Tkoin] Transaction sent: Jc3BtKxACGzs6c4qov9bAiM9WgjBhiGKUMdvCStL8HsUz3wbpoCEx6z3qnMsxmeXVHcsHot8SwEJscUuSW2nWiw
+20:16:25.277 tkoin-wallet.js?v=1764098158:675 [Tkoin] Transaction confirmed!
+20:16:25.278 tkoin-wallet.js?v=1764098158:584 [Tkoin] Transaction signature: Jc3BtKxACGzs6c4qov9bAiM9WgjBhiGKUMdvCStL8HsUz3wbpoCEx6z3qnMsxmeXVHcsHot8SwEJscUuSW2nWiw
+20:16:26.241 tkoin-wallet.js?v=1764098158:711   POST https://betwin.tkoin.finance/tkoin/verify-deposit 400 (Bad Request)
+verifyDeposit @ tkoin-wallet.js?v=1764098158:711
+handleDeposit @ tkoin-wallet.js?v=1764098158:589
+await in handleDeposit
+(anonymous) @ tkoin-wallet.js?v=1764098158:89
+20:16:26.243 tkoin-wallet.js?v=1764098158:590 [Tkoin] Verify result: {success: false, error: 'Transaction verification failed. Please try again or contact support.'}
+20:16:26.243 tkoin-wallet.js?v=1764098158:609  [Tkoin] Deposit error: Error: Verification failed
+    at TkoinWallet.handleDeposit (tkoin-wallet.js?v=1764098158:605:15)
+handleDeposit @ tkoin-wallet.js?v=1764098158:609
+await in handleDeposit
+(anonymous) @ tkoin-wallet.js?v=1764098158:89
+20:16:26.282 tkoin-wallet.js?v=1764098158:711 Fetch failed loading: POST "https://betwin.tkoin.finance/tkoin/verify-deposit".

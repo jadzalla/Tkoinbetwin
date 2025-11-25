@@ -571,10 +571,11 @@ class TkoinWallet {
         throw new Error(depositData.message || 'Failed to create deposit request');
       }
 
-      const depositId = depositData.deposit_id || depositData.id;
-      const tkoinAmount = depositData.tkoin_amount || (amount / this.CREDIT_TO_TKOIN);
+      // Extract TKOIN amount from response (suggested_amount or calculate)
+      const tkoinAmount = depositData.suggested_amount || depositData.tkoin_amount || (amount / this.CREDIT_TO_TKOIN);
+      const platformUserId = depositData.platform_user_id;
 
-      console.log('[Tkoin] Deposit ID:', depositId);
+      console.log('[Tkoin] Platform User ID:', platformUserId);
       console.log('[Tkoin] TKOIN to send:', tkoinAmount);
 
       // Step 2: Execute blockchain transaction
@@ -583,10 +584,10 @@ class TkoinWallet {
       const signature = await this.sendTkoinToTreasury(tkoinAmount);
       console.log('[Tkoin] Transaction signature:', signature);
 
-      // Step 3: Verify deposit
+      // Step 3: Verify deposit with blockchain signature
       this.setLoading(submitBtn, spinner, submitText, true, 'Verifying...');
       
-      const verifyResult = await this.verifyDeposit(depositId, signature);
+      const verifyResult = await this.verifyDeposit(signature, tkoinAmount, platformUserId);
       console.log('[Tkoin] Verify result:', verifyResult);
 
       if (verifyResult.success) {
@@ -625,6 +626,11 @@ class TkoinWallet {
     
     console.log('[Tkoin] Source ATA:', sourceATA.toString());
     console.log('[Tkoin] Destination ATA:', destATA.toString());
+    
+    // Safety check: prevent self-transfer
+    if (sourceATA.toString() === destATA.toString()) {
+      throw new Error('Cannot deposit: Your wallet is the treasury wallet. Please use a different wallet.');
+    }
     
     // Calculate amount with decimals
     const amountInSmallestUnit = Math.floor(tkoinAmount * Math.pow(10, this.tokenDecimals));
@@ -706,14 +712,15 @@ class TkoinWallet {
     });
   }
 
-  async verifyDeposit(depositId, signature) {
+  async verifyDeposit(signature, amount, platformUserId) {
     try {
       const response = await fetch(`${this.apiBaseUrl}/verify-deposit`, {
         method: 'POST',
         headers: this.getHeaders(),
         body: JSON.stringify({
-          deposit_id: depositId,
           signature: signature,
+          amount: amount,
+          platformUserId: platformUserId,
           wallet_address: this.publicKey,
         }),
       });
