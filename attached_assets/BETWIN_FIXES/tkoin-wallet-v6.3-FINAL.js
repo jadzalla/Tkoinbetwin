@@ -1,9 +1,10 @@
 /**
  * Tkoin Wallet Integration for BetWin Casino
- * VERSION v6.2 - DUAL COMPATIBLE (works with both ID formats)
+ * VERSION v6.3 - CORRECT MINT ADDRESS + DUAL COMPATIBLE
  * 
  * FIXES:
  * ✅ Token2022 program ID (not standard SPL)
+ * ✅ CORRECT MINT ADDRESS: 9XPD1ZcAtNZgc1pGYYL3Z4W3mNqHKmqKDsUtsKKzAJE5
  * ✅ Supports BOTH element ID formats (camelCase AND hyphenated)
  * ✅ Prevents Phantom auto-connect (requires explicit click)
  * ✅ Enhanced logging for debugging
@@ -21,12 +22,12 @@ class TkoinWallet {
     // DEVNET (for testing)
     this.rpcUrl = 'https://api.devnet.solana.com';
     this.treasuryWallet = '953CKYH169xXxaNKVwLT9z9s38TEg1d2pQsY7d1Lv6dD';
-    this.tkoinMint = '953CKYH169xXxaNKVwLT9z9s38TEg1d2pQsY7d1Lv6dD';
+    this.tkoinMint = '9XPD1ZcAtNZgc1pGYYL3Z4W3mNqHKmqKDsUtsKKzAJE5';  // CORRECT DEVNET MINT!
     
     // MAINNET (uncomment for production)
     // this.rpcUrl = 'https://api.mainnet-beta.solana.com';
     // this.treasuryWallet = '953CKYH169xXxaNKVwLT9z9s38TEg1d2pQsY7d1Lv6dD';
-    // this.tkoinMint = 'BVUrPwnZTRwnZgw1JmM43mZf8K7WVoDejgJ2X11Evs6i';
+    // this.tkoinMint = 'YOUR_MAINNET_MINT_ADDRESS_HERE';
     
     // ============ TOKEN2022 PROGRAM IDs ============
     this.TOKEN_2022_PROGRAM_ID = 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb';
@@ -60,7 +61,7 @@ class TkoinWallet {
 
   init() {
     console.log('[Tkoin] ========================================');
-    console.log('[Tkoin] Initializing wallet manager v6.2 (DUAL COMPATIBLE)');
+    console.log('[Tkoin] Initializing wallet manager v6.3 (CORRECT MINT)');
     console.log('[Tkoin] Network:', this.rpcUrl.includes('devnet') ? 'DEVNET' : 'MAINNET');
     console.log('[Tkoin] Treasury:', this.treasuryWallet);
     console.log('[Tkoin] Mint:', this.tkoinMint);
@@ -880,6 +881,6 @@ class TkoinWallet {
 
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('[Tkoin] DOM loaded, initializing TkoinWallet v6.2 (DUAL COMPATIBLE)...');
+  console.log('[Tkoin] DOM loaded, initializing TkoinWallet v6.3 (CORRECT MINT)...');
   window.tkoinWallet = new TkoinWallet();
 });
