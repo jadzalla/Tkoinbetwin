@@ -1,0 +1,594 @@
+tkoin-wallet.js?v=1764086473:333 [Tkoin] Creating disconnect button dynamically...
+17:01:15.189 tkoin-wallet.js?v=1764086473:350 [Tkoin] ✓ Disconnect button created and listener attached
+17:01:15.190 tkoin-wallet.js?v=1764086473:372 [Tkoin] Updating UI to DISCONNECTED state
+17:01:15.190 tkoin-wallet.js?v=1764086473:119 [Tkoin] Initialization complete
+17:01:15.206 inpage.js:1  StreamMiddleware - Unknown response id "105890812"
+(anonymous) @ inpage.js:1
+write @ inpage.js:1
+j @ inpage.js:1
+(anonymous) @ inpage.js:1
+R.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+j @ inpage.js:1
+R.push @ inpage.js:1
+_write @ inpage.js:1
+j @ inpage.js:1
+(anonymous) @ inpage.js:1
+R.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+j @ inpage.js:1
+R.push @ inpage.js:1
+_onData @ inpage.js:1
+_onMessage @ inpage.js:1
+postMessage
+_postMessage @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+d @ contentscript.js:1
+a.emit @ contentscript.js:10
+I @ contentscript.js:1
+x @ contentscript.js:1
+R.push @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+d @ contentscript.js:1
+a.emit @ contentscript.js:10
+I @ contentscript.js:1
+x @ contentscript.js:1
+R.push @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+f @ contentscript.js:12
+a.emit @ contentscript.js:10
+J @ contentscript.js:12
+K @ contentscript.js:12
+q.push @ contentscript.js:12
+(anonymous) @ contentscript.js:10
+17:01:15.210 inpage.js:1  StreamMiddleware - Unknown response id "105890812"
+(anonymous) @ inpage.js:1
+write @ inpage.js:1
+R @ inpage.js:1
+(anonymous) @ inpage.js:1
+j.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+R @ inpage.js:1
+j.push @ inpage.js:1
+_write @ inpage.js:1
+R @ inpage.js:1
+(anonymous) @ inpage.js:1
+j.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+R @ inpage.js:1
+j.push @ inpage.js:1
+_onData @ inpage.js:1
+_onMessage @ inpage.js:1
+postMessage
+_postMessage @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+d @ contentscript.js:1
+a.emit @ contentscript.js:10
+I @ contentscript.js:1
+x @ contentscript.js:1
+R.push @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+d @ contentscript.js:1
+a.emit @ contentscript.js:10
+I @ contentscript.js:1
+x @ contentscript.js:1
+R.push @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+f @ contentscript.js:12
+a.emit @ contentscript.js:10
+J @ contentscript.js:12
+K @ contentscript.js:12
+q.push @ contentscript.js:12
+(anonymous) @ contentscript.js:10
+17:01:15.212 inpage.js:1  StreamMiddleware - Unknown response id "105890812"
+(anonymous) @ inpage.js:1
+write @ inpage.js:1
+j @ inpage.js:1
+(anonymous) @ inpage.js:1
+R.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+j @ inpage.js:1
+R.push @ inpage.js:1
+_write @ inpage.js:1
+j @ inpage.js:1
+(anonymous) @ inpage.js:1
+R.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+j @ inpage.js:1
+R.push @ inpage.js:1
+_onData @ inpage.js:1
+_onMessage @ inpage.js:1
+postMessage
+_postMessage @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+d @ contentscript.js:1
+a.emit @ contentscript.js:10
+I @ contentscript.js:1
+x @ contentscript.js:1
+R.push @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+d @ contentscript.js:1
+a.emit @ contentscript.js:10
+I @ contentscript.js:1
+x @ contentscript.js:1
+R.push @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+f @ contentscript.js:12
+a.emit @ contentscript.js:10
+J @ contentscript.js:12
+K @ contentscript.js:12
+q.push @ contentscript.js:12
+(anonymous) @ contentscript.js:10
+17:01:15.216 inpage.js:1  StreamMiddleware - Unknown response id "4142999805"
+(anonymous) @ inpage.js:1
+write @ inpage.js:1
+R @ inpage.js:1
+(anonymous) @ inpage.js:1
+j.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+R @ inpage.js:1
+j.push @ inpage.js:1
+_write @ inpage.js:1
+R @ inpage.js:1
+(anonymous) @ inpage.js:1
+j.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+R @ inpage.js:1
+j.push @ inpage.js:1
+_onData @ inpage.js:1
+_onMessage @ inpage.js:1
+postMessage
+_postMessage @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+d @ contentscript.js:1
+a.emit @ contentscript.js:10
+I @ contentscript.js:1
+x @ contentscript.js:1
+R.push @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+d @ contentscript.js:1
+a.emit @ contentscript.js:10
+I @ contentscript.js:1
+x @ contentscript.js:1
+R.push @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+f @ contentscript.js:12
+a.emit @ contentscript.js:10
+J @ contentscript.js:12
+K @ contentscript.js:12
+q.push @ contentscript.js:12
+(anonymous) @ contentscript.js:10
+17:01:15.218 inpage.js:1  StreamMiddleware - Unknown response id "4142999805"
+(anonymous) @ inpage.js:1
+write @ inpage.js:1
+R @ inpage.js:1
+(anonymous) @ inpage.js:1
+j.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+R @ inpage.js:1
+j.push @ inpage.js:1
+_write @ inpage.js:1
+R @ inpage.js:1
+(anonymous) @ inpage.js:1
+j.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+R @ inpage.js:1
+j.push @ inpage.js:1
+_onData @ inpage.js:1
+_onMessage @ inpage.js:1
+postMessage
+_postMessage @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+d @ contentscript.js:1
+a.emit @ contentscript.js:10
+I @ contentscript.js:1
+x @ contentscript.js:1
+R.push @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+d @ contentscript.js:1
+a.emit @ contentscript.js:10
+I @ contentscript.js:1
+x @ contentscript.js:1
+R.push @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+f @ contentscript.js:12
+a.emit @ contentscript.js:10
+J @ contentscript.js:12
+K @ contentscript.js:12
+q.push @ contentscript.js:12
+(anonymous) @ contentscript.js:10
+17:01:15.220 inpage.js:1  StreamMiddleware - Unknown response id "4142999805"
+(anonymous) @ inpage.js:1
+write @ inpage.js:1
+j @ inpage.js:1
+(anonymous) @ inpage.js:1
+R.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+j @ inpage.js:1
+R.push @ inpage.js:1
+_write @ inpage.js:1
+j @ inpage.js:1
+(anonymous) @ inpage.js:1
+R.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+j @ inpage.js:1
+R.push @ inpage.js:1
+_onData @ inpage.js:1
+_onMessage @ inpage.js:1
+postMessage
+_postMessage @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+d @ contentscript.js:1
+a.emit @ contentscript.js:10
+I @ contentscript.js:1
+x @ contentscript.js:1
+R.push @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+d @ contentscript.js:1
+a.emit @ contentscript.js:10
+I @ contentscript.js:1
+x @ contentscript.js:1
+R.push @ contentscript.js:1
+_write @ contentscript.js:1
+x @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+R.write @ contentscript.js:1
+f @ contentscript.js:12
+a.emit @ contentscript.js:10
+J @ contentscript.js:12
+K @ contentscript.js:12
+q.push @ contentscript.js:12
+(anonymous) @ contentscript.js:10
+17:01:15.433 tkoin-wallet.js?v=1764086473:402 [Tkoin] Balance API response: {
+  "balance": 1461.73,
+  "currency": "CREDIT",
+  "account_id": 1,
+  "tkoin_equivalent": 14.6173
+}
+17:01:15.433 tkoin-wallet.js?v=1764086473:415 [Tkoin] Updating balance display with: 1461.73
+17:01:15.433 tkoin-wallet.js?v=1764086473:51 [Tkoin] Found element: balance-amount
+17:01:15.434 tkoin-wallet.js?v=1764086473:422 [Tkoin] ✓ Updated credit balance to: 1461.73
+17:01:15.434 tkoin-wallet.js?v=1764086473:51 [Tkoin] Found element: balance-account
+17:01:15.434 tkoin-wallet.js?v=1764086473:438 [Tkoin] Keeping server-rendered Account ID: Account ID: ---
+17:01:15.440 tkoin-wallet.js?v=1764086473:450 [Tkoin] History API response: {
+  "transactions": [
+    {
+      "id": 3,
+      "type": "deposit",
+      "amount": 100,
+      "status": "processing",
+      "solana_signature": null,
+      "created_at": "2025-11-21T17:21:48+00:00",
+      "completed_at": null
+    },
+    {
+      "id": 2,
+      "type": "withdrawal",
+      "amount": 5,
+      "status": "processing",
+      "solana_signature": null,
+      "created_at": "2025-11-21T15:50:54+00:00",
+      "completed_at": null
+    },
+    {
+      "id": 1,
+      "type": "deposit",
+      "amount": 10.5,
+      "status": "processing",
+      "solana_signature": null,
+      "created_at": "2025-11-21T15:50:43+00:00",
+      "completed_at": null
+    }
+  ],
+  "settlements": [
+    {
+      "id": 3,
+      "type": "deposit",
+      "amount": 100,
+      "status": "processing",
+      "solana_signature": null,
+      "created_at": "2025-11-21T17:21:48+00:00",
+      "completed_at": null
+    },
+    {
+      "id": 2,
+      "type": "withdrawal",
+      "amount": 5,
+      "status": "processing",
+      "solana_signature": null,
+      "created_at": "2025-11-21T15:50:54+00:00",
+      "completed_at": null
+    },
+    {
+      "id": 1,
+      "type": "deposit",
+      "amount": 10.5,
+      "status": "processing",
+      "solana_signature": null,
+      "created_at": "2025-11-21T15:50:43+00:00",
+      "completed_at": null
+    }
+  ]
+}
+17:01:15.441 tkoin-wallet.js?v=1764086473:463  [Tkoin] transactionHistory element not found - trying alternative IDs...
+updateHistoryDisplay @ tkoin-wallet.js?v=1764086473:463
+fetchHistory @ tkoin-wallet.js?v=1764086473:453
+await in fetchHistory
+init @ tkoin-wallet.js?v=1764086473:111
+TkoinWallet @ tkoin-wallet.js?v=1764086473:43
+(anonymous) @ tkoin-wallet.js?v=1764086473:953
+17:01:15.671 tkoin-wallet.js?v=1764086473:398 Fetch finished loading: GET "https://betwin.tkoin.finance/tkoin/balance".
+fetchBalance @ tkoin-wallet.js?v=1764086473:398
+init @ tkoin-wallet.js?v=1764086473:110
+TkoinWallet @ tkoin-wallet.js?v=1764086473:43
+(anonymous) @ tkoin-wallet.js?v=1764086473:953
+17:01:15.673 tkoin-wallet.js?v=1764086473:446 Fetch finished loading: GET "https://betwin.tkoin.finance/tkoin/history?limit=10".
+fetchHistory @ tkoin-wallet.js?v=1764086473:446
+init @ tkoin-wallet.js?v=1764086473:111
+TkoinWallet @ tkoin-wallet.js?v=1764086473:43
+(anonymous) @ tkoin-wallet.js?v=1764086473:953
+17:01:15.793 favicon.ico:1   GET https://betwin.tkoin.finance/favicon.ico 404 (Not Found)
+17:01:16.044 vcd15cbe7772f49c399c6a5babf22c1241717689176015:1 XHR finished loading: POST "https://betwin.tkoin.finance/cdn-cgi/rum?".
+t.sendObjectBeacon @ vcd15cbe7772f49c399c6a5babf22c1241717689176015:1
+P @ vcd15cbe7772f49c399c6a5babf22c1241717689176015:1
+R @ vcd15cbe7772f49c399c6a5babf22c1241717689176015:1
+setTimeout
+(anonymous) @ vcd15cbe7772f49c399c6a5babf22c1241717689176015:1
+17:01:18.827 tkoin-wallet.js?v=1764086473:166 [Tkoin] Connect button clicked!
+17:01:18.828 tkoin-wallet.js?v=1764086473:236 [Tkoin] User clicked Connect - requesting wallet popup...
+17:01:18.828 tkoin-wallet.js?v=1764086473:245 [Tkoin] Disconnecting existing session to force popup...
+17:01:18.840 tkoin-wallet.js?v=1764086473:308 [Tkoin] Wallet disconnected
+17:01:18.840 tkoin-wallet.js?v=1764086473:51 [Tkoin] Found element: connect-wallet-btn
+17:01:18.841 tkoin-wallet.js?v=1764086473:57 [Tkoin] Found element via fallback: disconnectWalletBtn
+17:01:18.841 tkoin-wallet.js?v=1764086473:372 [Tkoin] Updating UI to DISCONNECTED state
+17:01:18.841 tkoin-wallet.js?v=1764086473:250 [Tkoin] Calling phantom.connect() - popup should appear now...
+17:01:18.918 tkoin-wallet.js?v=1764086473:253 [Tkoin] ✓ Wallet connected with user approval: 953CKYH169xXxaNKVwLT9z9s38TEg1d2pQsY7d1Lv6dD
+17:01:18.918 tkoin-wallet.js?v=1764086473:286 [Tkoin] ========================================
+17:01:18.919 tkoin-wallet.js?v=1764086473:287 [Tkoin] WALLET CONNECTED: 953CKYH169xXxaNKVwLT9z9s38TEg1d2pQsY7d1Lv6dD
+17:01:18.919 tkoin-wallet.js?v=1764086473:288 [Tkoin] ========================================
+17:01:18.919 tkoin-wallet.js?v=1764086473:51 [Tkoin] Found element: connect-wallet-btn
+17:01:18.919 tkoin-wallet.js?v=1764086473:57 [Tkoin] Found element via fallback: disconnectWalletBtn
+17:01:18.919 tkoin-wallet.js?v=1764086473:355 [Tkoin] Updating UI to CONNECTED state
+17:01:18.920 tkoin-wallet.js?v=1764086473:360 [Tkoin] ✓ Disconnect button is now VISIBLE
+17:01:18.920 tkoin-wallet.js?v=1764086473:529 [Tkoin] Fetching TKOIN Token2022 balance...
+17:01:18.920 tkoin-wallet.js?v=1764086473:530 [Tkoin] Wallet: 953CKYH169xXxaNKVwLT9z9s38TEg1d2pQsY7d1Lv6dD
+17:01:18.920 tkoin-wallet.js?v=1764086473:531 [Tkoin] Mint: 9XPD1ZcAtNZgc1pGYYL3Z4W3mNqHKmqKDsUtsKKzAJE5
+17:01:18.927 tkoin-wallet.js?v=1764086473:538 [Tkoin] Token2022 ATA: GJ8ZUGBD7UAtffi8eWjfqN63nCMhPgmDuH44YNRct3R6
+17:01:20.610 connection.ts:1674 Fetch finished loading: POST "https://api.devnet.solana.com/".
+(anonymous) @ connection.ts:1674
+ClientBrowser.request @ index.js:102
+(anonymous) @ connection.ts:1711
+(anonymous) @ connection.ts:1710
+getAccountInfoAndContext @ connection.ts:3569
+getAccountInfo @ connection.ts:3622
+fetchTkoinBalance @ tkoin-wallet.js?v=1764086473:541
+await in fetchTkoinBalance
+handleWalletConnected @ tkoin-wallet.js?v=1764086473:294
+connectWallet @ tkoin-wallet.js?v=1764086473:255
+await in connectWallet
+(anonymous) @ tkoin-wallet.js?v=1764086473:167
+17:01:20.615 tkoin-wallet.js?v=1764086473:553 [Tkoin] Raw balance: 999990000000000000
+17:01:20.615 tkoin-wallet.js?v=1764086473:554 [Tkoin] TKOIN balance: 999990000
+17:01:24.731 tkoin-wallet.js?v=1764086473:347 [Tkoin] Disconnect button clicked!
+17:01:24.739 tkoin-wallet.js?v=1764086473:308 [Tkoin] Wallet disconnected
+17:01:24.739 tkoin-wallet.js?v=1764086473:51 [Tkoin] Found element: connect-wallet-btn
+17:01:24.740 tkoin-wallet.js?v=1764086473:57 [Tkoin] Found element via fallback: disconnectWalletBtn
+17:01:24.740 tkoin-wallet.js?v=1764086473:372 [Tkoin] Updating UI to DISCONNECTED state
+17:01:24.740 tkoin-wallet.js?v=1764086473:308 [Tkoin] Wallet disconnected
+17:01:24.741 tkoin-wallet.js?v=1764086473:51 [Tkoin] Found element: connect-wallet-btn
+17:01:24.741 tkoin-wallet.js?v=1764086473:57 [Tkoin] Found element via fallback: disconnectWalletBtn
+17:01:24.741 tkoin-wallet.js?v=1764086473:372 [Tkoin] Updating UI to DISCONNECTED state
+17:01:24.741 tkoin-wallet.js?v=1764086473:275 [Tkoin] Wallet disconnected
+17:01:27.859 tkoin-wallet.js?v=1764086473:166 [Tkoin] Connect button clicked!
+17:01:27.860 tkoin-wallet.js?v=1764086473:236 [Tkoin] User clicked Connect - requesting wallet popup...
+17:01:27.862 tkoin-wallet.js?v=1764086473:250 [Tkoin] Calling phantom.connect() - popup should appear now...
+17:01:27.900 tkoin-wallet.js?v=1764086473:253 [Tkoin] ✓ Wallet connected with user approval: 953CKYH169xXxaNKVwLT9z9s38TEg1d2pQsY7d1Lv6dD
+17:01:27.900 tkoin-wallet.js?v=1764086473:286 [Tkoin] ========================================
+17:01:27.900 tkoin-wallet.js?v=1764086473:287 [Tkoin] WALLET CONNECTED: 953CKYH169xXxaNKVwLT9z9s38TEg1d2pQsY7d1Lv6dD
+17:01:27.900 tkoin-wallet.js?v=1764086473:288 [Tkoin] ========================================
+17:01:27.901 tkoin-wallet.js?v=1764086473:51 [Tkoin] Found element: connect-wallet-btn
+17:01:27.901 tkoin-wallet.js?v=1764086473:57 [Tkoin] Found element via fallback: disconnectWalletBtn
+17:01:27.901 tkoin-wallet.js?v=1764086473:355 [Tkoin] Updating UI to CONNECTED state
+17:01:27.901 tkoin-wallet.js?v=1764086473:360 [Tkoin] ✓ Disconnect button is now VISIBLE
+17:01:27.901 tkoin-wallet.js?v=1764086473:529 [Tkoin] Fetching TKOIN Token2022 balance...
+17:01:27.902 tkoin-wallet.js?v=1764086473:530 [Tkoin] Wallet: 953CKYH169xXxaNKVwLT9z9s38TEg1d2pQsY7d1Lv6dD
+17:01:27.902 tkoin-wallet.js?v=1764086473:531 [Tkoin] Mint: 9XPD1ZcAtNZgc1pGYYL3Z4W3mNqHKmqKDsUtsKKzAJE5
+17:01:27.905 tkoin-wallet.js?v=1764086473:538 [Tkoin] Token2022 ATA: GJ8ZUGBD7UAtffi8eWjfqN63nCMhPgmDuH44YNRct3R6
+17:01:28.398 connection.ts:1674 Fetch finished loading: POST "https://api.devnet.solana.com/".
+(anonymous) @ connection.ts:1674
+ClientBrowser.request @ index.js:102
+(anonymous) @ connection.ts:1711
+(anonymous) @ connection.ts:1710
+getAccountInfoAndContext @ connection.ts:3569
+getAccountInfo @ connection.ts:3622
+fetchTkoinBalance @ tkoin-wallet.js?v=1764086473:541
+await in fetchTkoinBalance
+handleWalletConnected @ tkoin-wallet.js?v=1764086473:294
+connectWallet @ tkoin-wallet.js?v=1764086473:255
+await in connectWallet
+(anonymous) @ tkoin-wallet.js?v=1764086473:167
+17:01:28.401 tkoin-wallet.js?v=1764086473:553 [Tkoin] Raw balance: 999990000000000000
+17:01:28.402 tkoin-wallet.js?v=1764086473:554 [Tkoin] TKOIN balance: 999990000
+17:02:03.450 tkoin-wallet.js?v=1764086473:207 [Tkoin] Refresh button clicked!
+17:02:03.452 tkoin-wallet.js?v=1764086473:939 [Tkoin] ========================================
+17:02:03.453 tkoin-wallet.js?v=1764086473:940 [Tkoin] REFRESHING ALL DATA...
+17:02:03.453 tkoin-wallet.js?v=1764086473:941 [Tkoin] ========================================
+17:02:03.454 tkoin-wallet.js?v=1764086473:397 [Tkoin] Fetching balance from API...
+17:02:03.458 tkoin-wallet.js?v=1764086473:445 [Tkoin] Fetching transaction history...
+17:02:03.465 tkoin-wallet.js?v=1764086473:529 [Tkoin] Fetching TKOIN Token2022 balance...
+17:02:03.468 tkoin-wallet.js?v=1764086473:530 [Tkoin] Wallet: 953CKYH169xXxaNKVwLT9z9s38TEg1d2pQsY7d1Lv6dD
+17:02:03.470 tkoin-wallet.js?v=1764086473:531 [Tkoin] Mint: 9XPD1ZcAtNZgc1pGYYL3Z4W3mNqHKmqKDsUtsKKzAJE5
+17:02:03.491 tkoin-wallet.js?v=1764086473:538 [Tkoin] Token2022 ATA: GJ8ZUGBD7UAtffi8eWjfqN63nCMhPgmDuH44YNRct3R6
+17:02:03.753 tkoin-wallet.js?v=1764086473:402 [Tkoin] Balance API response: {
+  "balance": 1461.73,
+  "currency": "CREDIT",
+  "account_id": 1,
+  "tkoin_equivalent": 14.6173
+}
+17:02:03.753 tkoin-wallet.js?v=1764086473:415 [Tkoin] Updating balance display with: 1461.73
+17:02:03.754 tkoin-wallet.js?v=1764086473:51 [Tkoin] Found element: balance-amount
+17:02:03.754 tkoin-wallet.js?v=1764086473:422 [Tkoin] ✓ Updated credit balance to: 1461.73
+17:02:03.754 tkoin-wallet.js?v=1764086473:51 [Tkoin] Found element: balance-account
+17:02:03.754 tkoin-wallet.js?v=1764086473:438 [Tkoin] Keeping server-rendered Account ID: Account ID: ---
+17:02:03.763 tkoin-wallet.js?v=1764086473:450 [Tkoin] History API response: {
+  "transactions": [
+    {
+      "id": 3,
+      "type": "deposit",
+      "amount": 100,
+      "status": "processing",
+      "solana_signature": null,
+      "created_at": "2025-11-21T17:21:48+00:00",
+      "completed_at": null
+    },
+    {
+      "id": 2,
+      "type": "withdrawal",
+      "amount": 5,
+      "status": "processing",
+      "solana_signature": null,
+      "created_at": "2025-11-21T15:50:54+00:00",
+      "completed_at": null
+    },
+    {
+      "id": 1,
+      "type": "deposit",
+      "amount": 10.5,
+      "status": "processing",
+      "solana_signature": null,
+      "created_at": "2025-11-21T15:50:43+00:00",
+      "completed_at": null
+    }
+  ],
+  "settlements": [
+    {
+      "id": 3,
+      "type": "deposit",
+      "amount": 100,
+      "status": "processing",
+      "solana_signature": null,
+      "created_at": "2025-11-21T17:21:48+00:00",
+      "completed_at": null
+    },
+    {
+      "id": 2,
+      "type": "withdrawal",
+      "amount": 5,
+      "status": "processing",
+      "solana_signature": null,
+      "created_at": "2025-11-21T15:50:54+00:00",
+      "completed_at": null
+    },
+    {
+      "id": 1,
+      "type": "deposit",
+      "amount": 10.5,
+      "status": "processing",
+      "solana_signature": null,
+      "created_at": "2025-11-21T15:50:43+00:00",
+      "completed_at": null
+    }
+  ]
+}
+17:02:03.764 tkoin-wallet.js?v=1764086473:463  [Tkoin] transactionHistory element not found - trying alternative IDs...
+updateHistoryDisplay @ tkoin-wallet.js?v=1764086473:463
+fetchHistory @ tkoin-wallet.js?v=1764086473:453
+await in fetchHistory
+refreshData @ tkoin-wallet.js?v=1764086473:943
+(anonymous) @ tkoin-wallet.js?v=1764086473:208
+17:02:03.791 tkoin-wallet.js?v=1764086473:398 Fetch finished loading: GET "https://betwin.tkoin.finance/tkoin/balance".
+fetchBalance @ tkoin-wallet.js?v=1764086473:398
+refreshData @ tkoin-wallet.js?v=1764086473:942
+(anonymous) @ tkoin-wallet.js?v=1764086473:208
+17:02:03.792 tkoin-wallet.js?v=1764086473:446 Fetch finished loading: GET "https://betwin.tkoin.finance/tkoin/history?limit=10".
+fetchHistory @ tkoin-wallet.js?v=1764086473:446
+refreshData @ tkoin-wallet.js?v=1764086473:943
+(anonymous) @ tkoin-wallet.js?v=1764086473:208
+17:02:04.323 connection.ts:1674 Fetch finished loading: POST "https://api.devnet.solana.com/".
+(anonymous) @ connection.ts:1674
+ClientBrowser.request @ index.js:102
+(anonymous) @ connection.ts:1711
+(anonymous) @ connection.ts:1710
+getAccountInfoAndContext @ connection.ts:3569
+getAccountInfo @ connection.ts:3622
+fetchTkoinBalance @ tkoin-wallet.js?v=1764086473:541
+await in fetchTkoinBalance
+refreshData @ tkoin-wallet.js?v=1764086473:945
+(anonymous) @ tkoin-wallet.js?v=1764086473:208
+17:02:04.326 tkoin-wallet.js?v=1764086473:553 [Tkoin] Raw balance: 999990000000000000
+17:02:04.327 tkoin-wallet.js?v=1764086473:554 [Tkoin] TKOIN balance: 999990000
