@@ -814,7 +814,13 @@ class TkoinWallet {
       console.log('[Tkoin] Withdrawal response:', data);
 
       if (data.success) {
-        this.showSuccess('Withdrawal request submitted! TKOIN will be sent shortly.');
+        const tkoinAmount = data.tkoin_amount || (amount / 100);
+        let successMsg = `Withdrawal successful! ${tkoinAmount} TKOIN sent to your wallet.`;
+        if (data.signature) {
+          console.log('[Tkoin] Withdrawal signature:', data.signature);
+          successMsg += ` Tx: ${data.signature.substring(0, 8)}...`;
+        }
+        this.showSuccess(successMsg);
         
         const modal = bootstrap.Modal.getInstance(document.getElementById('withdrawModal'));
         if (modal) modal.hide();
@@ -824,7 +830,7 @@ class TkoinWallet {
         await this.fetchBalance();
         await this.fetchHistory();
       } else {
-        throw new Error(data.message || 'Withdrawal failed');
+        throw new Error(data.error || data.message || 'Withdrawal failed');
       }
 
     } catch (error) {

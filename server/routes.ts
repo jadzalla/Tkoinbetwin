@@ -1590,6 +1590,243 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  /**
+   * Process withdrawal - Send TKOIN from treasury to user's wallet
+   * Called by BetWin to process user withdrawal requests
+   */
+  app.post('/api/process-withdrawal', async (req, res) => {
+    try {
+      const { credits_amount, destination_wallet, platformUserId } = req.body;
+      
+      // Validate inputs
+      if (!credits_amount || credits_amount < 1) {
+        return res.status(400).json({ 
+          success: false,
+          error: 'Invalid withdrawal amount. Minimum is 1 CREDIT.' 
+        });
+      }
+      
+      if (!destination_wallet) {
+        return res.status(400).json({ 
+          success: false,
+          error: 'Destination wallet address is required' 
+        });
+      }
+      
+      // Import Solana utilities
+      const { solanaCore } = await import('./solana/solana-core');
+      const { PublicKey, Transaction, ComputeBudgetProgram } = await import('@solana/web3.js');
+      const { 
+        getAssociatedTokenAddress, 
+        TOKEN_2022_PROGRAM_ID,
+        createTransferCheckedInstruction,
+        getAccount,
+        createAssociatedTokenAccountIdempotentInstruction,
+      } = await import('@solana/spl-token');
+      
+      // Check if Solana services are configured
+      if (!solanaCore.isReady()) {
+        return res.status(503).json({
+          success: false,
+          error: 'Blockchain services not configured'
+        });
+      }
+      
+      const connection = solanaCore.getConnection();
+      const TREASURY_WALLET = process.env.SOLANA_TREASURY_WALLET;
+      const TKOIN_MINT = process.env.TKOIN_MINT_ADDRESS;
+      
+      if (!TREASURY_WALLET || !TKOIN_MINT) {
+        return res.status(503).json({
+          success: false,
+          error: 'Treasury configuration missing'
+        });
+      }
+      
+      // Get treasury keypair for signing
+      let treasuryKeypair;
+      try {
+        treasuryKeypair = solanaCore.getTreasuryKeypair();
+      } catch (error) {
+        console.error('Treasury keypair not available:', error);
+        return res.status(503).json({
+          success: false,
+          error: 'Treasury signing not available'
+        });
+      }
+      
+      // Validate destination wallet address
+      let destPubkey: InstanceType<typeof PublicKey>;
+      try {
+        destPubkey = new PublicKey(destination_wallet);
+      } catch (error) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid Solana wallet address'
+        });
+      }
+      
+      const mintPubkey = new PublicKey(TKOIN_MINT);
+      const treasuryPubkey = new PublicKey(TREASURY_WALLET);
+      
+      // Calculate TKOIN amount (100 CREDIT = 1 TKOIN)
+      const tkoinAmount = credits_amount / 100;
+      const amountInSmallestUnit = BigInt(Math.floor(tkoinAmount * 1_000_000_000)); // 9 decimals
+      
+      console.log(`[Withdrawal] Processing ${credits_amount} CREDIT (${tkoinAmount} TKOIN) to ${destination_wallet}`);
+      
+      // Get token accounts
+      const treasuryTokenAccount = await getAssociatedTokenAddress(
+        mintPubkey,
+        treasuryPubkey,
+        false,
+        TOKEN_2022_PROGRAM_ID
+      );
+      
+      const destTokenAccount = await getAssociatedTokenAddress(
+        mintPubkey,
+        destPubkey,
+        false,
+        TOKEN_2022_PROGRAM_ID
+      );
+      
+      // Check treasury balance
+      try {
+        const treasuryAccount = await getAccount(
+          connection,
+          treasuryTokenAccount,
+          'confirmed',
+          TOKEN_2022_PROGRAM_ID
+        );
+        
+        if (treasuryAccount.amount < amountInSmallestUnit) {
+          return res.status(400).json({
+            success: false,
+            error: 'Insufficient treasury balance for withdrawal'
+          });
+        }
+      } catch (error) {
+        console.error('Error checking treasury balance:', error);
+        return res.status(503).json({
+          success: false,
+          error: 'Could not verify treasury balance'
+        });
+      }
+      
+      // Build transaction
+      const transaction = new Transaction();
+      
+      // Add compute budget for Token2022
+      transaction.add(
+        ComputeBudgetProgram.setComputeUnitLimit({ units: 300000 })
+      );
+      
+      // Create destination token account if it doesn't exist
+      let destAccountExists = false;
+      try {
+        await getAccount(connection, destTokenAccount, 'confirmed', TOKEN_2022_PROGRAM_ID);
+        destAccountExists = true;
+      } catch {
+        // Account doesn't exist, will create it
+      }
+      
+      if (!destAccountExists) {
+        transaction.add(
+          createAssociatedTokenAccountIdempotentInstruction(
+            treasuryPubkey,
+            destTokenAccount,
+            destPubkey,
+            mintPubkey,
+            TOKEN_2022_PROGRAM_ID
+          )
+        );
+      }
+      
+      // Add transfer instruction
+      transaction.add(
+        createTransferCheckedInstruction(
+          treasuryTokenAccount,
+          mintPubkey,
+          destTokenAccount,
+          treasuryPubkey,
+          amountInSmallestUnit,
+          9, // TKOIN decimals
+          [],
+          TOKEN_2022_PROGRAM_ID
+        )
+      );
+      
+      // Get recent blockhash
+      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
+      transaction.recentBlockhash = blockhash;
+      transaction.feePayer = treasuryPubkey;
+      
+      // Sign and send transaction
+      transaction.sign(treasuryKeypair);
+      
+      const signature = await connection.sendRawTransaction(transaction.serialize(), {
+        skipPreflight: false,
+        preflightCommitment: 'confirmed',
+      });
+      
+      console.log(`[Withdrawal] Transaction sent: ${signature}`);
+      
+      // Wait for confirmation
+      const confirmation = await connection.confirmTransaction({
+        signature,
+        blockhash,
+        lastValidBlockHeight,
+      }, 'confirmed');
+      
+      if (confirmation.value.err) {
+        console.error('[Withdrawal] Transaction failed:', confirmation.value.err);
+        return res.status(500).json({
+          success: false,
+          error: 'Transaction failed on blockchain',
+          details: confirmation.value.err
+        });
+      }
+      
+      console.log(`[Withdrawal] Transaction confirmed: ${signature}`);
+      
+      // Record withdrawal in database
+      const withdrawal = await storage.createSolanaDeposit({
+        signature,
+        senderWallet: TREASURY_WALLET,
+        tkoinAmount: tkoinAmount.toString(),
+        creditsAmount: credits_amount.toString(),
+        burnAmount: '0',
+        platformUserId: platformUserId || 'unknown',
+        platformName: 'betwin',
+        status: 'verified',
+        metadata: {
+          type: 'withdrawal',
+          destination: destination_wallet,
+          blockTime: Math.floor(Date.now() / 1000),
+        },
+      });
+      
+      res.json({
+        success: true,
+        signature,
+        tkoin_amount: tkoinAmount,
+        credits_amount,
+        destination_wallet,
+        withdrawal_id: withdrawal.id,
+        message: `Withdrawal successful! ${tkoinAmount} TKOIN sent to ${destination_wallet}`,
+      });
+      
+    } catch (error) {
+      console.error('Error processing withdrawal:', error);
+      
+      res.status(500).json({
+        success: false,
+        error: 'Failed to process withdrawal',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+  
   // ========================================
   // Admin Routes - Agent Slashing
   // ========================================

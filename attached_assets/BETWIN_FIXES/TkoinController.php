@@ -330,16 +330,18 @@ class TkoinController extends Controller
     }
 
     /**
-     * Process withdrawal request
+     * Process withdrawal request - Calls Tkoin Protocol API to send TKOIN
      */
     public function withdraw(Request $request)
     {
         $validated = $request->validate([
-            'credits_amount' => 'required|numeric|min:100',
-            'destination_wallet' => 'required|string|min:32|max:64',
+            'amount' => 'required|numeric|min:1',
+            'wallet_address' => 'required|string|min:32|max:64',
         ]);
 
         $user = auth()->user();
+        $creditsAmount = $validated['amount'];
+        $destinationWallet = $validated['wallet_address'];
         
         $account = Account::where('user_id', $user->id)->first();
         
@@ -350,32 +352,97 @@ class TkoinController extends Controller
             ], 404);
         }
 
-        if ($account->balance < $validated['credits_amount']) {
+        if ($account->balance < $creditsAmount) {
             return response()->json([
                 'success' => false,
-                'error' => 'Insufficient balance'
+                'error' => 'Insufficient balance',
+                'available' => $account->balance,
+                'requested' => $creditsAmount,
             ], 400);
         }
 
         try {
-            $result = $this->tkoinService->initiateWithdrawal(
-                $user,
-                $account,
-                $validated['credits_amount'],
-                $validated['destination_wallet']
-            );
+            Log::info('Processing withdrawal', [
+                'user_id' => $user->id,
+                'credits_amount' => $creditsAmount,
+                'destination_wallet' => $destinationWallet,
+            ]);
+
+            // Call Tkoin Protocol API to process on-chain withdrawal
+            $withdrawResponse = Http::timeout(60)->post("{$this->tkoinApiBase}/api/process-withdrawal", [
+                'credits_amount' => $creditsAmount,
+                'destination_wallet' => $destinationWallet,
+                'platformUserId' => (string)$user->id,
+            ]);
+
+            if (!$withdrawResponse->successful()) {
+                Log::error('Tkoin withdrawal API error', [
+                    'status' => $withdrawResponse->status(),
+                    'response' => $withdrawResponse->body(),
+                ]);
+                
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Failed to process withdrawal. Please try again later.'
+                ], 500);
+            }
+
+            $withdrawData = $withdrawResponse->json();
+
+            if (!($withdrawData['success'] ?? false)) {
+                return response()->json([
+                    'success' => false,
+                    'error' => $withdrawData['error'] ?? 'Withdrawal failed'
+                ], 400);
+            }
+
+            // Deduct from user balance
+            $account->balance = $account->balance - $creditsAmount;
+            $account->save();
+
+            // Record the settlement
+            DB::table('tkoin_settlements')->insert([
+                'user_id' => $user->id,
+                'account_id' => $account->id,
+                'type' => 'withdrawal',
+                'status' => 'completed',
+                'amount' => $creditsAmount,
+                'solana_signature' => $withdrawData['signature'] ?? null,
+                'metadata' => json_encode([
+                    'tkoin_amount' => $withdrawData['tkoin_amount'] ?? ($creditsAmount / 100),
+                    'destination_wallet' => $destinationWallet,
+                    'withdrawal_id' => $withdrawData['withdrawal_id'] ?? null,
+                    'processed_at' => now()->toIso8601String(),
+                ]),
+                'completed_at' => now(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            Log::info('Withdrawal completed successfully', [
+                'user_id' => $user->id,
+                'credits_amount' => $creditsAmount,
+                'signature' => $withdrawData['signature'] ?? null,
+            ]);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Withdrawal initiated. TKOIN will be sent to your wallet shortly.',
-                'tkoin_amount' => $validated['credits_amount'] / 100,
+                'message' => $withdrawData['message'] ?? 'Withdrawal successful!',
+                'signature' => $withdrawData['signature'] ?? null,
+                'tkoin_amount' => $withdrawData['tkoin_amount'] ?? ($creditsAmount / 100),
+                'new_balance' => $account->balance,
             ]);
+
         } catch (\Exception $e) {
-            Log::error('Withdrawal error', ['error' => $e->getMessage()]);
+            Log::error('Withdrawal exception', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage()
-            ], 400);
+                'error' => 'An error occurred while processing your withdrawal. Please contact support.'
+            ], 500);
         }
     }
 
