@@ -1,0 +1,13 @@
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# grep -i "error\|exception\|deposit" storage/logs/app-2025-11-25.log | tail -30
+[2025-11-25 09:41:53] production.ERROR: Route [login] not defined. {"ip":"172.71.123.191","exception":"[object] (Symfony\\Component\\Routing\\Exception\\RouteNotFoundException(code: 0): Route [login] not defined. at /home/tkoin-betwin/htdocs/betwin.tkoin.finance/vendor/laravel/framework/src/Illuminate/Routing/UrlGenerator.php:517)
+#10 /home/tkoin-betwin/htdocs/betwin.tkoin.finance/vendor/laravel/framework/src/Illuminate/View/Middleware/ShareErrorsFromSession.php(49): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()
+#11 /home/tkoin-betwin/htdocs/betwin.tkoin.finance/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\View\\Middleware\\ShareErrorsFromSession->handle()
+[2025-11-25 09:42:34] production.ERROR: Route [login] not defined. {"ip":"104.23.229.57","exception":"[object] (Symfony\\Component\\Routing\\Exception\\RouteNotFoundException(code: 0): Route [login] not defined. at /home/tkoin-betwin/htdocs/betwin.tkoin.finance/vendor/laravel/framework/src/Illuminate/Routing/UrlGenerator.php:517)
+#10 /home/tkoin-betwin/htdocs/betwin.tkoin.finance/vendor/laravel/framework/src/Illuminate/View/Middleware/ShareErrorsFromSession.php(49): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()
+#11 /home/tkoin-betwin/htdocs/betwin.tkoin.finance/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\View\\Middleware\\ShareErrorsFromSession->handle()
+[2025-11-25 11:03:06] production.ERROR: Deposit verification exception {"error":"The signature field is required. (and 1 more error)","trace":"#0 /home/tkoin-betwin/htdocs/betwin.tkoin.finance/vendor/laravel/framework/src/Illuminate/Validation/Validator.php(558): throw_if()
+#4 /home/tkoin-betwin/htdocs/betwin.tkoin.finance/app/Http/Controllers/TkoinController.php(329): App\\Http\\Controllers\\TkoinController->verifyDeposit()
+#5 /home/tkoin-betwin/htdocs/betwin.tkoin.finance/vendor/laravel/framework/src/Illuminate/Routing/ControllerDispatcher.php(47): App\\Http\\Controllers\\TkoinController->deposit()
+#18 /home/tkoin-betwin/htdocs/betwin.tkoin.finance/vendor/laravel/framework/src/Illuminate/View/Middleware/ShareErrorsFromSession.php(49): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()
+#19 /home/tkoin-betwin/htdocs/betwin.tkoin.finance/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\View\\Middleware\\ShareErrorsFromSession->handle()
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# 
