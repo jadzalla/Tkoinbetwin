@@ -58,3 +58,37 @@ The frontend uses React, TypeScript, Vite, Tailwind CSS, and shadcn/ui, adopting
 - **Replit Auth**: For user authentication and authorization.
 - **PostgreSQL (Neon)**: Primary database.
 - **Jupiter**: Planned for stablecoin swap engine integration.
+
+## BetWin Casino Integration (Completed)
+
+### Production Status
+- **Version:** v6.5 (Production Ready)
+- **Last Updated:** November 25, 2025
+- **Status:** All critical bugs resolved
+
+### Token Configuration
+| Parameter | Value |
+|-----------|-------|
+| Network | Solana Devnet |
+| Mint Address | `9XPD1ZcAtNZgc1pGYYL3Z4W3mNqHKmqKDsUtsKKzAJE5` |
+| Treasury Wallet | `953CKYH169xXxaNKVwLT9z9s38TEg1d2pQsY7d1Lv6dD` |
+| Token Program | Token-2022 (`TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb`) |
+| Decimals | 9 |
+| Conversion | 100 CREDIT = 1 TKOIN |
+
+### Version History
+| Version | Key Fixes |
+|---------|-----------|
+| v6.1 | Correct Token-2022 mint address (was using treasury) |
+| v6.3 | Dual element ID support (hyphenated + camelCase) |
+| v6.4 | Phantom auto-connect prevention with forced popup |
+| v6.5 | Account ID + Transaction history display fixes |
+
+### Deployment Files
+All files for BetWin deployment are in `attached_assets/BETWIN_FIXES/`:
+- `tkoin-wallet-v6.5-FIXED.js` - Current production JavaScript
+- `tkoin-wallet.blade.php` - Laravel blade template
+- `TkoinController.php` - API controller
+- `web.php` - Route definitions
+- `favicon.png` - Site favicon
+- `COMPLETE_INTEGRATION_HISTORY.md` - Full documentation
