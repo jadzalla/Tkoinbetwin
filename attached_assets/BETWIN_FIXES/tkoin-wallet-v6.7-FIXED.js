@@ -1,12 +1,13 @@
 /**
  * Tkoin Wallet Integration for BetWin Casino
- * VERSION v6.7 - COMPLETE FIX (Buffer + Account ID + Transaction History)
+ * VERSION v6.7 - COMPLETE FIX (Buffer + Account ID + Transaction History + TransferChecked)
  * 
  * FIXES in v6.7:
  * - Buffer polyfill: Uses Uint8Array/toBytes() instead of Buffer/toBuffer()
  * - Account ID: Correctly extracts account_id from API response object
  * - Transaction History: Better fallback for finding transaction container
  * - API Response: Passes full response object, not just balance number
+ * - TransferChecked: Uses discriminator 12 with mint account for Token2022 Transfer Fee extension
  * 
  * CONFIGURATION:
  * - Token: TKOIN on Solana Devnet (Token-2022)
@@ -637,12 +638,14 @@ class TkoinWallet {
       recentBlockhash: blockhash,
     });
     
-    // v6.6/6.7 FIX: Create Token2022 transfer instruction without Buffer
-    const transferInstruction = this.createToken2022TransferInstruction(
+    // v6.7 FIX: Use TransferChecked for Token2022 with Transfer Fee extension
+    const transferInstruction = this.createToken2022TransferCheckedInstruction(
       sourceATA,
+      mintPubkey,
       destATA,
       ownerPubkey,
       amountInSmallestUnit,
+      this.tokenDecimals,
       token2022ProgramId
     );
     
@@ -673,19 +676,28 @@ class TkoinWallet {
     return signature;
   }
 
-  createToken2022TransferInstruction(source, destination, owner, amount, programId) {
-    // v6.6/6.7 FIX: Use Uint8Array instead of Buffer for browser compatibility
-    const dataBuffer = new Uint8Array(9);
-    dataBuffer[0] = 3; // Transfer instruction discriminator
+  createToken2022TransferCheckedInstruction(source, mint, destination, owner, amount, decimals, programId) {
+    // v6.7 FIX: Use TransferChecked (discriminator 12) for Token2022 with Transfer Fee
+    // TransferChecked data layout: [1 byte discriminator][8 bytes amount][1 byte decimals]
+    const dataBuffer = new Uint8Array(10);
+    dataBuffer[0] = 12; // TransferChecked instruction discriminator
     
+    // Write amount as u64 little-endian (8 bytes)
     const amountBigInt = BigInt(amount);
     for (let i = 0; i < 8; i++) {
       dataBuffer[1 + i] = Number((amountBigInt >> BigInt(i * 8)) & BigInt(0xff));
     }
     
+    // Write decimals (1 byte)
+    dataBuffer[9] = decimals;
+    
+    console.log('[Tkoin] TransferChecked instruction - amount:', amount, 'decimals:', decimals);
+    
+    // TransferChecked requires 4 accounts: source, mint, destination, owner
     return new solanaWeb3.TransactionInstruction({
       keys: [
         { pubkey: source, isSigner: false, isWritable: true },
+        { pubkey: mint, isSigner: false, isWritable: false },
         { pubkey: destination, isSigner: false, isWritable: true },
         { pubkey: owner, isSigner: true, isWritable: false },
       ],
