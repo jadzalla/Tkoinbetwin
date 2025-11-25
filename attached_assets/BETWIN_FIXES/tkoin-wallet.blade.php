@@ -40,7 +40,7 @@
         <button type="button" class="btn btn-primary" id="btn-deposit" data-bs-toggle="modal" data-bs-target="#depositModal">
           <i class="fa fa-arrow-down"></i> Deposit
         </button>
-        <button type="button" class="btn btn-primary" id="btn-withdrawal" data-bs-toggle="modal" data-bs-target="#withdrawalModal">
+        <button type="button" class="btn btn-primary" id="btn-withdrawal" data-bs-toggle="modal" data-bs-target="#withdrawModal">
           <i class="fa fa-arrow-up"></i> Withdraw
         </button>
         <button type="button" class="btn btn-secondary" id="btn-refresh">
@@ -111,38 +111,38 @@
     </div>
   </div>
 
-  <!-- Withdrawal Modal -->
-  <div class="modal fade" id="withdrawalModal" tabindex="-1" aria-hidden="true">
+  <!-- Withdrawal Modal - FIXED IDs to match tkoin-wallet.js -->
+  <div class="modal fade" id="withdrawModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">Withdraw Tkoin</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
-        <form id="withdrawalForm">
+        <form id="withdrawForm">
           <div class="modal-body">
             <div class="mb-3">
-              <label for="withdrawalAmount" class="form-label">Amount (CREDIT)</label>
-              <input type="number" class="form-control" id="withdrawalAmount" name="amount" 
+              <label for="withdrawAmount" class="form-label">Amount (CREDIT)</label>
+              <input type="number" class="form-control" id="withdrawAmount" name="amount" 
                      min="100" step="1" required placeholder="Enter amount to withdraw">
               <small class="text-muted">Minimum: 100 CREDIT (100 CREDIT = 1 TKOIN)</small>
             </div>
             <div class="mb-3">
-              <label for="solanaAddress" class="form-label">Solana Wallet Address (Optional)</label>
-              <input type="text" class="form-control" id="solanaAddress" name="solana_address" 
+              <label for="withdrawWallet" class="form-label">Solana Wallet Address (Optional)</label>
+              <input type="text" class="form-control" id="withdrawWallet" name="wallet_address" 
                      placeholder="Your Solana wallet address">
               <small class="text-muted">Leave blank to use your connected Phantom wallet</small>
             </div>
             <div class="alert alert-info" role="alert">
               <strong>How it works:</strong> TKOIN will be sent directly to your Solana wallet. Processing typically takes 1-5 minutes.
             </div>
-            <div id="withdrawalError" class="alert alert-danger" role="alert" style="display: none;"></div>
+            <div id="withdrawError" class="alert alert-danger" role="alert" style="display: none;"></div>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-primary" id="withdrawalSubmit">
-              <span id="withdrawalSubmitText">Withdraw</span>
-              <span id="withdrawalSpinner" class="spinner-border spinner-border-sm ms-2" role="status" aria-hidden="true" style="display: none;"></span>
+            <button type="submit" class="btn btn-primary" id="withdrawSubmit">
+              <span id="withdrawSubmitText">Withdraw</span>
+              <span id="withdrawSpinner" class="spinner-border spinner-border-sm ms-2" role="status" aria-hidden="true" style="display: none;"></span>
             </button>
           </div>
         </form>
