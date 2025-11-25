@@ -1,0 +1,537 @@
+2020:54:28.974 Tracking Prevention blocked access to storage for <URL>.
+20:53:51.099 tkoin-wallet:294  Uncaught ReferenceError: buffer is not defined
+    at tkoin-wallet:294:27
+(anonymous) @ tkoin-wallet:294
+20:53:51.235 inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+R @ inpage.js:1
+(anonymous) @ inpage.js:1
+j.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+R @ inpage.js:1
+j.push @ inpage.js:1
+_onData @ inpage.js:1
+_onMessage @ inpage.js:1
+20:53:51.237 inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+j @ inpage.js:1
+(anonymous) @ inpage.js:1
+R.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+j @ inpage.js:1
+R.push @ inpage.js:1
+_onData @ inpage.js:1
+_onMessage @ inpage.js:1
+20:53:51.260 inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+R @ inpage.js:1
+(anonymous) @ inpage.js:1
+j.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+R @ inpage.js:1
+j.push @ inpage.js:1
+_onData @ inpage.js:1
+_onMessage @ inpage.js:1
+20:53:51.261 inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+j @ inpage.js:1
+(anonymous) @ inpage.js:1
+R.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+j @ inpage.js:1
+R.push @ inpage.js:1
+_onData @ inpage.js:1
+_onMessage @ inpage.js:1
+20:53:51.263 inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+R @ inpage.js:1
+(anonymous) @ inpage.js:1
+j.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+R @ inpage.js:1
+j.push @ inpage.js:1
+_onData @ inpage.js:1
+_onMessage @ inpage.js:1
+20:53:51.264 inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+j @ inpage.js:1
+(anonymous) @ inpage.js:1
+R.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+j @ inpage.js:1
+R.push @ inpage.js:1
+_onData @ inpage.js:1
+_onMessage @ inpage.js:1
+20:53:51.286 tkoin-wallet.js?v=1764100430:850 [Tkoin] DOM ready, initializing TkoinWallet v6.7...
+20:53:51.287 tkoin-wallet.js?v=1764100430:36 [Tkoin] Initializing wallet manager v6.7 (COMPLETE FIX)
+20:53:51.287 tkoin-wallet.js?v=1764100430:37 [Tkoin] Token2022 Mint: 9XPD1ZcAtNZgc1pGYYL3Z4W3mNqHKmqKDsUtsKKzAJE5
+20:53:51.287 tkoin-wallet.js?v=1764100430:38 [Tkoin] Treasury: 953CKYH169xXxaNKVwLT9z9s38TEg1d2pQsY7d1Lv6dD
+20:53:51.289 tkoin-wallet.js?v=1764100430:46 [Tkoin] Connected to Solana Devnet
+20:53:51.290 tkoin-wallet.js?v=1764100430:70 [Tkoin] Found element: connect-wallet-btn
+20:53:51.290 tkoin-wallet.js?v=1764100430:70 [Tkoin] Found element: disconnect-wallet-btn
+20:53:51.290 tkoin-wallet.js?v=1764100430:122 [Tkoin] Events bound successfully
+20:53:51.291 tkoin-wallet.js?v=1764100430:130 [Tkoin] Phantom wallet detected
+20:53:51.291 tkoin-wallet.js?v=1764100430:265 [Tkoin] Fetching balance from API...
+20:53:51.431 inpage.js:1  StreamMiddleware - Unknown response id "2518609312"
+(anonymous) @ inpage.js:1
+write @ inpage.js:1
+j @ inpage.js:1
+(anonymous) @ inpage.js:1
+R.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+j @ inpage.js:1
+R.push @ inpage.js:1
+_write @ inpage.js:1
+j @ inpage.js:1
+(anonymous) @ inpage.js:1
+R.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+j @ inpage.js:1
+R.push @ inpage.js:1
+_onData @ inpage.js:1
+_onMessage @ inpage.js:1
+20:53:51.434 inpage.js:1  StreamMiddleware - Unknown response id "2518609313"
+(anonymous) @ inpage.js:1
+write @ inpage.js:1
+j @ inpage.js:1
+(anonymous) @ inpage.js:1
+R.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+j @ inpage.js:1
+R.push @ inpage.js:1
+_write @ inpage.js:1
+j @ inpage.js:1
+(anonymous) @ inpage.js:1
+R.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+j @ inpage.js:1
+R.push @ inpage.js:1
+_onData @ inpage.js:1
+_onMessage @ inpage.js:1
+20:53:51.436 inpage.js:1  StreamMiddleware - Unknown response id "3750665994"
+(anonymous) @ inpage.js:1
+write @ inpage.js:1
+R @ inpage.js:1
+(anonymous) @ inpage.js:1
+j.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+R @ inpage.js:1
+j.push @ inpage.js:1
+_write @ inpage.js:1
+R @ inpage.js:1
+(anonymous) @ inpage.js:1
+j.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+R @ inpage.js:1
+j.push @ inpage.js:1
+_onData @ inpage.js:1
+_onMessage @ inpage.js:1
+20:53:51.440 inpage.js:1  StreamMiddleware - Unknown response id "2518609312"
+(anonymous) @ inpage.js:1
+write @ inpage.js:1
+R @ inpage.js:1
+(anonymous) @ inpage.js:1
+j.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+R @ inpage.js:1
+j.push @ inpage.js:1
+_write @ inpage.js:1
+R @ inpage.js:1
+(anonymous) @ inpage.js:1
+j.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+R @ inpage.js:1
+j.push @ inpage.js:1
+_onData @ inpage.js:1
+_onMessage @ inpage.js:1
+20:53:51.442 inpage.js:1  StreamMiddleware - Unknown response id "2518609312"
+(anonymous) @ inpage.js:1
+write @ inpage.js:1
+j @ inpage.js:1
+(anonymous) @ inpage.js:1
+R.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+j @ inpage.js:1
+R.push @ inpage.js:1
+_write @ inpage.js:1
+j @ inpage.js:1
+(anonymous) @ inpage.js:1
+R.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+j @ inpage.js:1
+R.push @ inpage.js:1
+_onData @ inpage.js:1
+_onMessage @ inpage.js:1
+20:53:51.444 inpage.js:1  StreamMiddleware - Unknown response id "3750665995"
+(anonymous) @ inpage.js:1
+write @ inpage.js:1
+R @ inpage.js:1
+(anonymous) @ inpage.js:1
+j.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+R @ inpage.js:1
+j.push @ inpage.js:1
+_write @ inpage.js:1
+R @ inpage.js:1
+(anonymous) @ inpage.js:1
+j.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+R @ inpage.js:1
+j.push @ inpage.js:1
+_onData @ inpage.js:1
+_onMessage @ inpage.js:1
+20:53:51.447 inpage.js:1  StreamMiddleware - Unknown response id "2518609313"
+(anonymous) @ inpage.js:1
+write @ inpage.js:1
+R @ inpage.js:1
+(anonymous) @ inpage.js:1
+j.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+R @ inpage.js:1
+j.push @ inpage.js:1
+_write @ inpage.js:1
+R @ inpage.js:1
+(anonymous) @ inpage.js:1
+j.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+R @ inpage.js:1
+j.push @ inpage.js:1
+_onData @ inpage.js:1
+_onMessage @ inpage.js:1
+20:53:51.450 inpage.js:1  StreamMiddleware - Unknown response id "2518609313"
+(anonymous) @ inpage.js:1
+write @ inpage.js:1
+j @ inpage.js:1
+(anonymous) @ inpage.js:1
+R.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+j @ inpage.js:1
+R.push @ inpage.js:1
+_write @ inpage.js:1
+j @ inpage.js:1
+(anonymous) @ inpage.js:1
+R.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+j @ inpage.js:1
+R.push @ inpage.js:1
+_onData @ inpage.js:1
+_onMessage @ inpage.js:1
+20:53:51.452 inpage.js:1  StreamMiddleware - Unknown response id "3750665994"
+(anonymous) @ inpage.js:1
+write @ inpage.js:1
+R @ inpage.js:1
+(anonymous) @ inpage.js:1
+j.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+R @ inpage.js:1
+j.push @ inpage.js:1
+_write @ inpage.js:1
+R @ inpage.js:1
+(anonymous) @ inpage.js:1
+j.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+R @ inpage.js:1
+j.push @ inpage.js:1
+_onData @ inpage.js:1
+_onMessage @ inpage.js:1
+20:53:51.454 inpage.js:1  StreamMiddleware - Unknown response id "3750665994"
+(anonymous) @ inpage.js:1
+write @ inpage.js:1
+j @ inpage.js:1
+(anonymous) @ inpage.js:1
+R.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+j @ inpage.js:1
+R.push @ inpage.js:1
+_write @ inpage.js:1
+j @ inpage.js:1
+(anonymous) @ inpage.js:1
+R.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+j @ inpage.js:1
+R.push @ inpage.js:1
+_onData @ inpage.js:1
+_onMessage @ inpage.js:1
+20:53:51.467 inpage.js:1  StreamMiddleware - Unknown response id "3750665995"
+(anonymous) @ inpage.js:1
+write @ inpage.js:1
+R @ inpage.js:1
+(anonymous) @ inpage.js:1
+j.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+R @ inpage.js:1
+j.push @ inpage.js:1
+_write @ inpage.js:1
+R @ inpage.js:1
+(anonymous) @ inpage.js:1
+j.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+R @ inpage.js:1
+j.push @ inpage.js:1
+_onData @ inpage.js:1
+_onMessage @ inpage.js:1
+20:53:51.469 inpage.js:1  StreamMiddleware - Unknown response id "3750665995"
+(anonymous) @ inpage.js:1
+write @ inpage.js:1
+j @ inpage.js:1
+(anonymous) @ inpage.js:1
+R.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+j @ inpage.js:1
+R.push @ inpage.js:1
+_write @ inpage.js:1
+j @ inpage.js:1
+(anonymous) @ inpage.js:1
+R.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+j @ inpage.js:1
+R.push @ inpage.js:1
+_onData @ inpage.js:1
+_onMessage @ inpage.js:1
+20:53:51.475 inpage.js:1  StreamMiddleware - Unknown response id "2518609314"
+(anonymous) @ inpage.js:1
+write @ inpage.js:1
+j @ inpage.js:1
+(anonymous) @ inpage.js:1
+R.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+j @ inpage.js:1
+R.push @ inpage.js:1
+_write @ inpage.js:1
+j @ inpage.js:1
+(anonymous) @ inpage.js:1
+R.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+j @ inpage.js:1
+R.push @ inpage.js:1
+_onData @ inpage.js:1
+_onMessage @ inpage.js:1
+20:53:51.478 inpage.js:1  StreamMiddleware - Unknown response id "2518609314"
+(anonymous) @ inpage.js:1
+write @ inpage.js:1
+R @ inpage.js:1
+(anonymous) @ inpage.js:1
+j.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+R @ inpage.js:1
+j.push @ inpage.js:1
+_write @ inpage.js:1
+R @ inpage.js:1
+(anonymous) @ inpage.js:1
+j.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+R @ inpage.js:1
+j.push @ inpage.js:1
+_onData @ inpage.js:1
+_onMessage @ inpage.js:1
+20:53:51.479 inpage.js:1  StreamMiddleware - Unknown response id "2518609314"
+(anonymous) @ inpage.js:1
+write @ inpage.js:1
+j @ inpage.js:1
+(anonymous) @ inpage.js:1
+R.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+j @ inpage.js:1
+R.push @ inpage.js:1
+_write @ inpage.js:1
+j @ inpage.js:1
+(anonymous) @ inpage.js:1
+R.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+j @ inpage.js:1
+R.push @ inpage.js:1
+_onData @ inpage.js:1
+_onMessage @ inpage.js:1
+20:53:51.481 inpage.js:1  StreamMiddleware - Unknown response id "3750665996"
+(anonymous) @ inpage.js:1
+write @ inpage.js:1
+R @ inpage.js:1
+(anonymous) @ inpage.js:1
+j.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+R @ inpage.js:1
+j.push @ inpage.js:1
+_write @ inpage.js:1
+R @ inpage.js:1
+(anonymous) @ inpage.js:1
+j.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+R @ inpage.js:1
+j.push @ inpage.js:1
+_onData @ inpage.js:1
+_onMessage @ inpage.js:1
+20:53:51.520 inpage.js:1  StreamMiddleware - Unknown response id "3750665996"
+(anonymous) @ inpage.js:1
+write @ inpage.js:1
+R @ inpage.js:1
+(anonymous) @ inpage.js:1
+j.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+R @ inpage.js:1
+j.push @ inpage.js:1
+_write @ inpage.js:1
+R @ inpage.js:1
+(anonymous) @ inpage.js:1
+j.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+R @ inpage.js:1
+j.push @ inpage.js:1
+_onData @ inpage.js:1
+_onMessage @ inpage.js:1
+20:53:51.522 inpage.js:1  StreamMiddleware - Unknown response id "3750665996"
+(anonymous) @ inpage.js:1
+write @ inpage.js:1
+j @ inpage.js:1
+(anonymous) @ inpage.js:1
+R.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+j @ inpage.js:1
+R.push @ inpage.js:1
+_write @ inpage.js:1
+j @ inpage.js:1
+(anonymous) @ inpage.js:1
+R.write @ inpage.js:1
+d @ inpage.js:1
+a.emit @ inpage.js:10
+A @ inpage.js:1
+j @ inpage.js:1
+R.push @ inpage.js:1
+_onData @ inpage.js:1
+_onMessage @ inpage.js:1
+20:53:51.676 tkoin-wallet.js?v=1764100430:270 [Tkoin] Balance API response: {
+  "balance": 1461.73,
+  "currency": "CREDIT",
+  "account_id": 1,
+  "tkoin_equivalent": 14.6173
+}
+20:53:51.676 tkoin-wallet.js?v=1764100430:285 [Tkoin] Updating balance display with: {
+  "balance": 1461.73,
+  "currency": "CREDIT",
+  "account_id": 1,
+  "tkoin_equivalent": 14.6173
+}
+20:53:51.676 tkoin-wallet.js?v=1764100430:70 [Tkoin] Found element: balance-amount
+20:53:51.700 tkoin-wallet.js?v=1764100430:295 [Tkoin] Updated credit balance to: 1461.73
+20:53:51.700 tkoin-wallet.js?v=1764100430:70 [Tkoin] Found element: balance-account
+20:53:51.700 tkoin-wallet.js?v=1764100430:307 [Tkoin] Updated account ID to: 1
+20:53:51.700 tkoin-wallet.js?v=1764100430:316 [Tkoin] Fetching transaction history...
+20:53:51.735 tkoin-wallet.js?v=1764100430:133 [Tkoin] Phantom connected event
+20:53:51.736 tkoin-wallet.js?v=1764100430:206 [Tkoin] Wallet connected: cubBpiKduvNCGgPpshb3Jn1fhd6Bjaj8ttX6kd1JQSV
+20:53:51.736 tkoin-wallet.js?v=1764100430:70 [Tkoin] Found element: connect-wallet-btn
+20:53:51.736 tkoin-wallet.js?v=1764100430:70 [Tkoin] Found element: disconnect-wallet-btn
+20:53:51.736 tkoin-wallet.js?v=1764100430:218 [Tkoin] Disconnect button shown
+20:53:51.737 tkoin-wallet.js?v=1764100430:417 [Tkoin] Fetching on-chain TKOIN balance...
+20:53:51.742 tkoin-wallet.js?v=1764100430:423 [Tkoin] Token2022 ATA: EJF2s4eZz68wJCRENcYXG38mtBNNXJUgrDA3QBmmESvE
+20:53:51.901 tkoin-wallet.js?v=1764100430:321 [Tkoin] History API response: {
+  "transactions": [],
+  "settlements": []
+}
+20:53:51.901 tkoin-wallet.js?v=1764100430:350 [Tkoin] Found transaction container via content search
+20:53:51.902 tkoin-wallet.js?v=1764100430:361 [Tkoin] Updating transaction history with 0 transactions
+20:53:52.599 tkoin-wallet.js?v=1764100430:436 [Tkoin] Raw balance: 99000000000000
+20:53:52.599 tkoin-wallet.js?v=1764100430:437 [Tkoin] TKOIN balance: 99000
+20:54:02.220 tkoin-wallet.js?v=1764100430:70 [Tkoin] Found element: depositSubmit
+20:54:02.222 tkoin-wallet.js?v=1764100430:558 [Tkoin] Starting deposit flow for 1000 CREDIT
+20:54:02.463 tkoin-wallet.js?v=1764100430:568 [Tkoin] Deposit request response: Object
+20:54:02.463 tkoin-wallet.js?v=1764100430:578 [Tkoin] Platform User ID: 1
+20:54:02.463 tkoin-wallet.js?v=1764100430:579 [Tkoin] TKOIN to send: 10
+20:54:02.476 tkoin-wallet.js?v=1764100430:627 [Tkoin] Source ATA: EJF2s4eZz68wJCRENcYXG38mtBNNXJUgrDA3QBmmESvE
+20:54:02.476 tkoin-wallet.js?v=1764100430:628 [Tkoin] Destination ATA: GJ8ZUGBD7UAtffi8eWjfqN63nCMhPgmDuH44YNRct3R6
+20:54:02.477 tkoin-wallet.js?v=1764100430:637 [Tkoin] Amount in smallest unit: 10000000000
+20:54:02.744 tkoin-wallet.js?v=1764100430:700 [Tkoin] TransferChecked instruction - amount: 10000000000 decimals: 9
+20:54:02.744 tkoin-wallet.js?v=1764100430:660 [Tkoin] Requesting Phantom signature...
+20:54:13.813 tkoin-wallet.js?v=1764100430:663 [Tkoin] Sending transaction...
+20:54:14.157 tkoin-wallet.js?v=1764100430:669 [Tkoin] Transaction sent: 5YxzdR3g1u6JqVj8m8NsaeoSC9rLVgd8CUW31NnH4F43Kz5dDqa7wSVvYBtwH9TTBSC9Ni32Bb5gtgFTHzgHquxh
+20:54:15.300 tkoin-wallet.js?v=1764100430:681 [Tkoin] Transaction confirmed!
+20:54:15.300 tkoin-wallet.js?v=1764100430:585 [Tkoin] Transaction signature: 5YxzdR3g1u6JqVj8m8NsaeoSC9rLVgd8CUW31NnH4F43Kz5dDqa7wSVvYBtwH9TTBSC9Ni32Bb5gtgFTHzgHquxh
+20:54:16.514 /tkoin/verify-deposit:1   Failed to load resource: the server responded with a status of 400 ()
+20:54:16.515 tkoin-wallet.js?v=1764100430:591 [Tkoin] Verify result: Object
+20:54:16.515 tkoin-wallet.js?v=1764100430:610  [Tkoin] Deposit error: Error: Verification failed
+    at TkoinWallet.handleDeposit (tkoin-wallet.js?v=1764100430:606:15)
+handleDeposit @ tkoin-wallet.js?v=1764100430:610
+20:54:28.890 [NEW] Explain Console errors by using Copilot in Edge: click
+         
+         to explain an error. 
+        Learn more
