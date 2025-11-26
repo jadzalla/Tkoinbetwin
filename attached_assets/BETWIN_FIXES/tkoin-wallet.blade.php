@@ -67,7 +67,7 @@
                 <th>Date</th>
               </tr>
             </thead>
-            <tbody id="transaction-body">
+            <tbody id="transactionHistory">
               <tr>
                 <td colspan="4" class="text-center text-muted">Loading transactions...</td>
               </tr>

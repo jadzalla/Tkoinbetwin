@@ -1,0 +1,183 @@
+Tracking Prevention blocked access to storage for <URL>.
+01:05:00.394 inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+01:05:00.395 inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+01:05:00.399 inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+01:05:00.400 inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+01:05:00.401 inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+01:05:00.402 inpage.js:1  ObjectMultiplex - malformed chunk without name "ACK"
+_write @ inpage.js:1
+01:05:00.468 inpage.js:1  StreamMiddleware - Unknown response id "2291209299"
+(anonymous) @ inpage.js:1
+01:05:00.472 inpage.js:1  StreamMiddleware - Unknown response id "2291209299"
+(anonymous) @ inpage.js:1
+01:05:00.473 inpage.js:1  StreamMiddleware - Unknown response id "2291209299"
+(anonymous) @ inpage.js:1
+01:05:00.475 inpage.js:1  StreamMiddleware - Unknown response id "2291209300"
+(anonymous) @ inpage.js:1
+01:05:00.477 inpage.js:1  StreamMiddleware - Unknown response id "3664579652"
+(anonymous) @ inpage.js:1
+01:05:00.479 inpage.js:1  StreamMiddleware - Unknown response id "2291209300"
+(anonymous) @ inpage.js:1
+01:05:00.480 inpage.js:1  StreamMiddleware - Unknown response id "2291209300"
+(anonymous) @ inpage.js:1
+01:05:00.482 inpage.js:1  StreamMiddleware - Unknown response id "3664579653"
+(anonymous) @ inpage.js:1
+01:05:00.484 inpage.js:1  StreamMiddleware - Unknown response id "3664579652"
+(anonymous) @ inpage.js:1
+01:05:00.485 inpage.js:1  StreamMiddleware - Unknown response id "3664579652"
+(anonymous) @ inpage.js:1
+01:05:00.487 inpage.js:1  StreamMiddleware - Unknown response id "3664579653"
+(anonymous) @ inpage.js:1
+01:05:00.489 inpage.js:1  StreamMiddleware - Unknown response id "3664579653"
+(anonymous) @ inpage.js:1
+01:05:01.207 tkoin-wallet.js?v=1764115500:884 [Tkoin] DOM ready, initializing TkoinWallet v6.7...
+01:05:01.209 tkoin-wallet.js?v=1764115500:39 [Tkoin] Initializing wallet manager v6.7 (COMPLETE FIX)
+01:05:01.209 tkoin-wallet.js?v=1764115500:40 [Tkoin] Token2022 Mint: 9XPD1ZcAtNZgc1pGYYL3Z4W3mNqHKmqKDsUtsKKzAJE5
+01:05:01.210 tkoin-wallet.js?v=1764115500:41 [Tkoin] Treasury: 953CKYH169xXxaNKVwLT9z9s38TEg1d2pQsY7d1Lv6dD
+01:05:01.212 tkoin-wallet.js?v=1764115500:49 [Tkoin] Connected to Solana Devnet
+01:05:01.213 tkoin-wallet.js?v=1764115500:73 [Tkoin] Found element: connect-wallet-btn
+01:05:01.213 tkoin-wallet.js?v=1764115500:73 [Tkoin] Found element: disconnect-wallet-btn
+01:05:01.213 tkoin-wallet.js?v=1764115500:125 [Tkoin] Events bound successfully
+01:05:01.214 tkoin-wallet.js?v=1764115500:133 [Tkoin] Phantom wallet detected
+01:05:01.215 tkoin-wallet.js?v=1764115500:293 [Tkoin] Fetching balance from API...
+01:05:01.569 tkoin-wallet.js?v=1764115500:139 [Tkoin] Phantom connected event
+01:05:01.569 tkoin-wallet.js?v=1764115500:234 [Tkoin] Wallet connected: cubBpiKduvNCGgPpshb3Jn1fhd6Bjaj8ttX6kd1JQSV
+01:05:01.569 tkoin-wallet.js?v=1764115500:73 [Tkoin] Found element: connect-wallet-btn
+01:05:01.569 tkoin-wallet.js?v=1764115500:73 [Tkoin] Found element: disconnect-wallet-btn
+01:05:01.569 tkoin-wallet.js?v=1764115500:246 [Tkoin] Disconnect button shown
+01:05:01.570 tkoin-wallet.js?v=1764115500:445 [Tkoin] Fetching on-chain TKOIN balance...
+01:05:01.573 tkoin-wallet.js?v=1764115500:451 [Tkoin] Token2022 ATA: EJF2s4eZz68wJCRENcYXG38mtBNNXJUgrDA3QBmmESvE
+01:05:01.650 tkoin-wallet.js?v=1764115500:298 [Tkoin] Balance API response: {
+  "balance": 2461.73,
+  "currency": "CREDIT",
+  "account_id": 1,
+  "tkoin_equivalent": 0
+}
+01:05:01.651 tkoin-wallet.js?v=1764115500:313 [Tkoin] Updating balance display with: {
+  "balance": 2461.73,
+  "currency": "CREDIT",
+  "account_id": 1,
+  "tkoin_equivalent": 0
+}
+01:05:01.652 tkoin-wallet.js?v=1764115500:73 [Tkoin] Found element: balance-amount
+01:05:01.652 tkoin-wallet.js?v=1764115500:323 [Tkoin] Updated credit balance to: 2461.73
+01:05:01.653 tkoin-wallet.js?v=1764115500:73 [Tkoin] Found element: balance-account
+01:05:01.653 tkoin-wallet.js?v=1764115500:335 [Tkoin] Updated account ID to: 1
+01:05:01.654 tkoin-wallet.js?v=1764115500:344 [Tkoin] Fetching transaction history...
+01:05:01.660 inpage.js:1  StreamMiddleware - Unknown response id "2291209301"
+(anonymous) @ inpage.js:1
+01:05:01.669 inpage.js:1  StreamMiddleware - Unknown response id "3664579654"
+(anonymous) @ inpage.js:1
+01:05:01.687 inpage.js:1  StreamMiddleware - Unknown response id "2291209301"
+(anonymous) @ inpage.js:1
+01:05:01.697 inpage.js:1  StreamMiddleware - Unknown response id "2291209301"
+(anonymous) @ inpage.js:1
+01:05:01.721 inpage.js:1  StreamMiddleware - Unknown response id "3664579654"
+(anonymous) @ inpage.js:1
+01:05:01.726 inpage.js:1  StreamMiddleware - Unknown response id "3664579654"
+(anonymous) @ inpage.js:1
+01:05:01.936 tkoin-wallet.js?v=1764115500:349 [Tkoin] History API response: {
+  "transactions": [
+    {
+      "id": 30,
+      "type": "deposit",
+      "amount": 1000,
+      "status": "completed",
+      "solana_signature": "xb31ZHfRjbKoUsha5D9zdEtzJm9T51rPHMF2oCU78xnQfCvrZaKT7hzsNXvrABHoTKDQJMkDdU6J12kZ5h1Wnd7",
+      "created_at": "2025-11-25 20:15:47",
+      "completed_at": "2025-11-25 20:15:47"
+    }
+  ],
+  "settlements": [
+    {
+      "id": 30,
+      "type": "deposit",
+      "amount": 1000,
+      "status": "completed",
+      "solana_signature": "xb31ZHfRjbKoUsha5D9zdEtzJm9T51rPHMF2oCU78xnQfCvrZaKT7hzsNXvrABHoTKDQJMkDdU6J12kZ5h1Wnd7",
+      "created_at": "2025-11-25 20:15:47",
+      "completed_at": "2025-11-25 20:15:47"
+    }
+  ]
+}
+01:05:01.938 tkoin-wallet.js?v=1764115500:378 [Tkoin] Found transaction container via content search
+01:05:01.938 tkoin-wallet.js?v=1764115500:389 [Tkoin] Updating transaction history with 1 transactions
+01:05:01.940 tkoin-wallet.js?v=1764115500:412 [Tkoin] Transaction history updated
+01:05:02.855 tkoin-wallet.js?v=1764115500:464 [Tkoin] Raw balance: 98981980000000
+01:05:02.856 tkoin-wallet.js?v=1764115500:465 [Tkoin] TKOIN balance: 98981.98
+01:05:11.555 tkoin-wallet.js?v=1764115500:79 [Tkoin] Found element via fallback: withdrawSubmit
+01:05:11.570 tkoin-wallet.js?v=1764115500:802 [Tkoin] Starting withdrawal for 400 CREDIT to cubBpiKduvNCGgPpshb3Jn1fhd6Bjaj8ttX6kd1JQSV
+01:05:13.719 tkoin-wallet.js?v=1764115500:814 [Tkoin] Withdrawal response: Object
+01:05:13.719 tkoin-wallet.js?v=1764115500:820 [Tkoin] Withdrawal signature: 64b7gt1xmCo8jWcsBTXExkxfvxjqw4yrWGLSRdb8oqK5YLw5oHQ2zqXFnJLrk9BXrQw8fYecxTBWgQZDCPepSzJp
+01:05:13.719 tkoin-wallet.js?v=1764115500:863 [Tkoin] Success: Withdrawal successful! 4 TKOIN sent to your wallet. Tx: 64b7gt1x...
+01:05:28.990 tkoin-wallet.js?v=1764115500:293 [Tkoin] Fetching balance from API...
+01:05:29.243 tkoin-wallet.js?v=1764115500:298 [Tkoin] Balance API response: {
+  "balance": 2061.73,
+  "currency": "CREDIT",
+  "account_id": 1,
+  "tkoin_equivalent": 0
+}
+01:05:29.243 tkoin-wallet.js?v=1764115500:313 [Tkoin] Updating balance display with: {
+  "balance": 2061.73,
+  "currency": "CREDIT",
+  "account_id": 1,
+  "tkoin_equivalent": 0
+}
+01:05:29.243 tkoin-wallet.js?v=1764115500:73 [Tkoin] Found element: balance-amount
+01:05:29.244 tkoin-wallet.js?v=1764115500:323 [Tkoin] Updated credit balance to: 2061.73
+01:05:29.244 tkoin-wallet.js?v=1764115500:73 [Tkoin] Found element: balance-account
+01:05:29.244 tkoin-wallet.js?v=1764115500:335 [Tkoin] Updated account ID to: 1
+01:05:29.244 tkoin-wallet.js?v=1764115500:344 [Tkoin] Fetching transaction history...
+01:05:29.484 tkoin-wallet.js?v=1764115500:349 [Tkoin] History API response: {
+  "transactions": [
+    {
+      "id": 31,
+      "type": "withdrawal",
+      "amount": 400,
+      "status": "completed",
+      "solana_signature": "64b7gt1xmCo8jWcsBTXExkxfvxjqw4yrWGLSRdb8oqK5YLw5oHQ2zqXFnJLrk9BXrQw8fYecxTBWgQZDCPepSzJp",
+      "created_at": "2025-11-26 00:05:14",
+      "completed_at": "2025-11-26 00:05:14"
+    },
+    {
+      "id": 30,
+      "type": "deposit",
+      "amount": 1000,
+      "status": "completed",
+      "solana_signature": "xb31ZHfRjbKoUsha5D9zdEtzJm9T51rPHMF2oCU78xnQfCvrZaKT7hzsNXvrABHoTKDQJMkDdU6J12kZ5h1Wnd7",
+      "created_at": "2025-11-25 20:15:47",
+      "completed_at": "2025-11-25 20:15:47"
+    }
+  ],
+  "settlements": [
+    {
+      "id": 31,
+      "type": "withdrawal",
+      "amount": 400,
+      "status": "completed",
+      "solana_signature": "64b7gt1xmCo8jWcsBTXExkxfvxjqw4yrWGLSRdb8oqK5YLw5oHQ2zqXFnJLrk9BXrQw8fYecxTBWgQZDCPepSzJp",
+      "created_at": "2025-11-26 00:05:14",
+      "completed_at": "2025-11-26 00:05:14"
+    },
+    {
+      "id": 30,
+      "type": "deposit",
+      "amount": 1000,
+      "status": "completed",
+      "solana_signature": "xb31ZHfRjbKoUsha5D9zdEtzJm9T51rPHMF2oCU78xnQfCvrZaKT7hzsNXvrABHoTKDQJMkDdU6J12kZ5h1Wnd7",
+      "created_at": "2025-11-25 20:15:47",
+      "completed_at": "2025-11-25 20:15:47"
+    }
+  ]
+}
+01:05:29.485 tkoin-wallet.js?v=1764115500:385  [Tkoin] Could not find any transaction history container
+updateHistoryDisplay @ tkoin-wallet.js?v=1764115500:385
+01:08:34.530 [NEW] Explain Console errors by using Copilot in Edge: click
+         
+         to explain an error. 
+        Learn more
