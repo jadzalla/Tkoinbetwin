@@ -51,6 +51,9 @@ Route::prefix('tkoin')->name('tkoin.')->middleware('auth')->group(function () {
     Route::get('/balance', [TkoinController::class, 'balance'])->name('balance');
     Route::get('/history', [TkoinController::class, 'history'])->name('history');
     
+    // Export - v7.0: Download transactions as CSV/JSON
+    Route::get('/export', [TkoinController::class, 'export'])->name('export');
+    
     // Deposits
     Route::post('/deposit', [TkoinController::class, 'deposit'])->name('deposit');
     Route::post('/verify-deposit', [TkoinController::class, 'verifyDeposit'])->name('verify-deposit');
@@ -60,6 +63,14 @@ Route::prefix('tkoin')->name('tkoin.')->middleware('auth')->group(function () {
     Route::post('/withdraw', [TkoinController::class, 'withdraw'])->name('withdraw');
     // /tkoin/withdrawal - Legacy route (may be used by other code)
     Route::post('/withdrawal', [TkoinController::class, 'withdrawal'])->name('withdrawal');
+    
+    // P2P Marketplace - v7.0: Buy TKOIN from agents
+    Route::get('/marketplace/agents', [TkoinController::class, 'marketplaceAgents'])->name('marketplace.agents');
+    Route::get('/marketplace/orders', [TkoinController::class, 'marketplaceMyOrders'])->name('marketplace.orders');
+    Route::post('/marketplace/purchase', [TkoinController::class, 'marketplacePurchase'])->name('marketplace.purchase');
+    Route::get('/marketplace/orders/{id}', [TkoinController::class, 'marketplaceOrderStatus'])->name('marketplace.order.status');
+    Route::post('/marketplace/orders/{id}/confirm', [TkoinController::class, 'marketplaceConfirmPayment'])->name('marketplace.order.confirm');
+    Route::post('/marketplace/orders/{id}/cancel', [TkoinController::class, 'marketplaceCancelOrder'])->name('marketplace.order.cancel');
 });
 
 /*

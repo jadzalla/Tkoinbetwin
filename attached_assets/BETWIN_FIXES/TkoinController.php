@@ -92,24 +92,126 @@ class TkoinController extends Controller
     }
 
     /**
-     * API: Get transaction history
+     * API: Get transaction history with filtering support
+     * 
+     * v7.0: Added query parameters for filtering:
+     * - type: deposit, withdrawal, all (default: all)
+     * - status: completed, pending, failed, all (default: all)
+     * - date_from: YYYY-MM-DD start date
+     * - date_to: YYYY-MM-DD end date
+     * - min_amount: minimum amount filter
+     * - max_amount: maximum amount filter
+     * - limit: results per page (default: 20, max: 100)
+     * - offset: pagination offset (default: 0)
      */
     public function history(Request $request)
     {
         try {
             $user = auth()->user();
-            $limit = $request->get('limit', 20);
-            $transactions = $this->tkoinService->getUserTransactions($user, $limit);
             
+            // Build filters from query parameters
+            $filters = [];
+            
+            if ($request->has('type')) {
+                $filters['type'] = $request->get('type');
+            }
+            if ($request->has('status')) {
+                $filters['status'] = $request->get('status');
+            }
+            if ($request->has('date_from')) {
+                $filters['date_from'] = $request->get('date_from');
+            }
+            if ($request->has('date_to')) {
+                $filters['date_to'] = $request->get('date_to');
+            }
+            if ($request->has('min_amount')) {
+                $filters['min_amount'] = $request->get('min_amount');
+            }
+            if ($request->has('max_amount')) {
+                $filters['max_amount'] = $request->get('max_amount');
+            }
+            
+            $limit = min((int)$request->get('limit', 20), 100);
+            $offset = (int)$request->get('offset', 0);
+            
+            $result = $this->tkoinService->getUserTransactions($user, $filters, $limit, $offset);
+            
+            // Backward compatible: keep both 'transactions' and 'settlements' keys
             return response()->json([
-                'transactions' => $transactions ?? [],
-                'settlements' => $transactions ?? [],
+                'transactions' => $result['transactions'] ?? [],
+                'settlements' => $result['transactions'] ?? [],
+                'total' => $result['total'] ?? 0,
+                'limit' => $result['limit'] ?? $limit,
+                'offset' => $result['offset'] ?? $offset,
+                'has_more' => $result['has_more'] ?? false,
+                'filters_applied' => !empty($filters) ? $filters : null,
             ]);
         } catch (\Exception $e) {
             Log::error('Tkoin history error', ['error' => $e->getMessage()]);
             return response()->json([
                 'transactions' => [],
                 'error' => 'Failed to fetch history'
+            ], 500);
+        }
+    }
+    
+    /**
+     * API: Export transaction history as CSV or JSON
+     * 
+     * v7.0: New endpoint for downloading transactions
+     * 
+     * Query parameters:
+     * - format: csv (default) or json
+     * - type, status, date_from, date_to: same filters as history endpoint
+     */
+    public function export(Request $request)
+    {
+        try {
+            $user = auth()->user();
+            $format = $request->get('format', 'csv');
+            
+            // Validate format
+            if (!in_array($format, ['csv', 'json'])) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Invalid format. Use csv or json.'
+                ], 400);
+            }
+            
+            // Build filters
+            $filters = [];
+            if ($request->has('type')) {
+                $filters['type'] = $request->get('type');
+            }
+            if ($request->has('status')) {
+                $filters['status'] = $request->get('status');
+            }
+            if ($request->has('date_from')) {
+                $filters['date_from'] = $request->get('date_from');
+            }
+            if ($request->has('date_to')) {
+                $filters['date_to'] = $request->get('date_to');
+            }
+            
+            $data = $this->tkoinService->exportTransactions($user, $format, $filters);
+            
+            $filename = 'tkoin-transactions-' . date('Y-m-d') . '.' . $format;
+            
+            if ($format === 'json') {
+                return response()->json($data)
+                    ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
+            }
+            
+            // CSV response
+            return response($data)
+                ->header('Content-Type', 'text/csv; charset=utf-8')
+                ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
+                
+        } catch (\Exception $e) {
+            Log::error('Tkoin export error', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to export transactions'
             ], 500);
         }
     }
@@ -461,5 +563,277 @@ class TkoinController extends Controller
     {
         $marketplaceUrl = config('services.tkoin.marketplace_url', $this->tkoinApiBase . '/marketplace');
         return redirect()->away($marketplaceUrl);
+    }
+    
+    // ==================== P2P MARKETPLACE INTEGRATION v7.0 ====================
+    
+    /**
+     * API: Get available agents/liquidity providers from Tkoin Protocol marketplace
+     * 
+     * BetWin users can browse active sell offers and purchase TKOIN with fiat
+     */
+    public function marketplaceAgents(Request $request)
+    {
+        try {
+            Log::info('Fetching marketplace agents');
+            
+            // Query Tkoin Protocol API for active sell offers
+            $response = Http::timeout(30)->get("{$this->tkoinApiBase}/api/p2p/market/offers", [
+                'side' => 'sell', // We want agents selling TKOIN
+                'status' => 'active',
+            ]);
+            
+            if (!$response->successful()) {
+                Log::error('Failed to fetch marketplace agents', ['status' => $response->status()]);
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Marketplace temporarily unavailable',
+                    'agents' => [],
+                ], 503);
+            }
+            
+            $data = $response->json();
+            
+            // Transform offers for BetWin display
+            $agents = collect($data['offers'] ?? [])->map(function ($offer) {
+                return [
+                    'id' => $offer['id'],
+                    'agent_id' => $offer['agentId'],
+                    'agent_name' => $offer['agentName'] ?? 'Agent',
+                    'agent_tier' => $offer['agentTier'] ?? 'basic',
+                    'price_per_tkoin' => (float)$offer['pricePerToken'],
+                    'min_amount' => (float)$offer['minAmount'],
+                    'max_amount' => (float)$offer['maxAmount'],
+                    'available_tkoin' => (float)$offer['availableAmount'],
+                    'payment_methods' => $offer['paymentMethods'] ?? [],
+                    'currency' => $offer['currency'] ?? 'USD',
+                    'created_at' => $offer['createdAt'] ?? null,
+                ];
+            })->toArray();
+            
+            return response()->json([
+                'success' => true,
+                'agents' => $agents,
+                'total' => count($agents),
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Marketplace agents error', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to fetch marketplace data',
+                'agents' => [],
+            ], 500);
+        }
+    }
+    
+    /**
+     * API: Create a purchase order for TKOIN from an agent
+     */
+    public function marketplacePurchase(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'offer_id' => 'required|integer',
+                'tkoin_amount' => 'required|numeric|min:0.01',
+                'payment_method' => 'required|string',
+            ]);
+            
+            $user = auth()->user();
+            
+            Log::info('Creating marketplace purchase', [
+                'user_id' => $user->id,
+                'offer_id' => $validated['offer_id'],
+                'amount' => $validated['tkoin_amount'],
+            ]);
+            
+            // Create order via Tkoin Protocol API
+            $response = Http::timeout(30)->post("{$this->tkoinApiBase}/api/p2p/orders", [
+                'offerId' => $validated['offer_id'],
+                'amount' => $validated['tkoin_amount'],
+                'buyerPlatformId' => 'betwin',
+                'buyerUserId' => (string)$user->id,
+                'paymentMethod' => $validated['payment_method'],
+            ]);
+            
+            if (!$response->successful()) {
+                $error = $response->json()['error'] ?? 'Failed to create order';
+                Log::error('Marketplace purchase failed', ['error' => $error]);
+                return response()->json([
+                    'success' => false,
+                    'error' => $error,
+                ], 400);
+            }
+            
+            $orderData = $response->json();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Purchase order created! Follow payment instructions.',
+                'order' => [
+                    'id' => $orderData['orderId'],
+                    'status' => $orderData['status'] ?? 'created',
+                    'tkoin_amount' => $validated['tkoin_amount'],
+                    'credits_equivalent' => $validated['tkoin_amount'] * 100,
+                    'fiat_amount' => $orderData['fiatAmount'] ?? null,
+                    'payment_details' => $orderData['paymentDetails'] ?? null,
+                    'expires_at' => $orderData['expiresAt'] ?? null,
+                ],
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Marketplace purchase error', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to create purchase order',
+            ], 500);
+        }
+    }
+    
+    /**
+     * API: Get user's marketplace orders
+     */
+    public function marketplaceMyOrders(Request $request)
+    {
+        try {
+            $user = auth()->user();
+            
+            $response = Http::timeout(30)->get("{$this->tkoinApiBase}/api/p2p/orders", [
+                'platformId' => 'betwin',
+                'userId' => (string)$user->id,
+            ]);
+            
+            if (!$response->successful()) {
+                return response()->json([
+                    'success' => false,
+                    'orders' => [],
+                ], 503);
+            }
+            
+            $data = $response->json();
+            
+            return response()->json([
+                'success' => true,
+                'orders' => $data['orders'] ?? [],
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Marketplace orders error', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'orders' => [],
+            ], 500);
+        }
+    }
+    
+    /**
+     * API: Get specific order status
+     */
+    public function marketplaceOrderStatus(Request $request, $id)
+    {
+        try {
+            $user = auth()->user();
+            
+            $response = Http::timeout(30)->get("{$this->tkoinApiBase}/api/p2p/orders/{$id}");
+            
+            if (!$response->successful()) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Order not found',
+                ], 404);
+            }
+            
+            return response()->json([
+                'success' => true,
+                'order' => $response->json(),
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Order status error', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to fetch order status',
+            ], 500);
+        }
+    }
+    
+    /**
+     * API: Confirm payment was sent (buyer action)
+     */
+    public function marketplaceConfirmPayment(Request $request, $id)
+    {
+        try {
+            $validated = $request->validate([
+                'payment_proof' => 'sometimes|string',
+            ]);
+            
+            $user = auth()->user();
+            
+            $response = Http::timeout(30)->post("{$this->tkoinApiBase}/api/p2p/orders/{$id}/confirm-payment", [
+                'userId' => (string)$user->id,
+                'platformId' => 'betwin',
+                'paymentProof' => $validated['payment_proof'] ?? null,
+            ]);
+            
+            if (!$response->successful()) {
+                $error = $response->json()['error'] ?? 'Failed to confirm payment';
+                return response()->json([
+                    'success' => false,
+                    'error' => $error,
+                ], 400);
+            }
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Payment confirmed. Waiting for agent to release TKOIN.',
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Payment confirmation error', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to confirm payment',
+            ], 500);
+        }
+    }
+    
+    /**
+     * API: Cancel an order
+     */
+    public function marketplaceCancelOrder(Request $request, $id)
+    {
+        try {
+            $validated = $request->validate([
+                'reason' => 'sometimes|string|max:255',
+            ]);
+            
+            $user = auth()->user();
+            
+            $response = Http::timeout(30)->post("{$this->tkoinApiBase}/api/p2p/orders/{$id}/cancel", [
+                'userId' => (string)$user->id,
+                'platformId' => 'betwin',
+                'reason' => $validated['reason'] ?? 'User cancelled',
+            ]);
+            
+            if (!$response->successful()) {
+                $error = $response->json()['error'] ?? 'Failed to cancel order';
+                return response()->json([
+                    'success' => false,
+                    'error' => $error,
+                ], 400);
+            }
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Order cancelled successfully.',
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Order cancellation error', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to cancel order',
+            ], 500);
+        }
     }
 }

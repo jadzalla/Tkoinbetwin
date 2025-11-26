@@ -56,7 +56,55 @@
 
       <!-- Transaction History -->
       <div class="transaction-history">
-        <h3>Recent Transactions</h3>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h3 class="mb-0">Recent Transactions</h3>
+          <div class="btn-group" role="group">
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-export-csv" data-testid="btn-export-csv">
+              <i class="fa fa-download"></i> CSV
+            </button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-export-json" data-testid="btn-export-json">
+              <i class="fa fa-code"></i> JSON
+            </button>
+          </div>
+        </div>
+        
+        <!-- Filter Controls - v7.0 -->
+        <div class="filter-controls mb-3" id="filter-controls">
+          <div class="row g-2">
+            <div class="col-md-3 col-6">
+              <select class="form-select form-select-sm" id="filter-type" data-testid="filter-type">
+                <option value="all">All Types</option>
+                <option value="deposit">Deposits</option>
+                <option value="withdrawal">Withdrawals</option>
+              </select>
+            </div>
+            <div class="col-md-3 col-6">
+              <select class="form-select form-select-sm" id="filter-status" data-testid="filter-status">
+                <option value="all">All Status</option>
+                <option value="completed">Completed</option>
+                <option value="pending">Pending</option>
+                <option value="failed">Failed</option>
+              </select>
+            </div>
+            <div class="col-md-2 col-6">
+              <input type="date" class="form-control form-control-sm" id="filter-date-from" placeholder="From" data-testid="filter-date-from">
+            </div>
+            <div class="col-md-2 col-6">
+              <input type="date" class="form-control form-control-sm" id="filter-date-to" placeholder="To" data-testid="filter-date-to">
+            </div>
+            <div class="col-md-2 col-12">
+              <button type="button" class="btn btn-outline-primary btn-sm w-100" id="btn-clear-filters" data-testid="btn-clear-filters">
+                <i class="fa fa-times"></i> Clear
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Filter Summary -->
+        <div class="filter-summary mb-2 text-muted small" id="filter-summary" style="display: none;">
+          <span id="filter-summary-text">Showing 0 of 0 transactions</span>
+        </div>
+        
         <div class="history-table-container">
           <table class="table table-sm" id="transaction-table">
             <thead>
@@ -73,6 +121,19 @@
               </tr>
             </tbody>
           </table>
+        </div>
+        
+        <!-- Pagination -->
+        <div class="pagination-controls mt-2" id="pagination-controls" style="display: none;">
+          <div class="d-flex justify-content-between align-items-center">
+            <button class="btn btn-outline-secondary btn-sm" id="btn-prev-page" disabled data-testid="btn-prev-page">
+              <i class="fa fa-chevron-left"></i> Previous
+            </button>
+            <span id="pagination-info" class="text-muted small">Page 1</span>
+            <button class="btn btn-outline-secondary btn-sm" id="btn-next-page" data-testid="btn-next-page">
+              Next <i class="fa fa-chevron-right"></i>
+            </button>
+          </div>
         </div>
       </div>
     </div>

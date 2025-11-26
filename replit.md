@@ -30,6 +30,12 @@ The frontend utilizes React, TypeScript, Vite, Tailwind CSS, and shadcn/ui, char
 - **Security Hardening**: Includes webhook nonce tracking, platform rate limiting, IP-based rate limiting, trust proxy configuration, graceful shutdown, and admin endpoint protection.
 - **Observability & Monitoring**: Structured logging with correlation IDs, health check endpoints (`/api/health/live`, `/api/health/ready`, `/api/health`).
 - **BetWin Platform API Integration**: Fully integrated for real-time balance tracking, atomic deposits/withdrawals, and transaction history using HMAC-SHA256 authentication.
+- **BetWin v7.0 Enhancements** (Nov 2025):
+  - Transaction filtering: Filter by type (deposit/withdrawal), status (completed/pending/failed), and date range
+  - Export functionality: Download transaction history as CSV or JSON with filter support
+  - Pagination: Server-side pagination with offset-based navigation
+  - P2P Marketplace integration: BetWin users can purchase TKOIN from liquidity agents with fiat
+  - Debounced filter controls for optimal UX
 
 ### Feature Specifications
 - **Pricing Configurator**: Agents can set bid/ask spreads and FX buffers.

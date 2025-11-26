@@ -113,19 +113,72 @@ class TkoinService
      * Get user transaction history from local database
      * FIXED: Returns ALL fields including id, solana_signature, completed_at
      * Returns both deposits AND withdrawals from tkoin_settlements table
+     * 
+     * v7.0: Added filtering support for type, status, date range
+     * BACKWARD COMPATIBLE: Accepts either (User, int) or (User, array, int, int)
+     * 
+     * @param User $user The authenticated user
+     * @param array|int $filtersOrLimit Filters array OR limit integer (for backward compatibility)
+     * @param int $limit Max results to return
+     * @param int $offset Pagination offset
+     * @return array
      */
-    public function getUserTransactions(User $user, int $limit = 20): array
+    public function getUserTransactions(User $user, array|int $filtersOrLimit = [], int $limit = 20, int $offset = 0): array
     {
         try {
-            // Query directly from tkoin_settlements table to get all transaction types
-            // Using DB facade to ensure we get all fields without model filtering
-            $settlements = DB::table('tkoin_settlements')
-                ->where('user_id', $user->id)
+            // v7.0: Backward compatibility - handle old signature (User, int)
+            $filters = [];
+            $isLegacyCall = false;
+            if (is_int($filtersOrLimit)) {
+                // Old call style: getUserTransactions($user, 20)
+                $limit = $filtersOrLimit;
+                $filters = [];
+                $isLegacyCall = true;
+            } else {
+                // New call style: getUserTransactions($user, ['type' => 'deposit'], 20, 0)
+                $filters = $filtersOrLimit;
+            }
+            
+            $query = DB::table('tkoin_settlements')
+                ->where('user_id', $user->id);
+            
+            // Filter by transaction type (deposit, withdrawal)
+            if (!empty($filters['type']) && $filters['type'] !== 'all') {
+                $query->where('type', $filters['type']);
+            }
+            
+            // Filter by status (completed, pending, failed)
+            if (!empty($filters['status']) && $filters['status'] !== 'all') {
+                $query->where('status', $filters['status']);
+            }
+            
+            // Filter by date range
+            if (!empty($filters['date_from'])) {
+                $query->where('created_at', '>=', $filters['date_from']);
+            }
+            if (!empty($filters['date_to'])) {
+                $query->where('created_at', '<=', $filters['date_to'] . ' 23:59:59');
+            }
+            
+            // Filter by amount range
+            if (!empty($filters['min_amount'])) {
+                $query->where('amount', '>=', (float)$filters['min_amount']);
+            }
+            if (!empty($filters['max_amount'])) {
+                $query->where('amount', '<=', (float)$filters['max_amount']);
+            }
+            
+            // Get total count for pagination
+            $total = $query->count();
+            
+            // Apply ordering and pagination
+            $settlements = $query
                 ->orderBy('created_at', 'desc')
+                ->offset($offset)
                 ->limit($limit)
                 ->get();
 
-            return $settlements->map(function ($settlement) {
+            $transactions = $settlements->map(function ($settlement) {
                 return [
                     'id' => $settlement->id,
                     'type' => $settlement->type,
@@ -136,12 +189,123 @@ class TkoinService
                     'completed_at' => $settlement->completed_at,
                 ];
             })->toArray();
+            
+            // v7.0: Return format depends on call style
+            if ($isLegacyCall) {
+                // Old call style expects just the transactions array
+                return $transactions;
+            }
+            
+            // New call style expects paginated result with metadata
+            return [
+                'transactions' => $transactions,
+                'total' => $total,
+                'limit' => $limit,
+                'offset' => $offset,
+                'has_more' => ($offset + count($transactions)) < $total,
+            ];
         } catch (\Exception $e) {
             Log::error('Failed to fetch user transactions', [
                 'user_id' => $user->id,
+                'filters' => $filters ?? [],
                 'error' => $e->getMessage()
             ]);
-            return [];
+            
+            // v7.0: Return format depends on call style
+            if ($isLegacyCall ?? false) {
+                return [];
+            }
+            
+            return [
+                'transactions' => [],
+                'total' => 0,
+                'limit' => $limit,
+                'offset' => $offset,
+                'has_more' => false,
+            ];
+        }
+    }
+    
+    /**
+     * Export user transactions as CSV or JSON
+     * v7.0: New method for transaction export
+     * 
+     * @param User $user The authenticated user
+     * @param string $format 'csv' or 'json'
+     * @param array $filters Optional filters (same as getUserTransactions)
+     * @return array|string Returns array for JSON, CSV string for CSV
+     */
+    public function exportTransactions(User $user, string $format = 'csv', array $filters = []): array|string
+    {
+        try {
+            // Get all matching transactions (no limit for export)
+            $query = DB::table('tkoin_settlements')
+                ->where('user_id', $user->id);
+            
+            // Apply same filters
+            if (!empty($filters['type']) && $filters['type'] !== 'all') {
+                $query->where('type', $filters['type']);
+            }
+            if (!empty($filters['status']) && $filters['status'] !== 'all') {
+                $query->where('status', $filters['status']);
+            }
+            if (!empty($filters['date_from'])) {
+                $query->where('created_at', '>=', $filters['date_from']);
+            }
+            if (!empty($filters['date_to'])) {
+                $query->where('created_at', '<=', $filters['date_to'] . ' 23:59:59');
+            }
+            
+            $settlements = $query->orderBy('created_at', 'desc')->get();
+            
+            $transactions = $settlements->map(function ($settlement) {
+                return [
+                    'id' => $settlement->id,
+                    'type' => strtoupper($settlement->type),
+                    'amount_credit' => (float)$settlement->amount,
+                    'amount_tkoin' => (float)$settlement->amount / 100,
+                    'status' => strtoupper($settlement->status),
+                    'solana_signature' => $settlement->solana_signature ?? '',
+                    'created_at' => $settlement->created_at,
+                    'completed_at' => $settlement->completed_at ?? '',
+                ];
+            })->toArray();
+            
+            if ($format === 'json') {
+                return [
+                    'export_date' => now()->toIso8601String(),
+                    'user_id' => $user->id,
+                    'total_transactions' => count($transactions),
+                    'transactions' => $transactions,
+                ];
+            }
+            
+            // Generate CSV with BOM for Excel compatibility
+            $csv = "\xEF\xBB\xBF"; // UTF-8 BOM
+            $csv .= "ID,Type,Amount (CREDIT),Amount (TKOIN),Status,Solana Signature,Created At,Completed At\n";
+            
+            foreach ($transactions as $tx) {
+                $csv .= sprintf(
+                    "%d,%s,%.2f,%.4f,%s,%s,%s,%s\n",
+                    $tx['id'],
+                    $tx['type'],
+                    $tx['amount_credit'],
+                    $tx['amount_tkoin'],
+                    $tx['status'],
+                    $tx['solana_signature'],
+                    $tx['created_at'],
+                    $tx['completed_at']
+                );
+            }
+            
+            return $csv;
+        } catch (\Exception $e) {
+            Log::error('Failed to export transactions', [
+                'user_id' => $user->id,
+                'format' => $format,
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
         }
     }
 
