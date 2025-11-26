@@ -837,6 +837,90 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Platform API: Browse marketplace offers (for external platforms like BetWin)
+  // Returns agent sell offers in a format suitable for platform integration
+  app.get('/api/p2p/market/offers', async (req: any, res) => {
+    try {
+      const { side, status, currency, minAmount, maxAmount } = req.query;
+      
+      // Get approved, online agents
+      const filters: any = { status: 'approved' };
+      let agents = await storage.getAllAgents(filters);
+      agents = agents.filter(a => a.availabilityStatus === 'online');
+      
+      // Calculate available balance for each agent
+      const offers = await Promise.all(
+        agents.map(async (agent) => {
+          const paymentMethods = await storage.getActivePaymentMethodsByAgent(agent.id);
+          const activePaymentMethodTypes = paymentMethods.map(m => m.methodType);
+          
+          // Calculate available TKOIN (total - locked)
+          const tkoinBalance = parseFloat(agent.tkoinBalance || '0');
+          const lockedBalance = parseFloat(agent.lockedBalance || '0');
+          const availableAmount = tkoinBalance - lockedBalance;
+          
+          // Skip agents with no available inventory for sell offers
+          if (side === 'sell' && availableAmount <= 0) {
+            return null;
+          }
+          
+          // Get agent's pricing (markup)
+          const markup = parseFloat(agent.markup || '0.5');
+          const basePrice = 1.0; // Base TKOIN price in USD (1 TKOIN = 1 USD soft peg)
+          const pricePerToken = side === 'sell' 
+            ? basePrice * (1 + markup / 100) // Agent sells higher
+            : basePrice * (1 - markup / 100); // Agent buys lower
+          
+          // Get min/max from payment methods or use defaults
+          const minTrade = Math.min(...paymentMethods.map(m => parseFloat(m.minAmount || '10')));
+          const maxTrade = Math.max(...paymentMethods.map(m => parseFloat(m.maxAmount || '5000')));
+          
+          return {
+            id: agent.id,
+            agentId: agent.id,
+            agentName: agent.username || 'Agent',
+            agentTier: agent.verificationTier,
+            pricePerToken: pricePerToken.toFixed(4),
+            minAmount: minTrade.toFixed(2),
+            maxAmount: Math.min(maxTrade, availableAmount).toFixed(2),
+            availableAmount: availableAmount.toFixed(4),
+            paymentMethods: activePaymentMethodTypes,
+            currency: 'USD',
+            rating: agent.averageRating || '5.0',
+            completedTrades: 0, // TODO: Calculate from p2p_orders when needed
+            createdAt: agent.createdAt,
+          };
+        })
+      );
+      
+      // Filter out null entries and apply additional filters
+      let filteredOffers = offers.filter(o => o !== null);
+      
+      if (minAmount) {
+        const min = parseFloat(minAmount);
+        filteredOffers = filteredOffers.filter(o => parseFloat(o!.availableAmount) >= min);
+      }
+      
+      if (maxAmount) {
+        const max = parseFloat(maxAmount);
+        filteredOffers = filteredOffers.filter(o => parseFloat(o!.availableAmount) <= max);
+      }
+      
+      res.json({
+        offers: filteredOffers,
+        total: filteredOffers.length,
+        side: side || 'sell',
+      });
+    } catch (error) {
+      console.error("Error fetching marketplace offers:", error);
+      res.status(500).json({ 
+        message: "Failed to fetch offers",
+        offers: [],
+        total: 0,
+      });
+    }
+  });
+  
   // Create P2P order (user buys TKOIN from agent)
   app.post('/api/p2p/orders', isAuthenticated, async (req: any, res) => {
     try {
