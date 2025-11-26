@@ -1,0 +1,42 @@
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# curl -X GET "https://1f1f76cb-d6d6-4e8e-b41b-5cb7e3d7fc0f-00-1icgdawm3o9xv.picard.replit.dev/api/p2p/market/offers?side=sell"
+{"offers":[{"id":"test-agent-p2p-006","agentId":"test-agent-p2p-006","agentName":"p2pagent006","agentTier":"verified","pricePerToken":"1.0050","minAmount":"10.00","maxAmount":"10000.00","availableAmount":"100000.0000","paymentMethods":["bank_transfer"],"currency":"USD","rating":"0.00","completedTrades":0,"createdAt":"2025-11-20T15:43:25.666Z"},{"id":"test-agent-p2p-005","agentId":"test-agent-p2p-005","agentName":"p2pagent005","agentTier":"verified","pricePerToken":"1.0050","minAmount":"10.00","maxAmount":"10000.00","availableAmount":"100000.0000","paymentMethods":["bank_transfer"],"currency":"USD","rating":"0.00","completedTrades":0,"createdAt":"2025-11-20T15:39:05.306Z"},{"id":"test-agent-p2p-004","agentId":"test-agent-p2p-004","agentName":"p2pagent004","agentTier":"verified","pricePerToken":"1.0050","minAmount":"10.00","maxAmount":"10000.00","availableAmount":"100000.0000","paymentMethods":["bank_transfer"],"currency":"USD","rating":"0.00","completedTrades":0,"createdAt":"2025-11-20T15:32:46.678Z"}],"total":3,"side":"sell"}root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# php artisan cache:clear && php artisan config:clear && php artisan route:clear && php artisan view:clear && php artisan route:cache && echo "All caches cleared!"
+
+   INFO  Application cache cleared successfully.  
+
+
+   INFO  Configuration cache cleared successfully.  
+
+
+   INFO  Route cache cleared successfully.  
+
+
+   INFO  Compiled views cleared successfully.  
+
+
+   INFO  Routes cached successfully.  
+
+All caches cleared!
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# php artisan route:list | grep tkoin
+  GET|HEAD        api/user/tkoin/balance ............................................................. user.tkoin.balance › TkoinController@balance
+  POST            api/user/tkoin/deposit ............................................................. user.tkoin.deposit › TkoinController@deposit
+  GET|HEAD        api/user/tkoin/history ............................................................. user.tkoin.history › TkoinController@history
+  GET|HEAD        api/user/tkoin/settlements/{settlement} .................................................. user.tkoin.show › TkoinController@show
+  POST            api/user/tkoin/settlements/{settlement}/cancel ....................................... user.tkoin.cancel › TkoinController@cancel
+  GET|HEAD        api/user/tkoin/stats ................................................................... user.tkoin.stats › TkoinController@stats
+  POST            api/user/tkoin/withdrawal .................................................... user.tkoin.withdrawal › TkoinController@withdrawal
+  POST            api/webhooks/tkoin ........................................................ webhooks.tkoin › TkoinWebhookController@handleWebhook
+  GET|HEAD        tkoin/balance ........................................................................... tkoin.balance › TkoinController@balance
+  POST            tkoin/deposit ........................................................................... tkoin.deposit › TkoinController@deposit
+  GET|HEAD        tkoin/export .............................................................................. tkoin.export › TkoinController@export
+  GET|HEAD        tkoin/history ........................................................................... tkoin.history › TkoinController@history
+  GET|HEAD        tkoin/marketplace/agents ........................................... tkoin.marketplace.agents › TkoinController@marketplaceAgents
+  GET|HEAD        tkoin/marketplace/orders ......................................... tkoin.marketplace.orders › TkoinController@marketplaceMyOrders
+  GET|HEAD        tkoin/marketplace/orders/{id} ........................... tkoin.marketplace.order.status › TkoinController@marketplaceOrderStatus
+  POST            tkoin/marketplace/orders/{id}/cancel .................... tkoin.marketplace.order.cancel › TkoinController@marketplaceCancelOrder
+  POST            tkoin/marketplace/orders/{id}/confirm ............... tkoin.marketplace.order.confirm › TkoinController@marketplaceConfirmPayment
+  POST            tkoin/marketplace/purchase ..................................... tkoin.marketplace.purchase › TkoinController@marketplacePurchase
+  POST            tkoin/verify-deposit ....................................................... tkoin.verify-deposit › TkoinController@verifyDeposit
+  POST            tkoin/withdraw ........................................................................ tkoin.withdraw › TkoinController@withdraw
+  POST            tkoin/withdrawal .................................................................. tkoin.withdrawal › TkoinController@withdrawal
+  GET|HEAD        user/tkoin-wallet ................................................................ user.tkoin-wallet › TkoinController@showWallet
+root@srv684502:/home/tkoin-betwin/htdocs/betwin.tkoin.finance# 
